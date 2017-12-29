@@ -1,0 +1,35 @@
+<idea-plugin>
+    <id>name.martingeisse.mahdl.plugin</id>
+    <name>MaHDL</name>
+    <version>0.1</version>
+    <vendor email="martingeisse@googlemail.com" url="https://github.com/MartinGeisse">Martin Geisse</vendor>
+
+    <description><![CDATA[
+        MaHDL support for IntelliJ
+  ]]></description>
+
+    <change-notes><![CDATA[
+  ]]></change-notes>
+
+    <idea-version since-build="145.0"/>
+
+    <depends>com.intellij.modules.lang</depends>
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileTypeFactory implementation="name.martingeisse.mahdl.plugin.MahdlFileTypeFactory" />
+        <lang.syntaxHighlighterFactory language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlSyntaxHighlighterFactory" />
+        <lang.parserDefinition language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlParserDefinition" />
+<!--
+        <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFindUsagesProvider" />
+        <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagRefactoringSupportProvider" />
+        <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFormattingModelBuilder" />
+        <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
+        <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
+        <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagBraceMatcher" />
+        <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFoldingBuilder" />
+        <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagCommenter" />
+-->
+    </extensions>
+
+</idea-plugin>
