@@ -29,7 +29,7 @@ public class PsiFactory {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
-                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalDeclaration, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock), ImplementationItem.class);
+                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalDeclaration, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_CombinatorialDoBlock, Symbols.implementationItem_ClockedDoBlock), ImplementationItem.class);
             }
                     if (type == Symbols.synthetic_List_CaseItem) {
                 return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
@@ -172,8 +172,11 @@ public class PsiFactory {
                     if (type == Symbols.implementationItem_ModuleInstance) {
                 return new ImplementationItem_ModuleInstance(node);
             }
-                    if (type == Symbols.implementationItem_DoBlock) {
-                return new ImplementationItem_DoBlock(node);
+                    if (type == Symbols.implementationItem_CombinatorialDoBlock) {
+                return new ImplementationItem_CombinatorialDoBlock(node);
+            }
+                    if (type == Symbols.implementationItem_ClockedDoBlock) {
+                return new ImplementationItem_ClockedDoBlock(node);
             }
                     if (type == Symbols.declaredSignal_WithoutInitializer) {
                 return new DeclaredSignal_WithoutInitializer(node);

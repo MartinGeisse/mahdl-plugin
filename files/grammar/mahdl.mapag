@@ -86,7 +86,8 @@ portDirection ::= {
 implementationItem ::= {
     signalDeclaration ::= dataType:dataType (declaredSignal, COMMA)+ SEMICOLON;
     moduleInstance ::= qualifiedIdentifier:moduleName IDENTIFIER:instanceName OPENING_PARENTHESIS portConnection*:portConnections CLOSING_PARENTHESIS SEMICOLON;
-    doBlock ::= KW_DO OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS statement:statement;
+    combinatorialDoBlock ::= KW_DO OPENING_PARENTHESIS OP_TIMES CLOSING_PARENTHESIS statement:statement;
+    clockedDoBlock ::= KW_DO OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS statement:statement;
 }
 
 declaredSignal ::= {
@@ -121,8 +122,8 @@ expression ::= {
     literal ::= literal:literal;
     signal ::= IDENTIFIER:signalName;
     instancePort ::= IDENTIFIER:instanceName DOT IDENTIFIER:portName;
-    indexSelection ::= expression:container OPENING_SQUARE_BRACKET expression:index CLOSING_CURLY_BRACE;
-    rangeSelection ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_CURLY_BRACE;
+    indexSelection ::= expression:container OPENING_SQUARE_BRACKET expression:index CLOSING_SQUARE_BRACKET;
+    rangeSelection ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_SQUARE_BRACKET;
     parenthesized ::= OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS;
     functionCall ::= IDENTIFIER:functionName OPENING_PARENTHESIS (expression, COMMA)+:arguments CLOSING_PARENTHESIS;
 

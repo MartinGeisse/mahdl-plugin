@@ -103,7 +103,8 @@ public class Symbols {
 	public static final MahdlElementType expression_UnaryMinus = new MahdlElementType("expression_UnaryMinus");
 	public static final MahdlElementType expression_UnaryNot = new MahdlElementType("expression_UnaryNot");
 	public static final MahdlElementType expression_UnaryPlus = new MahdlElementType("expression_UnaryPlus");
-	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
+	public static final MahdlElementType implementationItem_ClockedDoBlock = new MahdlElementType("implementationItem_ClockedDoBlock");
+	public static final MahdlElementType implementationItem_CombinatorialDoBlock = new MahdlElementType("implementationItem_CombinatorialDoBlock");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
 	public static final MahdlElementType implementationItem_SignalDeclaration = new MahdlElementType("implementationItem_SignalDeclaration");
 	public static final MahdlElementType interfaceItem = new MahdlElementType("interfaceItem");
