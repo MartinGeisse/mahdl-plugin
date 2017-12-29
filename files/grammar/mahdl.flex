@@ -83,6 +83,7 @@ UnsignedNumber = [0] | ([1-9][0-9]*)
 
 // keywords
 module { return Symbols.KW_MODULE; }
+interface { return Symbols.KW_INTERFACE; }
 const { return Symbols.KW_CONST; }
 input { return Symbols.KW_INPUT; }
 output { return Symbols.KW_OUTPUT; }
