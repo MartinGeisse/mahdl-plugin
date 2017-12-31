@@ -1,0 +1,20 @@
+
+module ${moduleName}(
+    #foreach($port in $ports) ${port.comma} ${port.name} #end
+);
+    #foreach($port in $ports)
+    	${port.direction}${port.dataType} ${port.name};
+    #end
+
+/*
+    reg [24:0] counter;
+    always @(posedge clk) begin:foo
+        reg[24:0] helper;
+        helper <= counter + 1;
+        counter <= helper;
+    end
+
+    assign led = counter[24];
+*/
+
+endmodule

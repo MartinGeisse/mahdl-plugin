@@ -75,9 +75,9 @@ public class Symbols {
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType declaredSignal_WithInitializer = new MahdlElementType("declaredSignal_WithInitializer");
 	public static final MahdlElementType declaredSignal_WithoutInitializer = new MahdlElementType("declaredSignal_WithoutInitializer");
-	public static final MahdlElementType expression_BinaryBitwiseAnd = new MahdlElementType("expression_BinaryBitwiseAnd");
-	public static final MahdlElementType expression_BinaryBitwiseOr = new MahdlElementType("expression_BinaryBitwiseOr");
-	public static final MahdlElementType expression_BinaryBitwiseXor = new MahdlElementType("expression_BinaryBitwiseXor");
+	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
+	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
+	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
 	public static final MahdlElementType expression_BinaryConcat = new MahdlElementType("expression_BinaryConcat");
 	public static final MahdlElementType expression_BinaryDividedBy = new MahdlElementType("expression_BinaryDividedBy");
 	public static final MahdlElementType expression_BinaryEqual = new MahdlElementType("expression_BinaryEqual");
@@ -87,11 +87,13 @@ public class Symbols {
 	public static final MahdlElementType expression_BinaryLessThanOrEqual = new MahdlElementType("expression_BinaryLessThanOrEqual");
 	public static final MahdlElementType expression_BinaryMinus = new MahdlElementType("expression_BinaryMinus");
 	public static final MahdlElementType expression_BinaryNotEqual = new MahdlElementType("expression_BinaryNotEqual");
+	public static final MahdlElementType expression_BinaryOr = new MahdlElementType("expression_BinaryOr");
 	public static final MahdlElementType expression_BinaryPlus = new MahdlElementType("expression_BinaryPlus");
 	public static final MahdlElementType expression_BinaryRemainder = new MahdlElementType("expression_BinaryRemainder");
 	public static final MahdlElementType expression_BinaryShiftLeft = new MahdlElementType("expression_BinaryShiftLeft");
 	public static final MahdlElementType expression_BinaryShiftRight = new MahdlElementType("expression_BinaryShiftRight");
 	public static final MahdlElementType expression_BinaryTimes = new MahdlElementType("expression_BinaryTimes");
+	public static final MahdlElementType expression_BinaryXor = new MahdlElementType("expression_BinaryXor");
 	public static final MahdlElementType expression_FunctionCall = new MahdlElementType("expression_FunctionCall");
 	public static final MahdlElementType expression_IndexSelection = new MahdlElementType("expression_IndexSelection");
 	public static final MahdlElementType expression_InstancePort = new MahdlElementType("expression_InstancePort");
@@ -103,8 +105,7 @@ public class Symbols {
 	public static final MahdlElementType expression_UnaryMinus = new MahdlElementType("expression_UnaryMinus");
 	public static final MahdlElementType expression_UnaryNot = new MahdlElementType("expression_UnaryNot");
 	public static final MahdlElementType expression_UnaryPlus = new MahdlElementType("expression_UnaryPlus");
-	public static final MahdlElementType implementationItem_ClockedDoBlock = new MahdlElementType("implementationItem_ClockedDoBlock");
-	public static final MahdlElementType implementationItem_CombinatorialDoBlock = new MahdlElementType("implementationItem_CombinatorialDoBlock");
+	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
 	public static final MahdlElementType implementationItem_SignalDeclaration = new MahdlElementType("implementationItem_SignalDeclaration");
 	public static final MahdlElementType interfaceItem = new MahdlElementType("interfaceItem");

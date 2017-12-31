@@ -21,18 +21,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryLessThan extends Expression implements BinaryOperation {
+public abstract class DoBlockTrigger extends ASTWrapperPsiElement  {
 
-    public Expression_BinaryLessThan(@NotNull ASTNode node) {
+    public DoBlockTrigger(@NotNull ASTNode node) {
         super(node);
     }
 
-        public Expression getLeftOperand() {
-            return (Expression)InternalPsiUtil.getChild(this, 0);
-        }
-        public Expression getRightOperand() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
-        }
     
 			
 	

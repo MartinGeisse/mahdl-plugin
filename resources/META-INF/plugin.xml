@@ -24,12 +24,20 @@
         <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFindUsagesProvider" />
         <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagRefactoringSupportProvider" />
         <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFormattingModelBuilder" />
-        <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
-        <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
-        <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagBraceMatcher" />
-        <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFoldingBuilder" />
-        <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagCommenter" />
 -->
+        <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.annotator.MahdlAnnotator" />
+        <!--
+                <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
+                <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagBraceMatcher" />
+                <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFoldingBuilder" />
+                <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagCommenter" />
+        -->
     </extensions>
+
+    <actions>
+        <action id="mapag.generateVerilog" class="name.martingeisse.mahdl.plugin.actions.GenerateVerilogAction" text="generate verilog">
+            <add-to-group group-id="ProjectViewPopupMenu" />
+        </action>
+    </actions>
 
 </idea-plugin>

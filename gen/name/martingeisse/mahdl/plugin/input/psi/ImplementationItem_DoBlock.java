@@ -27,8 +27,8 @@ public final class ImplementationItem_DoBlock extends ImplementationItem  {
         super(node);
     }
 
-        public Expression getExpression() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
+        public DoBlockTrigger getTrigger() {
+            return (DoBlockTrigger)InternalPsiUtil.getChild(this, 2);
         }
         public Statement getStatement() {
             return (Statement)InternalPsiUtil.getChild(this, 4);

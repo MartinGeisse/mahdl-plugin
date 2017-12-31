@@ -30,6 +30,9 @@ public final class DeclaredSignal_WithInitializer extends DeclaredSignal  {
         public LeafPsiElement getIdentifier() {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
+        public Expression getInitializer() {
+            return (Expression)InternalPsiUtil.getChild(this, 2);
+        }
     
 			
 	

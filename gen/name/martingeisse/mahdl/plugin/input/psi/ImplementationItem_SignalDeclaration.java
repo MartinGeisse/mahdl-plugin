@@ -30,6 +30,9 @@ public final class ImplementationItem_SignalDeclaration extends ImplementationIt
         public DataType getDataType() {
             return (DataType)InternalPsiUtil.getChild(this, 0);
         }
+        public ListNode<DeclaredSignal> getSignalNames() {
+            return (ListNode<DeclaredSignal>)InternalPsiUtil.getChild(this, 1);
+        }
     
 			
 	

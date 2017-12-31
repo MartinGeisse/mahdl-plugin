@@ -21,15 +21,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_CombinatorialDoBlock extends ImplementationItem  {
+public final class DoBlockTrigger_Combinatorial extends DoBlockTrigger  {
 
-    public ImplementationItem_CombinatorialDoBlock(@NotNull ASTNode node) {
+    public DoBlockTrigger_Combinatorial(@NotNull ASTNode node) {
         super(node);
     }
 
-        public Statement getStatement() {
-            return (Statement)InternalPsiUtil.getChild(this, 4);
-        }
     
 			
 	

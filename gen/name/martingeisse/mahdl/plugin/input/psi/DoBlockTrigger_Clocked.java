@@ -21,17 +21,14 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_ClockedDoBlock extends ImplementationItem  {
+public final class DoBlockTrigger_Clocked extends DoBlockTrigger  {
 
-    public ImplementationItem_ClockedDoBlock(@NotNull ASTNode node) {
+    public DoBlockTrigger_Clocked(@NotNull ASTNode node) {
         super(node);
     }
 
-        public Expression getExpression() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
-        }
-        public Statement getStatement() {
-            return (Statement)InternalPsiUtil.getChild(this, 4);
+        public Expression getClockExpression() {
+            return (Expression)InternalPsiUtil.getChild(this, 0);
         }
     
 			

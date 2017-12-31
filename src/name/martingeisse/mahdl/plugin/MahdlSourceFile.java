@@ -22,7 +22,7 @@ public class MahdlSourceFile extends PsiFileBase {
 		return MahdlFileType.INSTANCE;
 	}
 
-	public Module getRoot() {
+	public Module getModule() {
 		for (PsiElement child : getChildren()) {
 			if (child instanceof Module) {
 				return (Module)child;

@@ -29,7 +29,7 @@ public class PsiFactory {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
-                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalDeclaration, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_CombinatorialDoBlock, Symbols.implementationItem_ClockedDoBlock), ImplementationItem.class);
+                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalDeclaration, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock), ImplementationItem.class);
             }
                     if (type == Symbols.synthetic_List_CaseItem) {
                 return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
@@ -103,14 +103,14 @@ public class PsiFactory {
                     if (type == Symbols.expression_BinaryLessThanOrEqual) {
                 return new Expression_BinaryLessThanOrEqual(node);
             }
-                    if (type == Symbols.expression_BinaryBitwiseAnd) {
-                return new Expression_BinaryBitwiseAnd(node);
+                    if (type == Symbols.expression_BinaryAnd) {
+                return new Expression_BinaryAnd(node);
             }
-                    if (type == Symbols.expression_BinaryBitwiseOr) {
-                return new Expression_BinaryBitwiseOr(node);
+                    if (type == Symbols.expression_BinaryOr) {
+                return new Expression_BinaryOr(node);
             }
-                    if (type == Symbols.expression_BinaryBitwiseXor) {
-                return new Expression_BinaryBitwiseXor(node);
+                    if (type == Symbols.expression_BinaryXor) {
+                return new Expression_BinaryXor(node);
             }
                     if (type == Symbols.expression_BinaryShiftLeft) {
                 return new Expression_BinaryShiftLeft(node);
@@ -129,6 +129,12 @@ public class PsiFactory {
             }
                     if (type == Symbols.synthetic_SeparatedList_DeclaredSignal_COMMA) {
                 return new ListNode<DeclaredSignal>(node, TokenSet.create(Symbols.declaredSignal_WithoutInitializer, Symbols.declaredSignal_WithInitializer), DeclaredSignal.class);
+            }
+                    if (type == Symbols.doBlockTrigger_Combinatorial) {
+                return new DoBlockTrigger_Combinatorial(node);
+            }
+                    if (type == Symbols.doBlockTrigger_Clocked) {
+                return new DoBlockTrigger_Clocked(node);
             }
                     if (type == Symbols.module) {
                 return new Module(node);
@@ -172,11 +178,8 @@ public class PsiFactory {
                     if (type == Symbols.implementationItem_ModuleInstance) {
                 return new ImplementationItem_ModuleInstance(node);
             }
-                    if (type == Symbols.implementationItem_CombinatorialDoBlock) {
-                return new ImplementationItem_CombinatorialDoBlock(node);
-            }
-                    if (type == Symbols.implementationItem_ClockedDoBlock) {
-                return new ImplementationItem_ClockedDoBlock(node);
+                    if (type == Symbols.implementationItem_DoBlock) {
+                return new ImplementationItem_DoBlock(node);
             }
                     if (type == Symbols.declaredSignal_WithoutInitializer) {
                 return new DeclaredSignal_WithoutInitializer(node);
@@ -221,7 +224,7 @@ public class PsiFactory {
                 return new ListNode<PortConnection>(node, TokenSet.create(Symbols.portConnection), PortConnection.class);
             }
                     if (type == Symbols.synthetic_SeparatedList_Expression_COMMA) {
-                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Signal, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelection, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryBitwiseAnd, Symbols.expression_BinaryBitwiseOr, Symbols.expression_BinaryBitwiseXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
+                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Signal, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelection, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
             }
         		if (type == Symbols.__PARSED_FRAGMENT) {
 			return new ASTWrapperPsiElement(node);
