@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class DeclaredSignal extends ASTWrapperPsiElement  {
+public final class SignalLikeKind_Register extends SignalLikeKind  {
 
-    public DeclaredSignal(@NotNull ASTNode node) {
+    public SignalLikeKind_Register(@NotNull ASTNode node) {
         super(node);
     }
 

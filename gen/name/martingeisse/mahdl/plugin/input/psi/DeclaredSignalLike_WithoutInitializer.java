@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class DeclaredSignal_WithoutInitializer extends DeclaredSignal  {
+public final class DeclaredSignalLike_WithoutInitializer extends DeclaredSignalLike  {
 
-    public DeclaredSignal_WithoutInitializer(@NotNull ASTNode node) {
+    public DeclaredSignalLike_WithoutInitializer(@NotNull ASTNode node) {
         super(node);
     }
 

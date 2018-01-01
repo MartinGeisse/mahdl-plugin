@@ -29,7 +29,7 @@ public class PsiFactory {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
-                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalDeclaration, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock), ImplementationItem.class);
+                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinition, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock), ImplementationItem.class);
             }
                     if (type == Symbols.synthetic_List_CaseItem) {
                 return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
@@ -124,9 +124,6 @@ public class PsiFactory {
                     if (type == Symbols.expression_Mux) {
                 return new Expression_Mux(node);
             }
-                    if (type == Symbols.synthetic_SeparatedList_DeclaredSignal_COMMA) {
-                return new ListNode<DeclaredSignal>(node, TokenSet.create(Symbols.declaredSignal_WithoutInitializer, Symbols.declaredSignal_WithInitializer), DeclaredSignal.class);
-            }
                     if (type == Symbols.doBlockTrigger_Combinatorial) {
                 return new DoBlockTrigger_Combinatorial(node);
             }
@@ -166,8 +163,8 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_SeparatedList_IDENTIFIER_DOT) {
                 return new ListNode<LeafPsiElement>(node, TokenSet.create(Symbols.IDENTIFIER), LeafPsiElement.class);
             }
-                    if (type == Symbols.implementationItem_SignalDeclaration) {
-                return new ImplementationItem_SignalDeclaration(node);
+                    if (type == Symbols.implementationItem_SignalLikeDefinition) {
+                return new ImplementationItem_SignalLikeDefinition(node);
             }
                     if (type == Symbols.implementationItem_ModuleInstance) {
                 return new ImplementationItem_ModuleInstance(node);
@@ -175,14 +172,14 @@ public class PsiFactory {
                     if (type == Symbols.implementationItem_DoBlock) {
                 return new ImplementationItem_DoBlock(node);
             }
-                    if (type == Symbols.declaredSignal_WithoutInitializer) {
-                return new DeclaredSignal_WithoutInitializer(node);
+                    if (type == Symbols.signalLikeKind_Constant) {
+                return new SignalLikeKind_Constant(node);
             }
-                    if (type == Symbols.declaredSignal_WithInitializer) {
-                return new DeclaredSignal_WithInitializer(node);
+                    if (type == Symbols.signalLikeKind_Signal) {
+                return new SignalLikeKind_Signal(node);
             }
-                    if (type == Symbols.portDirection_Const) {
-                return new PortDirection_Const(node);
+                    if (type == Symbols.signalLikeKind_Register) {
+                return new SignalLikeKind_Register(node);
             }
                     if (type == Symbols.portDirection_Input) {
                 return new PortDirection_Input(node);
@@ -195,6 +192,12 @@ public class PsiFactory {
             }
                     if (type == Symbols.portConnection) {
                 return new PortConnection(node);
+            }
+                    if (type == Symbols.declaredSignalLike_WithoutInitializer) {
+                return new DeclaredSignalLike_WithoutInitializer(node);
+            }
+                    if (type == Symbols.declaredSignalLike_WithInitializer) {
+                return new DeclaredSignalLike_WithInitializer(node);
             }
                     if (type == Symbols.statement_Assignment) {
                 return new Statement_Assignment(node);
@@ -216,6 +219,9 @@ public class PsiFactory {
             }
                     if (type == Symbols.synthetic_List_PortDefinition) {
                 return new ListNode<PortDefinition>(node, TokenSet.create(Symbols.portDefinition), PortDefinition.class);
+            }
+                    if (type == Symbols.synthetic_SeparatedList_DeclaredSignalLike_COMMA) {
+                return new ListNode<DeclaredSignalLike>(node, TokenSet.create(Symbols.declaredSignalLike_WithoutInitializer, Symbols.declaredSignalLike_WithInitializer), DeclaredSignalLike.class);
             }
                     if (type == Symbols.portDefinition) {
                 return new PortDefinition(node);

@@ -81,18 +81,26 @@ UnsignedNumber = [0] | ([1-9][0-9]*)
 \? { return Symbols.OP_MUX; }
 \_ { return Symbols.OP_CONCAT; }
 
-// keywords
+// module and interface keywords
 module { return Symbols.KW_MODULE; }
 interface { return Symbols.KW_INTERFACE; }
-const { return Symbols.KW_CONST; }
 input { return Symbols.KW_INPUT; }
 output { return Symbols.KW_OUTPUT; }
 inout { return Symbols.KW_INOUT; }
+
+// value source kind keywords
+constant { return Symbols.KW_CONSTANT; }
+signal { return Symbols.KW_SIGNAL; }
+register { return Symbols.KW_REGISTER; }
+
+// data type keywords
 bit { return Symbols.KW_BIT; }
 vector { return Symbols.KW_VECTOR; }
 memory { return Symbols.KW_MEMORY; }
 integer { return Symbols.KW_INTEGER; }
 text { return Symbols.KW_TEXT; }
+
+// statement keywords
 do { return Symbols.KW_DO; }
 if { return Symbols.KW_IF; }
 else { return Symbols.KW_ELSE; }

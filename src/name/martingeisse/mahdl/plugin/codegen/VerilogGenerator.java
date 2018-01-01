@@ -41,8 +41,6 @@ public class VerilogGenerator {
 					port.direction = "output";
 				} else if (portDefinition.getDirection() instanceof PortDirection_Inout) {
 					port.direction = "inout";
-				} else if (portDefinition.getDirection() instanceof PortDirection_Const) {
-					continue;
 				} else {
 					throw new RuntimeException("unknown port direction: " + portDefinition.getDirection());
 				}
@@ -64,6 +62,7 @@ public class VerilogGenerator {
 
 	private String vectorTypeRangeToString(DataType_Vector dataType) {
 		Expression sizeExpression = dataType.getSize();
+		// TODO evaluate!
 		if (sizeExpression instanceof Expression_Literal) {
 			Literal literal = ((Expression_Literal) sizeExpression).getLiteral();
 			if (literal instanceof Literal_Integer) {

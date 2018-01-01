@@ -1,19 +1,16 @@
 package name.martingeisse.mahdl.plugin.annotator;
 
-import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  *
@@ -24,15 +21,10 @@ final class ModuleAnnotationRun {
 	private final Module module;
 	private final AnnotationHolder annotationHolder;
 
-	// information common to ports and non-ports
+	// information that is collected in the preparation step
 	private final Map<String, PsiElement> definedNames = new HashMap<>();
 	private final Set<String> signalsNeedingAssignment = new HashSet<>();
-
-	// ports
 	private final Map<String, PortDefinition> portsByName = new HashMap<>();
-	private final Set<String> constantPortNames = new HashSet<>();
-
-	// non-ports
 	private final Map<String, DataType> signalNameToDataType = new HashMap<>();
 	private final Map<String, Expression> signalNameToInitializer = new HashMap<>();
 	private final Map<String, ImplementationItem_ModuleInstance> moduleInstances = new HashMap<>();
@@ -69,9 +61,7 @@ final class ModuleAnnotationRun {
 				String name = element.getText();
 				if (definedNames.put(name, element) == null) {
 					portsByName.put(name, port);
-					if (port.getDirection() instanceof PortDirection_Const) {
-						constantPortNames.add(name);
-					} else if (port.getDirection() instanceof PortDirection_Output) {
+					if (port.getDirection() instanceof PortDirection_Output) {
 						signalsNeedingAssignment.add(name);
 					}
 				} else {
@@ -82,13 +72,14 @@ final class ModuleAnnotationRun {
 
 		// Map data about implementation items: signals by name; instances by name; which do-blocks assign to which
 		// signals. Finds duplicate names and signals assigned to by multiple do-blocks.
+		// TODO treat signals, constants and registers differently! put in different maps!
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalDeclaration) {
-				ImplementationItem_SignalDeclaration typedImplementationItem = (ImplementationItem_SignalDeclaration) implementationItem;
-				DataType dataType = ((ImplementationItem_SignalDeclaration) implementationItem).getDataType();
-				for (DeclaredSignal declaredSignal : typedImplementationItem.getSignalNames().getAll()) {
-					if (declaredSignal instanceof DeclaredSignal_WithoutInitializer) {
-						DeclaredSignal_WithoutInitializer typedDeclaredSignal = (DeclaredSignal_WithoutInitializer) declaredSignal;
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
+				ImplementationItem_SignalLikeDefinition typedImplementationItem = (ImplementationItem_SignalLikeDefinition) implementationItem;
+				DataType dataType = ((ImplementationItem_SignalLikeDefinition) implementationItem).getDataType();
+				for (DeclaredSignalLike declaredSignal : typedImplementationItem.getSignalNames().getAll()) {
+					if (declaredSignal instanceof DeclaredSignalLike_WithoutInitializer) {
+						DeclaredSignalLike_WithoutInitializer typedDeclaredSignal = (DeclaredSignalLike_WithoutInitializer) declaredSignal;
 						String signalName = typedDeclaredSignal.getIdentifier().getText();
 						if (definedNames.put(signalName, typedDeclaredSignal.getIdentifier()) == null) {
 							signalNameToDataType.put(signalName, dataType);
@@ -96,8 +87,8 @@ final class ModuleAnnotationRun {
 						} else {
 							annotationHolder.createErrorAnnotation(typedDeclaredSignal.getIdentifier().getNode(), "redefinition of '" + signalName + "'");
 						}
-					} else if (declaredSignal instanceof DeclaredSignal_WithInitializer) {
-						DeclaredSignal_WithInitializer typedDeclaredSignal = (DeclaredSignal_WithInitializer) declaredSignal;
+					} else if (declaredSignal instanceof DeclaredSignalLike_WithInitializer) {
+						DeclaredSignalLike_WithInitializer typedDeclaredSignal = (DeclaredSignalLike_WithInitializer) declaredSignal;
 						String signalName = typedDeclaredSignal.getIdentifier().getText();
 						if (definedNames.put(signalName, typedDeclaredSignal.getIdentifier()) == null) {
 							signalNameToDataType.put(signalName, dataType);
@@ -125,8 +116,8 @@ final class ModuleAnnotationRun {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
-			if (implementationItem instanceof ImplementationItem_SignalDeclaration) {
-				annotateSignalDeclaration((ImplementationItem_SignalDeclaration) implementationItem);
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
+				annotateSignalDeclaration((ImplementationItem_SignalLikeDefinition) implementationItem);
 			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
 				annotateModuleInstance((ImplementationItem_ModuleInstance) implementationItem);
 			} else if (implementationItem instanceof ImplementationItem_DoBlock) {
@@ -155,27 +146,14 @@ final class ModuleAnnotationRun {
 	//
 
 	private void annotatePortDefinition(PortDefinition port) {
-
 		DataType dataType = port.getDataType();
 		annotateDataType(dataType);
-
-		if (dataType instanceof DataType_Bit || dataType instanceof DataType_Vector) {
-			return;
-		}
-		if (!(dataType instanceof DataType_Integer)) {
+		if (!(dataType instanceof DataType_Bit) && !(dataType instanceof DataType_Vector)) {
 			annotationHolder.createErrorAnnotation(dataType.getNode(), "data type '" + dataType.getText() + "' not allowed for ports");
-			return;
 		}
-
-		PortDirection direction = port.getDirection();
-		if (!(direction instanceof PortDirection_Const)) {
-			annotationHolder.createErrorAnnotation(dataType.getNode(), "integer is only allowed for const ports");
-			return;
-		}
-
 	}
 
-	private void annotateSignalDeclaration(ImplementationItem_SignalDeclaration signalDeclaration) {
+	private void annotateSignalDeclaration(ImplementationItem_SignalLikeDefinition signalLikeDefinition) {
 
 	}
 

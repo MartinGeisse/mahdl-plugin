@@ -21,18 +21,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class DeclaredSignal_WithInitializer extends DeclaredSignal  {
+public final class SignalLikeKind_Constant extends SignalLikeKind  {
 
-    public DeclaredSignal_WithInitializer(@NotNull ASTNode node) {
+    public SignalLikeKind_Constant(@NotNull ASTNode node) {
         super(node);
     }
 
-        public LeafPsiElement getIdentifier() {
-            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
-        }
-        public Expression getInitializer() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
-        }
     
 			
 	

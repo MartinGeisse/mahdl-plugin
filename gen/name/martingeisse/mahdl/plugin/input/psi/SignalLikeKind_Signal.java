@@ -21,18 +21,12 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_SignalDeclaration extends ImplementationItem  {
+public final class SignalLikeKind_Signal extends SignalLikeKind  {
 
-    public ImplementationItem_SignalDeclaration(@NotNull ASTNode node) {
+    public SignalLikeKind_Signal(@NotNull ASTNode node) {
         super(node);
     }
 
-        public DataType getDataType() {
-            return (DataType)InternalPsiUtil.getChild(this, 0);
-        }
-        public ListNode<DeclaredSignal> getSignalNames() {
-            return (ListNode<DeclaredSignal>)InternalPsiUtil.getChild(this, 1);
-        }
     
 			
 	

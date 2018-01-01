@@ -19,7 +19,8 @@
 	OP_MUX, OP_CONCAT,
 
 	// keywords
-	KW_MODULE, KW_INTERFACE, KW_CONST, KW_INPUT, KW_OUTPUT, KW_INOUT,
+	KW_MODULE, KW_INTERFACE, KW_INPUT, KW_OUTPUT, KW_INOUT,
+	KW_CONSTANT, KW_SIGNAL, KW_REGISTER,
 	KW_BIT, KW_VECTOR, KW_MEMORY, KW_INTEGER, KW_TEXT,
 	KW_DO, KW_IF, KW_ELSE, KW_SWITCH, KW_CASE, KW_DEFAULT, KW_BREAK,
 
@@ -72,7 +73,6 @@ module ::= KW_MODULE IDENTIFIER:moduleName SEMICOLON
 portDefinition ::= portDirection:direction dataType:dataType (IDENTIFIER, COMMA)+:identifiers SEMICOLON;
 
 portDirection ::= {
-	const ::= KW_CONST;
 	input ::= KW_INPUT;
 	output ::= KW_OUTPUT;
 	inout ::= KW_INOUT;
@@ -84,18 +84,20 @@ portDirection ::= {
 //
 
 implementationItem ::= {
-	signalDeclaration ::= dataType:dataType (declaredSignal, COMMA)+:signalNames SEMICOLON;
+	signalLikeDefinition ::= signalLikeKind:kind dataType:dataType (declaredSignalLike, COMMA)+:signalNames SEMICOLON;
 	moduleInstance ::= qualifiedIdentifier:moduleName IDENTIFIER:instanceName OPENING_PARENTHESIS portConnection*:portConnections CLOSING_PARENTHESIS SEMICOLON;
 	doBlock ::= KW_DO OPENING_PARENTHESIS doBlockTrigger:trigger CLOSING_PARENTHESIS statement:statement;
 }
 
-declaredSignal ::= {
+signalLikeKind ::= {
+	constant ::= KW_CONSTANT;
+	signal ::= KW_SIGNAL;
+	register ::= KW_REGISTER;
+}
+
+declaredSignalLike ::= {
 	withoutInitializer ::= IDENTIFIER:identifier;
 	withInitializer ::= IDENTIFIER:identifier EQUALS expression:initializer;
-// TODO info: a signal with a constant initializer can be either a constant wire or a register with initial value --
-// the difference is made by whether it gets assigned in a clocked block. A signal with an initializer cannot be assigned
-// to in a combinatorial block. A signal without initializer must be assigned to, and is either a wire or register
-// depending on whether it is assigned to in a combinatorial or clocked block.
 }
 
 portConnection ::= IDENTIFIER:portName COLON expression:expression SEMICOLON;

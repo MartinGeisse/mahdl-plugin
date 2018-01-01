@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class PortDirection_Const extends PortDirection  {
+public abstract class SignalLikeKind extends ASTWrapperPsiElement  {
 
-    public PortDirection_Const(@NotNull ASTNode node) {
+    public SignalLikeKind(@NotNull ASTNode node) {
         super(node);
     }
 
