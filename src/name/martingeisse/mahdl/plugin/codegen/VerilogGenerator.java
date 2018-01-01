@@ -31,27 +31,27 @@ public class VerilogGenerator {
 		context.put("moduleName", module.getModuleName().getText());
 
 		List<Port> ports = new ArrayList<>();
-		for (InterfaceItem interfaceItem : module.getInterfaceItems().getAll()) {
-			for (LeafPsiElement identifierElement : interfaceItem.getIdentifiers().getAll()) {
+		for (PortDefinition portDefinition : module.getPorts().getAll()) {
+			for (LeafPsiElement identifierElement : portDefinition.getIdentifiers().getAll()) {
 				Port port = new Port();
 				port.comma = (ports.isEmpty() ? "" : ", ");
-				if (interfaceItem.getDirection() instanceof PortDirection_Input) {
+				if (portDefinition.getDirection() instanceof PortDirection_Input) {
 					port.direction = "input";
-				} else if (interfaceItem.getDirection() instanceof PortDirection_Output) {
+				} else if (portDefinition.getDirection() instanceof PortDirection_Output) {
 					port.direction = "output";
-				} else if (interfaceItem.getDirection() instanceof PortDirection_Inout) {
+				} else if (portDefinition.getDirection() instanceof PortDirection_Inout) {
 					port.direction = "inout";
-				} else if (interfaceItem.getDirection() instanceof PortDirection_Const) {
+				} else if (portDefinition.getDirection() instanceof PortDirection_Const) {
 					continue;
 				} else {
-					throw new RuntimeException("unknown port direction: " + interfaceItem.getDirection());
+					throw new RuntimeException("unknown port direction: " + portDefinition.getDirection());
 				}
-				if (interfaceItem.getDataType() instanceof DataType_Bit) {
+				if (portDefinition.getDataType() instanceof DataType_Bit) {
 					port.dataType = "";
-				} else if (interfaceItem.getDataType() instanceof DataType_Vector) {
-					port.dataType = vectorTypeRangeToString((DataType_Vector)interfaceItem.getDataType());
+				} else if (portDefinition.getDataType() instanceof DataType_Vector) {
+					port.dataType = vectorTypeRangeToString((DataType_Vector) portDefinition.getDataType());
 				} else {
-					throw new RuntimeException("unexpected data type for port: " + interfaceItem.getDataType());
+					throw new RuntimeException("unexpected data type for port: " + portDefinition.getDataType());
 				}
 				port.name = identifierElement.getText();
 				ports.add(port);

@@ -61,7 +61,7 @@
 //
 
 module ::= KW_MODULE IDENTIFIER:moduleName SEMICOLON
-		KW_INTERFACE OPENING_CURLY_BRACE interfaceItem*:interfaceItems CLOSING_CURLY_BRACE
+		KW_INTERFACE OPENING_CURLY_BRACE portDefinition*:ports CLOSING_CURLY_BRACE
 		implementationItem*:implementationItems;
 
 
@@ -69,7 +69,7 @@ module ::= KW_MODULE IDENTIFIER:moduleName SEMICOLON
 // interface
 //
 
-interfaceItem ::= portDirection:direction dataType:dataType (IDENTIFIER, COMMA)+:identifiers SEMICOLON;
+portDefinition ::= portDirection:direction dataType:dataType (IDENTIFIER, COMMA)+:identifiers SEMICOLON;
 
 portDirection ::= {
 	const ::= KW_CONST;

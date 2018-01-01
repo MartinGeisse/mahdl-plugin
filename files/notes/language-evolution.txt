@@ -1,0 +1,26 @@
+
+Parameterized modules:
+In v1, all vector and memory sized must have port-independent constant sizes. So the compiler must be able to
+compute the size to an integer without ever reading any constant ports (non-constant ports are not valid for type
+information anyway). In v2, it would be nice to allow port-dependent constant sizes, i.e. using constant ports.
+However, we don't want errors in the size formulas to pop up during module instantiation, but module definition!
+This means the type information used while analyzing the module definition must be able to pass a formula around
+which may refer to constant ports. Non-port "inner" constants are resolved since they cannot be overwritten from the
+outside, but any two different constant ports must be treated as "different" since they may be set to different
+values at instantiation. Based on these rules, we'd need to compare two types involving such formulas for equality.
+-
+Any more complex scenario is better solved with explicit code generation, not parameterized modules.
+-
+Verilog "solves" the problem by saying that bounds violation results in reading 'x' and not writing, evading all
+problems with static type checking at the cost of making the whole thing a run-time bug hunt.
+-
+After thinking about it again, even that is useless. Consider this simple use-case for parameters: A UART with
+parameterizabe baud rate. This translates to a parameter for the baud rate (or maybe delay), from which a constant
+for a counter register size is derived. Some static checking would have to be done to make sure the assignments
+don't violate the size --> not possible. Then, one could add two separate parameters for the delay and the register
+size, but then these would be considered "independent" since the caller could specify incompatible values -->
+not possible.
+-
+Given that parameters cannot handle any slightly more complex anyway -- one would need at least generate-blocks,
+and even those cannot handle a lot more -- and the fact that only a single module in my designs used parameters,
+I'd rather remove parameters altogether and use real code generation for any of these cases -- if needed at all.

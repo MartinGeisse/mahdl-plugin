@@ -30,8 +30,8 @@ public final class Module extends ASTWrapperPsiElement  {
         public LeafPsiElement getModuleName() {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 1);
         }
-        public ListNode<InterfaceItem> getInterfaceItems() {
-            return (ListNode<InterfaceItem>)InternalPsiUtil.getChild(this, 5);
+        public ListNode<PortDefinition> getPorts() {
+            return (ListNode<PortDefinition>)InternalPsiUtil.getChild(this, 5);
         }
         public ListNode<ImplementationItem> getImplementationItems() {
             return (ListNode<ImplementationItem>)InternalPsiUtil.getChild(this, 7);

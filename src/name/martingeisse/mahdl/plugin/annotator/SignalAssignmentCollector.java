@@ -18,28 +18,8 @@ import java.util.function.Predicate;
  */
 final class SignalAssignmentCollector {
 
-	private final AnnotationHolder annotationHolder;
 	private final Map<String, ImplementationItem_DoBlock> assigningDoBlocks = new HashMap<>();
 	private Set<String> newlyAssignedSignals;
-
-	public SignalAssignmentCollector(AnnotationHolder annotationHolder) {
-		this.annotationHolder = annotationHolder;
-	}
-
-	public void handle(ImplementationItem_DoBlock doBlock) {
-		// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
-		// because assigning to a signal multiple times within the same do-block is allowed
-		newlyAssignedSignals = new HashSet<>();
-		check(doBlock.getStatement());
-		for (String signalName : newlyAssignedSignals) {
-			assigningDoBlocks.put(signalName, doBlock);
-		}
-		newlyAssignedSignals = null;
-	}
-
-	public Map<String, ImplementationItem_DoBlock> getAssigningDoBlocks() {
-		return assigningDoBlocks;
-	}
 
 	/**
 	 * The specified body is executed for each element, pre-order, and should return true if its

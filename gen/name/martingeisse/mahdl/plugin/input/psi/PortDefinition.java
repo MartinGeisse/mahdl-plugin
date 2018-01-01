@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class InterfaceItem extends ASTWrapperPsiElement  {
+public final class PortDefinition extends ASTWrapperPsiElement  {
 
-    public InterfaceItem(@NotNull ASTNode node) {
+    public PortDefinition(@NotNull ASTNode node) {
         super(node);
     }
 

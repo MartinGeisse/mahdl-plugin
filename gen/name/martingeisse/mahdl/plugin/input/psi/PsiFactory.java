@@ -124,9 +124,6 @@ public class PsiFactory {
                     if (type == Symbols.expression_Mux) {
                 return new Expression_Mux(node);
             }
-                    if (type == Symbols.synthetic_List_InterfaceItem) {
-                return new ListNode<InterfaceItem>(node, TokenSet.create(Symbols.interfaceItem), InterfaceItem.class);
-            }
                     if (type == Symbols.synthetic_SeparatedList_DeclaredSignal_COMMA) {
                 return new ListNode<DeclaredSignal>(node, TokenSet.create(Symbols.declaredSignal_WithoutInitializer, Symbols.declaredSignal_WithInitializer), DeclaredSignal.class);
             }
@@ -165,9 +162,6 @@ public class PsiFactory {
             }
                     if (type == Symbols.literal_Text) {
                 return new Literal_Text(node);
-            }
-                    if (type == Symbols.interfaceItem) {
-                return new InterfaceItem(node);
             }
                     if (type == Symbols.synthetic_SeparatedList_IDENTIFIER_DOT) {
                 return new ListNode<LeafPsiElement>(node, TokenSet.create(Symbols.IDENTIFIER), LeafPsiElement.class);
@@ -219,6 +213,12 @@ public class PsiFactory {
             }
                     if (type == Symbols.statement_Break) {
                 return new Statement_Break(node);
+            }
+                    if (type == Symbols.synthetic_List_PortDefinition) {
+                return new ListNode<PortDefinition>(node, TokenSet.create(Symbols.portDefinition), PortDefinition.class);
+            }
+                    if (type == Symbols.portDefinition) {
+                return new PortDefinition(node);
             }
                     if (type == Symbols.synthetic_List_PortConnection) {
                 return new ListNode<PortConnection>(node, TokenSet.create(Symbols.portConnection), PortConnection.class);

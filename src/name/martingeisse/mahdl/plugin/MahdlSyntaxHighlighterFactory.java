@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import name.martingeisse.mahdl.plugin.input.MahdlLexer;
-import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.TokenGroups;
 import org.jetbrains.annotations.NotNull;
 

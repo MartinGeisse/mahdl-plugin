@@ -108,12 +108,12 @@ public class Symbols {
 	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
 	public static final MahdlElementType implementationItem_SignalDeclaration = new MahdlElementType("implementationItem_SignalDeclaration");
-	public static final MahdlElementType interfaceItem = new MahdlElementType("interfaceItem");
 	public static final MahdlElementType literal_Integer = new MahdlElementType("literal_Integer");
 	public static final MahdlElementType literal_Text = new MahdlElementType("literal_Text");
 	public static final MahdlElementType literal_Vector = new MahdlElementType("literal_Vector");
 	public static final MahdlElementType module = new MahdlElementType("module");
 	public static final MahdlElementType portConnection = new MahdlElementType("portConnection");
+	public static final MahdlElementType portDefinition = new MahdlElementType("portDefinition");
 	public static final MahdlElementType portDirection_Const = new MahdlElementType("portDirection_Const");
 	public static final MahdlElementType portDirection_Inout = new MahdlElementType("portDirection_Inout");
 	public static final MahdlElementType portDirection_Input = new MahdlElementType("portDirection_Input");
@@ -127,8 +127,8 @@ public class Symbols {
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");
 	public static final MahdlElementType synthetic_List_CaseItem = new MahdlElementType("synthetic_List_CaseItem");
 	public static final MahdlElementType synthetic_List_ImplementationItem = new MahdlElementType("synthetic_List_ImplementationItem");
-	public static final MahdlElementType synthetic_List_InterfaceItem = new MahdlElementType("synthetic_List_InterfaceItem");
 	public static final MahdlElementType synthetic_List_PortConnection = new MahdlElementType("synthetic_List_PortConnection");
+	public static final MahdlElementType synthetic_List_PortDefinition = new MahdlElementType("synthetic_List_PortDefinition");
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
 	public static final MahdlElementType synthetic_SeparatedList_DeclaredSignal_COMMA = new MahdlElementType("synthetic_SeparatedList_DeclaredSignal_COMMA");
 	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA");
