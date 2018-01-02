@@ -17,6 +17,8 @@ public abstract class ConstantValue {
 	public abstract String getDataTypeFamilyDisplayString();
 
 	public abstract BigInteger convertToInteger();
+	public abstract ConstantValue selectIndex(int index);
+	public abstract ConstantValue selectRange(int from, int to);
 
 	public static final class Bit extends ConstantValue {
 
@@ -52,8 +54,20 @@ public abstract class ConstantValue {
 		public BigInteger convertToInteger() {
 			return null;
 		}
+
+		@Override
+		public ConstantValue selectIndex(int index) {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
+			return null;
+		}
+
 	}
 
+	// note: the Java BitSet uses the same index values as the MaHDL vector, just the from/to notation is reversed.
 	public static final class Vector extends ConstantValue {
 
 		private final int size;
@@ -109,6 +123,24 @@ public abstract class ConstantValue {
 			}
 			return result;
 		}
+
+		@Override
+		public ConstantValue selectIndex(int index) {
+			if (index < 0 || index >= size) {
+				return null;
+			} else {
+				return new Bit(bits.get(index));
+			}
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
+			if (to < 0 || from < to || from >= size) {
+				return null;
+			}
+			return new Vector(from - to + 1, bits.get(to, from));
+		}
+
 	}
 
 	public static final class Memory extends ConstantValue {
@@ -161,6 +193,19 @@ public abstract class ConstantValue {
 			return null;
 		}
 
+		@Override
+		public ConstantValue selectIndex(int index) {
+			if (index < 0 || index >= firstSize) {
+				return null;
+			}
+			// TODO wrong use of sizes! return new Vector(secondSize, bits.get(index * firstSize, (index + 1) * firstSize - 1));
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
+			return null;
+		}
+
 	}
 
 	public static final class Integer extends ConstantValue {
@@ -197,6 +242,17 @@ public abstract class ConstantValue {
 		public BigInteger convertToInteger() {
 			return value;
 		}
+
+		@Override
+		public ConstantValue selectIndex(int index) {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
+			return null;
+		}
+
 	}
 
 	public static final class Text extends ConstantValue {
@@ -231,6 +287,16 @@ public abstract class ConstantValue {
 
 		@Override
 		public BigInteger convertToInteger() {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectIndex(int index) {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}
 
