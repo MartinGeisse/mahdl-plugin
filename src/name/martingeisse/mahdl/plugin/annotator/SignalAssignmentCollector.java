@@ -71,7 +71,7 @@ final class SignalAssignmentCollector {
 
 	private void check(PsiElement element, String signalName) {
 		if (assigningDoBlocks.containsKey(signalName)) {
-			annotationHolder.createErrorAnnotation(element.getNode(), "signal " + signalName + " was already assigned to in another do-block");
+			annotationHolder.createErrorAnnotation(element, "signal " + signalName + " was already assigned to in another do-block");
 		}
 		newlyAssignedSignals.add(signalName);
 	}

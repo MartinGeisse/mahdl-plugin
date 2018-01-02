@@ -13,7 +13,12 @@ public abstract class ConstantValue {
 	private ConstantValue() {
 	}
 
-	public final class Bit extends ConstantValue {
+	public abstract String getDataTypeDisplayString();
+	public abstract String getDataTypeFamilyDisplayString();
+
+	public abstract BigInteger convertToInteger();
+
+	public static final class Bit extends ConstantValue {
 
 		private final boolean set;
 
@@ -35,9 +40,21 @@ public abstract class ConstantValue {
 			return Boolean.hashCode(set);
 		}
 
+		public String getDataTypeDisplayString() {
+			return "bit";
+		}
+
+		public String getDataTypeFamilyDisplayString() {
+			return "bit";
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			return null;
+		}
 	}
 
-	public final class Vector extends ConstantValue {
+	public static final class Vector extends ConstantValue {
 
 		private final int size;
 		private final BitSet bits;
@@ -69,9 +86,32 @@ public abstract class ConstantValue {
 			return new HashCodeBuilder().append(size).append(bits).toHashCode();
 		}
 
+		public String getDataTypeDisplayString() {
+			return "vector[" + size + "]";
+		}
+
+		public String getDataTypeFamilyDisplayString() {
+			return "vector";
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			final int length = bits.length();
+			int index = 0;
+			BigInteger significance = BigInteger.ONE;
+			BigInteger result = BigInteger.ZERO;
+			while (index < length) {
+				if (bits.get(index)) {
+					result = result.add(significance);
+					index++;
+					significance = significance.shiftLeft(1);
+				}
+			}
+			return result;
+		}
 	}
 
-	public final class Memory extends ConstantValue {
+	public static final class Memory extends ConstantValue {
 
 		private final int firstSize, secondSize;
 		private final BitSet bits;
@@ -108,9 +148,22 @@ public abstract class ConstantValue {
 			return new HashCodeBuilder().append(firstSize).append(secondSize).append(bits).toHashCode();
 		}
 
+		public String getDataTypeDisplayString() {
+			return "memory[" + firstSize + "][" + secondSize + "]";
+		}
+
+		public String getDataTypeFamilyDisplayString() {
+			return "memory";
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			return null;
+		}
+
 	}
 
-	public final class Integer extends ConstantValue {
+	public static final class Integer extends ConstantValue {
 
 		private final BigInteger value;
 
@@ -132,9 +185,21 @@ public abstract class ConstantValue {
 			return value.hashCode();
 		}
 
+		public String getDataTypeDisplayString() {
+			return "integer";
+		}
+
+		public String getDataTypeFamilyDisplayString() {
+			return "integer";
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			return value;
+		}
 	}
 
-	public final class Text extends ConstantValue {
+	public static final class Text extends ConstantValue {
 
 		private final String value;
 
@@ -154,6 +219,19 @@ public abstract class ConstantValue {
 		@Override
 		public int hashCode() {
 			return value.hashCode();
+		}
+
+		public String getDataTypeDisplayString() {
+			return "text";
+		}
+
+		public String getDataTypeFamilyDisplayString() {
+			return "text";
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			return null;
 		}
 
 	}

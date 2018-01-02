@@ -1,15 +1,13 @@
 package name.martingeisse.mahdl.plugin.annotator;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
+import name.martingeisse.mahdl.plugin.definition.*;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -22,16 +20,11 @@ final class ModuleAnnotationRun {
 	private final AnnotationHolder annotationHolder;
 
 	// information that is collected in the preparation step
-	private final Map<String, PsiElement> definedNames = new HashMap<>();
-	private final Set<String> signalsNeedingAssignment = new HashSet<>();
-	private final Map<String, PortDefinition> portsByName = new HashMap<>();
-	private final Map<String, DataType> signalNameToDataType = new HashMap<>();
-	private final Map<String, Expression> signalNameToInitializer = new HashMap<>();
-	private final Map<String, ImplementationItem_ModuleInstance> moduleInstances = new HashMap<>();
+	private ImmutableMap<String, Named> definitions;
 
 	// additional information that is collected during the main annotation step
-	private final Set<String> previouslyAssignedSignals = new HashSet<>();
-	private final Set<String> newlyAssignedSignals = new HashSet<>();
+	private Set<String> previouslyAssignedSignals;
+	private Set<String> newlyAssignedSignals;
 
 
 	public ModuleAnnotationRun(Module module, AnnotationHolder annotationHolder) {
@@ -48,68 +41,17 @@ final class ModuleAnnotationRun {
 				String expectedFileName = moduleName + '.' + MahdlFileType.DEFAULT_EXTENSION;
 				String actualFileName = ((MahdlSourceFile) element).getName();
 				if (!actualFileName.equals(expectedFileName)) {
-					annotationHolder.createErrorAnnotation(module.getModuleName().getNode(),
+					annotationHolder.createErrorAnnotation((PsiElement)module.getModuleName(),
 						"module '" + moduleName + "' should be defined in a file named '" + expectedFileName + "'");
 				}
 				break;
 			}
 		}
 
-		// map ports by name and find duplicates
-		for (PortDefinition port : module.getPorts().getAll()) {
-			for (LeafPsiElement element : port.getIdentifiers().getAll()) {
-				String name = element.getText();
-				if (definedNames.put(name, element) == null) {
-					portsByName.put(name, port);
-					if (port.getDirection() instanceof PortDirection_Output) {
-						signalsNeedingAssignment.add(name);
-					}
-				} else {
-					annotationHolder.createErrorAnnotation(element.getNode(), "redefinition of port name '" + name + "'");
-				}
-			}
-		}
+		// collect definitions
+		definitions = ModuleAnalyzer.analyze(module, annotationHolder);
 
-		// Map data about implementation items: signals by name; instances by name; which do-blocks assign to which
-		// signals. Finds duplicate names and signals assigned to by multiple do-blocks.
-		// TODO treat signals, constants and registers differently! put in different maps!
-		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				ImplementationItem_SignalLikeDefinition typedImplementationItem = (ImplementationItem_SignalLikeDefinition) implementationItem;
-				DataType dataType = ((ImplementationItem_SignalLikeDefinition) implementationItem).getDataType();
-				for (DeclaredSignalLike declaredSignal : typedImplementationItem.getSignalNames().getAll()) {
-					if (declaredSignal instanceof DeclaredSignalLike_WithoutInitializer) {
-						DeclaredSignalLike_WithoutInitializer typedDeclaredSignal = (DeclaredSignalLike_WithoutInitializer) declaredSignal;
-						String signalName = typedDeclaredSignal.getIdentifier().getText();
-						if (definedNames.put(signalName, typedDeclaredSignal.getIdentifier()) == null) {
-							signalNameToDataType.put(signalName, dataType);
-							signalsNeedingAssignment.add(signalName);
-						} else {
-							annotationHolder.createErrorAnnotation(typedDeclaredSignal.getIdentifier().getNode(), "redefinition of '" + signalName + "'");
-						}
-					} else if (declaredSignal instanceof DeclaredSignalLike_WithInitializer) {
-						DeclaredSignalLike_WithInitializer typedDeclaredSignal = (DeclaredSignalLike_WithInitializer) declaredSignal;
-						String signalName = typedDeclaredSignal.getIdentifier().getText();
-						if (definedNames.put(signalName, typedDeclaredSignal.getIdentifier()) == null) {
-							signalNameToDataType.put(signalName, dataType);
-							signalNameToInitializer.put(signalName, typedDeclaredSignal.getInitializer());
-						} else {
-							annotationHolder.createErrorAnnotation(typedDeclaredSignal.getIdentifier().getNode(), "redefinition of '" + signalName + "'");
-						}
-					}
-				}
-			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-				ImplementationItem_ModuleInstance moduleInstance = (ImplementationItem_ModuleInstance) implementationItem;
-				String instanceName = moduleInstance.getInstanceName().getText();
-				if (definedNames.put(instanceName, moduleInstance.getInstanceName()) == null) {
-					moduleInstances.put(instanceName, moduleInstance);
-				} else {
-					annotationHolder.createErrorAnnotation(moduleInstance.getInstanceName().getNode(), "redefinition of '" + instanceName + "'");
-				}
-			}
-		}
-
-		// this is the main annotation step
+		// annotate the module
 		for (PortDefinition port : module.getPorts().getAll()) {
 			annotatePortDefinition(port);
 		}
@@ -117,7 +59,7 @@ final class ModuleAnnotationRun {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				annotateSignalDeclaration((ImplementationItem_SignalLikeDefinition) implementationItem);
+				annotateSignalLikeDefinition((ImplementationItem_SignalLikeDefinition) implementationItem);
 			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
 				annotateModuleInstance((ImplementationItem_ModuleInstance) implementationItem);
 			} else if (implementationItem instanceof ImplementationItem_DoBlock) {
@@ -127,16 +69,16 @@ final class ModuleAnnotationRun {
 			newlyAssignedSignals.clear();
 		}
 
-		// now check that all signals needing that have been assigned to
-		Set<String> unassignedSignals = new HashSet<>(signalsNeedingAssignment);
-		unassignedSignals.removeAll(previouslyAssignedSignals);
-		for (String unassignedSignal : unassignedSignals) {
-			PsiElement identifierElement = definedNames.get(unassignedSignal);
-			if (identifierElement == null) {
-				// shouldn't happen, but if it does, at least put the message somewhere
-				identifierElement = module.getModuleName();
+		// now check that all ports and signals without initializer have been assigned to
+		for (Named definition : definitions.values()) {
+			if (definition instanceof Signal || definition instanceof Port) {
+				String kind = (definition instanceof Signal) ? "signal" : "port";
+				SignalLike signalOrPort = (SignalLike)definition;
+				if (signalOrPort.getInitializer() == null && !previouslyAssignedSignals.contains(signalOrPort.getName())) {
+					annotationHolder.createErrorAnnotation(signalOrPort.getNameElement(),
+						"missing assignment for " + kind + " '" + signalOrPort.getName() + "'");
+				}
 			}
-			annotationHolder.createErrorAnnotation(identifierElement.getNode(), "no assignment found for signal '" + unassignedSignal + "'");
 		}
 
 	}
@@ -149,12 +91,12 @@ final class ModuleAnnotationRun {
 		DataType dataType = port.getDataType();
 		annotateDataType(dataType);
 		if (!(dataType instanceof DataType_Bit) && !(dataType instanceof DataType_Vector)) {
-			annotationHolder.createErrorAnnotation(dataType.getNode(), "data type '" + dataType.getText() + "' not allowed for ports");
+			annotationHolder.createErrorAnnotation(dataType, "data type '" + dataType.getText() + "' not allowed for ports");
 		}
 	}
 
-	private void annotateSignalDeclaration(ImplementationItem_SignalLikeDefinition signalLikeDefinition) {
-
+	private void annotateSignalLikeDefinition(ImplementationItem_SignalLikeDefinition signalLikeDefinition) {
+		annotateDataType(signalLikeDefinition.getDataType());
 	}
 
 	private void annotateModuleInstance(ImplementationItem_ModuleInstance moduleInstance) {
