@@ -16,6 +16,7 @@ public abstract class ConstantValue {
 	public abstract String getDataTypeDisplayString();
 	public abstract String getDataTypeFamilyDisplayString();
 
+	public abstract Boolean convertToBoolean();
 	public abstract BigInteger convertToInteger();
 	public abstract ConstantValue selectIndex(int index);
 	public abstract ConstantValue selectRange(int from, int to);
@@ -48,6 +49,11 @@ public abstract class ConstantValue {
 
 		public String getDataTypeFamilyDisplayString() {
 			return "bit";
+		}
+
+		@Override
+		public Boolean convertToBoolean() {
+			return set;
 		}
 
 		@Override
@@ -106,6 +112,11 @@ public abstract class ConstantValue {
 
 		public String getDataTypeFamilyDisplayString() {
 			return "vector";
+		}
+
+		@Override
+		public Boolean convertToBoolean() {
+			return null;
 		}
 
 		@Override
@@ -198,7 +209,7 @@ public abstract class ConstantValue {
 			if (index < 0 || index >= firstSize) {
 				return null;
 			}
-			// TODO wrong use of sizes! return new Vector(secondSize, bits.get(index * firstSize, (index + 1) * firstSize - 1));
+			return new Vector(secondSize, bits.get(index * secondSize, (index + 1) * secondSize - 1));
 		}
 
 		@Override

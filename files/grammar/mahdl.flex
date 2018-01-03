@@ -32,7 +32,8 @@ LineComment = "//" [^\r\n]*
 CommentContent = ( [^*] | \*+[^*/] )*
 
 // other
-UnsignedNumber = [0] | ([1-9][0-9]*)
+PositiveInteger = ([1-9][0-9]*)
+UnsignedInteger = "0" | {PositiveInteger}
 
 %%
 
@@ -110,11 +111,11 @@ default { return Symbols.KW_DEFAULT; }
 break { return Symbols.KW_BREAK; }
 
 // literals
-{UnsignedNumber} { return Symbols.INTEGER_LITERAL; }
-{UnsignedNumber}[b][01]* { return Symbols.VECTOR_LITERAL; }
-{UnsignedNumber}[o][0-7]* { return Symbols.VECTOR_LITERAL; }
-{UnsignedNumber}[d][0-9]* { return Symbols.VECTOR_LITERAL; }
-{UnsignedNumber}[h][0-9a-fA-F]* { return Symbols.VECTOR_LITERAL; }
+{UnsignedInteger} { return Symbols.INTEGER_LITERAL; }
+{PositiveInteger}[b][01]+ { return Symbols.VECTOR_LITERAL; }
+{PositiveInteger}[o][0-7]+ { return Symbols.VECTOR_LITERAL; }
+{PositiveInteger}[d][0-9]+ { return Symbols.VECTOR_LITERAL; }
+{PositiveInteger}[h][0-9a-fA-F]+ { return Symbols.VECTOR_LITERAL; }
 
 // identifiers
 [a-zA-Z_][a-zA-Z_0-9]* { return Symbols.IDENTIFIER; }
