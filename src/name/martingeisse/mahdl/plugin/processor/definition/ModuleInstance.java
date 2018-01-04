@@ -1,4 +1,4 @@
-package name.martingeisse.mahdl.plugin.definition;
+package name.martingeisse.mahdl.plugin.processor.definition;
 
 import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
 

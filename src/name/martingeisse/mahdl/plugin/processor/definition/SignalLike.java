@@ -1,4 +1,4 @@
-package name.martingeisse.mahdl.plugin.definition;
+package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;

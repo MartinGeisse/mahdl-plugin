@@ -1,9 +1,10 @@
-package name.martingeisse.mahdl.plugin.annotator;
+package name.martingeisse.mahdl.plugin;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
+import name.martingeisse.mahdl.plugin.processor.ModuleProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,7 +23,12 @@ public class MahdlAnnotator implements Annotator {
 	}
 
 	private void annotate(@NotNull Module module, @NotNull AnnotationHolder annotationHolder) {
-		new ModuleAnnotationRun(module, annotationHolder).annotate();
+		new ModuleProcessor(module) {
+			@Override
+			protected void onError(PsiElement errorSource, String message) {
+				annotationHolder.createErrorAnnotation(errorSource, message);
+			}
+		}.process();
 	}
 
 }

@@ -25,7 +25,7 @@
         <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagRefactoringSupportProvider" />
         <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFormattingModelBuilder" />
 -->
-        <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.annotator.MahdlAnnotator" />
+        <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
         <!--
                 <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
                 <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagBraceMatcher" />

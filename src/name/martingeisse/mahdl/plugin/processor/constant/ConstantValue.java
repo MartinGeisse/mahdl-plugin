@@ -1,4 +1,4 @@
-package name.martingeisse.mahdl.plugin.constant;
+package name.martingeisse.mahdl.plugin.processor.constant;
 
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -200,6 +200,11 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		public Boolean convertToBoolean() {
+			return null;
+		}
+
+		@Override
 		public BigInteger convertToInteger() {
 			return null;
 		}
@@ -250,6 +255,11 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		public Boolean convertToBoolean() {
+			return null;
+		}
+
+		@Override
 		public BigInteger convertToInteger() {
 			return value;
 		}
@@ -294,6 +304,11 @@ public abstract class ConstantValue {
 
 		public String getDataTypeFamilyDisplayString() {
 			return "text";
+		}
+
+		@Override
+		public Boolean convertToBoolean() {
+			return null;
 		}
 
 		@Override

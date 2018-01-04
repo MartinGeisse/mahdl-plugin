@@ -1,7 +1,8 @@
-package name.martingeisse.mahdl.plugin.definition;
+package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 
@@ -11,34 +12,25 @@ import java.util.Map;
 /**
  *
  */
-public final class ModuleAnalyzer {
+public abstract class ModuleAnalyzer {
 
-	// prevent instantiation
-	private ModuleAnalyzer() {
-	}
+	private final Module module;
 
-	/**
-	 * Returns all named definitions (ports and implementation items) from the specified module.
-	 */
-	public static ImmutableMap<String, Named> analyze(Module module) {
-		return analyze(module, null);
+	public ModuleAnalyzer(Module module) {
+		this.module = module;
 	}
 
 	/**
 	 * Returns all named definitions (ports and implementation items) from the specified module, mapped by name.
-	 * <p>
-	 * If an annotation holder is given, name collisions will be annotated. The reason this is supported here is that
-	 * with name collisions, the returned map cannot contain all definitions, and the annotator could not generate
-	 * annotations for name collisions without duplicating the functionality from here.
 	 */
-	public static ImmutableMap<String, Named> analyze(Module module, AnnotationHolder annotationHolder) {
+	public final ImmutableMap<String, Named> analyze() {
 		Map<String, Named> result = new HashMap<>();
 
 		// ports
 		for (PortDefinition portDefinition : module.getPorts().getAll()) {
 			for (LeafPsiElement nameElement : portDefinition.getIdentifiers().getAll()) {
 				Port port = new Port(nameElement, portDefinition.getDirection(), portDefinition.getDataType());
-				add(result, port, annotationHolder);
+				add(result, port);
 			}
 		}
 
@@ -62,26 +54,25 @@ public final class ModuleAnalyzer {
 					}
 					SignalLike signalLike = convertSignalLike(typedImplementationItem, nameElement, initializer);
 					if (signalLike != null) {
-						add(result, signalLike, annotationHolder);
+						add(result, signalLike);
 					}
 				}
 			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
 				ModuleInstance moduleInstance = new ModuleInstance((ImplementationItem_ModuleInstance) implementationItem);
-				add(result, moduleInstance, annotationHolder);
+				add(result, moduleInstance);
 			}
 		}
 
 		return ImmutableMap.copyOf(result);
 	}
 
-	private static void add(Map<String, Named> map, Named element, AnnotationHolder annotationHolder) {
+	private void add(Map<String, Named> map, Named element) {
 		if (map.put(element.getName(), element) != null) {
-			if (annotationHolder != null) {
-				annotationHolder.createErrorAnnotation(element.getNameElement(),
-					"redefinition of '" + element.getName() + "'");
-			}
+			onError(element.getNameElement(), "redefinition of '" + element.getName() + "'");
 		}
 	}
+
+	protected abstract void onError(PsiElement errorSource, String message);
 
 	private static SignalLike convertSignalLike(ImplementationItem_SignalLikeDefinition signalLikeDefinition,
 												LeafPsiElement nameElement,

@@ -1,6 +1,5 @@
-package name.martingeisse.mahdl.plugin.constant;
+package name.martingeisse.mahdl.plugin.processor.constant;
 
-import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 
@@ -13,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  *
  */
-public class ConstantExpressionEvaluator {
+public abstract class ConstantExpressionEvaluator {
 
 	private static final Pattern VECTOR_PATTERN = Pattern.compile("([0-9]+)([bodh])([0-9]+)");
 
@@ -28,15 +27,7 @@ public class ConstantExpressionEvaluator {
 	/**
 	 * Returns null for non-constant expressions or errors.
 	 */
-	public ConstantValue evaluate(Expression expression) {
-		return evaluate(expression, null);
-	}
-
-	/**
-	 * Returns null for non-constant expressions or errors. Those are also reported to the specified annotation holder,
-	 * if any.
-	 */
-	public ConstantValue evaluate(Expression expression, AnnotationHolder annotationHolder) {
+	public final ConstantValue evaluate(Expression expression) {
 		if (expression instanceof Expression_Literal) {
 
 			Literal literal = ((Expression_Literal) expression).getLiteral();
@@ -50,7 +41,7 @@ public class ConstantExpressionEvaluator {
 				String rawText = ((Literal_Text) literal).getValue().getText();
 				return parseText(rawText);
 			} else {
-				return nonConstant(expression, annotationHolder);
+				return nonConstant(expression);
 			}
 
 		} else if (expression instanceof Expression_Signal) {
@@ -58,18 +49,18 @@ public class ConstantExpressionEvaluator {
 			String name = ((Expression_Signal) expression).getSignalName().getText();
 			ConstantValue value = definedConstants.get(name);
 			if (value == null) {
-				return error(expression, "undefined constant: '" + name + "'", annotationHolder);
+				return error(expression, "undefined constant: '" + name + "'");
 			}
 			return value;
 
 		} else if (expression instanceof Expression_InstancePort) {
 
-			return nonConstant(expression, annotationHolder);
+			return nonConstant(expression);
 
 		} else if (expression instanceof Expression_IndexSelection) {
 
 			Expression_IndexSelection indexSelection = (Expression_IndexSelection) expression;
-			ConstantValue containerValue = evaluate(indexSelection.getContainer(), annotationHolder);
+			ConstantValue containerValue = evaluate(indexSelection.getContainer());
 			int containerSize;
 			String containerTypeText;
 			if (containerValue == null) {
@@ -85,9 +76,9 @@ public class ConstantExpressionEvaluator {
 				containerTypeText = memoryType.getDataTypeDisplayString();
 			} else {
 				return error(expression, "cannot index-select from an expression of type " +
-					containerValue.getDataTypeFamilyDisplayString(), annotationHolder);
+					containerValue.getDataTypeFamilyDisplayString());
 			}
-			int intIndexValue = handleIndexValue(containerSize, containerTypeText, indexSelection.getIndex(), annotationHolder);
+			int intIndexValue = handleIndexValue(containerSize, containerTypeText, indexSelection.getIndex());
 			if (containerValue == null || intIndexValue < 0) {
 				return null;
 			}
@@ -96,7 +87,7 @@ public class ConstantExpressionEvaluator {
 		} else if (expression instanceof Expression_RangeSelection) {
 
 			Expression_RangeSelection rangeSelection = (Expression_RangeSelection) expression;
-			ConstantValue containerValue = evaluate(rangeSelection.getContainer(), annotationHolder);
+			ConstantValue containerValue = evaluate(rangeSelection.getContainer());
 			int containerSize;
 			String containerTypeText;
 			if (containerValue == null) {
@@ -108,10 +99,10 @@ public class ConstantExpressionEvaluator {
 				containerTypeText = vectorValue.getDataTypeDisplayString();
 			} else {
 				return error(expression, "cannot range-select from an expression of type " +
-					containerValue.getDataTypeFamilyDisplayString(), annotationHolder);
+					containerValue.getDataTypeFamilyDisplayString());
 			}
-			int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom(), annotationHolder);
-			int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo(), annotationHolder);
+			int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
+			int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
 			if (containerValue == null || intFromIndexValue < 0 || intToIndexValue < 0) {
 				return null;
 			}
@@ -120,12 +111,12 @@ public class ConstantExpressionEvaluator {
 		} else if (expression instanceof UnaryOperation) {
 
 			// TODO
-			return error(expression, "not yet implemented", annotationHolder);
+			return error(expression, "not yet implemented");
 
 		} else if (expression instanceof BinaryOperation) {
 
 			// TODO
-			return error(expression, "not yet implemented", annotationHolder);
+			return error(expression, "not yet implemented");
 
 		} else if (expression instanceof Expression_Mux) {
 
@@ -133,38 +124,38 @@ public class ConstantExpressionEvaluator {
 			// (soft-commenting-out; generating only constants during code generation; ...) aren't clear to me.
 			// For now, let's be strict about it so no ugly code creeps in.
 			Expression_Mux mux = (Expression_Mux) expression;
-			ConstantValue conditionValue = evaluate(mux.getCondition(), annotationHolder);
-			ConstantValue thenValue = evaluate(mux.getThenBranch(), annotationHolder);
-			ConstantValue elseValue = evaluate(mux.getElseBranch(), annotationHolder);
+			ConstantValue conditionValue = evaluate(mux.getCondition());
+			ConstantValue thenValue = evaluate(mux.getThenBranch());
+			ConstantValue elseValue = evaluate(mux.getElseBranch());
 			Boolean booleanCondition = conditionValue.convertToBoolean();
 			return booleanCondition == null ? null : booleanCondition ? thenValue : elseValue;
 
 		} else if (expression instanceof Expression_FunctionCall) {
 
 			// TODO
-			return error(expression, "not yet implemented", annotationHolder);
+			return error(expression, "not yet implemented");
 
 		} else if (expression instanceof Expression_Parenthesized) {
 
-			return evaluate(((Expression_Parenthesized) expression).getExpression(), annotationHolder);
+			return evaluate(((Expression_Parenthesized) expression).getExpression());
 
 		} else {
-			return nonConstant(expression, annotationHolder);
+			return nonConstant(expression);
 		}
 	}
 
-	private static ConstantValue error(PsiElement element, String message, AnnotationHolder annotationHolder) {
-		if (annotationHolder != null) {
-			annotationHolder.createErrorAnnotation(element, message);
-		}
+	protected abstract void onError(PsiElement errorSource, String message);
+
+	private ConstantValue error(PsiElement element, String message) {
+		onError(element, message);
 		return null;
 	}
 
-	private static ConstantValue nonConstant(PsiElement element, AnnotationHolder annotationHolder) {
-		return error(element, "expression must be constant", annotationHolder);
+	private ConstantValue nonConstant(PsiElement element) {
+		return error(element, "expression must be constant");
 	}
 
-	private static ConstantValue.Vector parseVector(String text) {
+	private ConstantValue.Vector parseVector(String text) {
 		Matcher matcher = VECTOR_PATTERN.matcher(text);
 		if (!matcher.matches()) {
 			return null;
@@ -195,7 +186,7 @@ public class ConstantExpressionEvaluator {
 
 	}
 
-	private static ConstantValue.Text parseText(String rawText) {
+	private ConstantValue.Text parseText(String rawText) {
 		if (rawText.charAt(0) != '"' || rawText.charAt(rawText.length() - 1) != '"') {
 			return null;
 		}
@@ -219,22 +210,22 @@ public class ConstantExpressionEvaluator {
 		return new ConstantValue.Text(builder.toString());
 	}
 
-	private int handleIndexValue(int containerSize, String containerType, Expression indexExpression, AnnotationHolder annotationHolder) {
-		ConstantValue indexValue = evaluate(indexExpression, annotationHolder);
+	private int handleIndexValue(int containerSize, String containerType, Expression indexExpression) {
+		ConstantValue indexValue = evaluate(indexExpression);
 		if (indexValue == null) {
 			return -1;
 		}
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {
-			error(indexExpression, "value of type  " + indexValue.getDataTypeFamilyDisplayString() + " cannot be converted to integer", annotationHolder);
+			error(indexExpression, "value of type  " + indexValue.getDataTypeFamilyDisplayString() + " cannot be converted to integer");
 			return -1;
 		}
 		if (numericIndexValue.compareTo(BigInteger.ZERO) < 0) {
-			error(indexExpression, "index is negative: " + numericIndexValue, annotationHolder);
+			error(indexExpression, "index is negative: " + numericIndexValue);
 			return -1;
 		}
 		if (numericIndexValue.compareTo(MAX_INDEX_VALUE) > 0) {
-			error(indexExpression, "index too large: " + numericIndexValue, annotationHolder);
+			error(indexExpression, "index too large: " + numericIndexValue);
 			return -1;
 		}
 		if (containerSize < 0) {
@@ -243,7 +234,7 @@ public class ConstantExpressionEvaluator {
 		}
 		int intValue = numericIndexValue.intValue();
 		if (intValue >= containerSize) {
-			error(indexExpression, "index too large for type " + containerType + ": " + numericIndexValue, annotationHolder);
+			error(indexExpression, "index too large for type " + containerType + ": " + numericIndexValue);
 			return -1;
 		}
 		return intValue;
