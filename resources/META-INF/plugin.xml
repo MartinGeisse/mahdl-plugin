@@ -23,13 +23,13 @@
 <!--
         <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFindUsagesProvider" />
         <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagRefactoringSupportProvider" />
-        <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFormattingModelBuilder" />
 -->
+        <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFormattingModelBuilder" />
         <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
-        <!--
-                <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
-        -->
-        <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MapagBraceMatcher" />
+<!--
+        <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
+-->
+        <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlBraceMatcher" />
         <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFoldingBuilder" />
         <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlCommenter" />
     </extensions>

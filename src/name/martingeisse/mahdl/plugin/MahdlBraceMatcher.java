@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *
  */
-public class MapagBraceMatcher implements PairedBraceMatcher {
+public class MahdlBraceMatcher implements PairedBraceMatcher {
 
 	@NotNull
 	@Override
