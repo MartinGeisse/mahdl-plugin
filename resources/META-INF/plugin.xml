@@ -28,10 +28,10 @@
         <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
         <!--
                 <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
-                <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagBraceMatcher" />
-                <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFoldingBuilder" />
-                <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagCommenter" />
         -->
+        <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MapagBraceMatcher" />
+        <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFoldingBuilder" />
+        <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlCommenter" />
     </extensions>
 
     <actions>

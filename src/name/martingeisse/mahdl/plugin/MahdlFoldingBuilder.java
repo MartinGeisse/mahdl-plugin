@@ -1,13 +1,13 @@
-package name.martingeisse.verilog.plugin.input;
+package name.martingeisse.mahdl.plugin;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
-import name.martingeisse.mapag.input.psi.Grammar_PrecedenceTable;
-import name.martingeisse.mapag.input.psi.Grammar_TerminalDeclarations;
-import name.martingeisse.mapag.input.psi.Production;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_DoBlock;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_SignalLikeDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  *
  */
-public class MapagFoldingBuilder implements FoldingBuilder {
+public class MahdlFoldingBuilder implements FoldingBuilder {
 
 	@NotNull
 	@Override
@@ -28,7 +28,7 @@ public class MapagFoldingBuilder implements FoldingBuilder {
 	}
 
 	private void collectFoldingRegions(PsiElement psiElement, List<FoldingDescriptor> destination) {
-		if (psiElement instanceof Grammar_TerminalDeclarations || psiElement instanceof Grammar_PrecedenceTable || psiElement instanceof Production) {
+		if (psiElement instanceof ImplementationItem_SignalLikeDefinition || psiElement instanceof ImplementationItem_DoBlock) {
 			destination.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange()));
 		}
 		for (PsiElement child : psiElement.getChildren()) {
@@ -40,17 +40,15 @@ public class MapagFoldingBuilder implements FoldingBuilder {
 	@Override
 	public String getPlaceholderText(@NotNull ASTNode astNode) {
 		PsiElement psiElement = astNode.getPsi();
-		if (psiElement instanceof Grammar_TerminalDeclarations) {
-			return "%terminals {...}";
+		if (psiElement instanceof ImplementationItem_DoBlock) {
+			ImplementationItem_DoBlock doBlock = (ImplementationItem_DoBlock)psiElement;
+			return "do (" + doBlock.getTrigger().getText() + ") do {...}";
 		}
-		if (psiElement instanceof Grammar_PrecedenceTable) {
-			return "%precedence {...}";
+		if (psiElement instanceof ImplementationItem_ModuleInstance) {
+			ImplementationItem_ModuleInstance moduleInstance = (ImplementationItem_ModuleInstance)psiElement;
+			return moduleInstance.getModuleName().getText() + " " + moduleInstance.getInstanceName().getText() + "(...);";
 		}
-		if (psiElement instanceof Production) {
-			return ((Production) psiElement).getName() + " ::= ";
-		} else {
-			return psiElement.toString();
-		}
+		return psiElement.toString();
 	}
 
 	@Override

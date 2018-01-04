@@ -1,13 +1,13 @@
-package name.martingeisse.verilog.plugin.input;
+package name.martingeisse.mahdl.plugin;
 
 import com.intellij.lang.CodeDocumentationAwareCommenterEx;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import name.martingeisse.mapag.input.Symbols;
+import name.martingeisse.mahdl.plugin.input.Symbols;
 import org.jetbrains.annotations.Nullable;
 
-public class MapagCommenter implements CodeDocumentationAwareCommenterEx {
+public class MahdlCommenter implements CodeDocumentationAwareCommenterEx {
 
 	@Override
 	public boolean isDocumentationCommentText(PsiElement element) {
