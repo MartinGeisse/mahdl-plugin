@@ -1,4 +1,4 @@
-package name.martingeisse.verilog.plugin.input;
+package name.martingeisse.mahdl.plugin;
 
 import com.intellij.ide.structureView.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import name.martingeisse.mapag.input.psi.*;
+import name.martingeisse.mahdl.plugin.input.psi.Module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,31 +17,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO commented out for now
  */
-public class MapagStructureViewFactory implements PsiStructureViewFactory {
+public class MahdlStructureViewFactory implements PsiStructureViewFactory {
 
 	private static boolean shouldInclude(PsiElement element) {
-		if (element instanceof Grammar_TerminalDeclarations) {
-			return true;
-		}
-		if (element instanceof Grammar_PrecedenceTable) {
-			return true;
-		}
-		if (element instanceof Production) {
-			return true;
-		}
+		// TODO
+//		if (element instanceof Grammar_TerminalDeclarations) {
+//			return true;
+//		}
+//		if (element instanceof Grammar_PrecedenceTable) {
+//			return true;
+//		}
+//		if (element instanceof Production) {
+//			return true;
+//		}
 		return false;
 	}
 
 	@Nullable
 	@Override
 	public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
-		if (!(psiFile instanceof MapagSourceFile)) {
+		if (!(psiFile instanceof MahdlSourceFile)) {
 			return null;
 		}
-		Grammar grammar = ((MapagSourceFile) psiFile).getGrammar();
-		if (grammar == null) {
+		Module module = ((MahdlSourceFile) psiFile).getModule();
+		if (module == null) {
 			return null;
 		}
 		return new TreeBasedStructureViewBuilder() {
@@ -53,7 +54,7 @@ public class MapagStructureViewFactory implements PsiStructureViewFactory {
 					@NotNull
 					@Override
 					public StructureViewTreeElement getRoot() {
-						return new MyStructureViewElement(grammar);
+						return new MyStructureViewElement(module);
 					}
 
 					@NotNull
@@ -93,16 +94,17 @@ public class MapagStructureViewFactory implements PsiStructureViewFactory {
 		@Nullable
 		@Override
 		public String getPresentableText() {
-			if (element instanceof Grammar_TerminalDeclarations) {
-				return "%terminals {...}";
-			}
-			if (element instanceof Grammar_PrecedenceTable) {
-				return "%precedence {...}";
-			}
-			if (element instanceof Production) {
-				String name = ((Production) element).getName();
-				return (name == null ? "(production)" : name);
-			}
+			// TODO
+//			if (element instanceof Grammar_TerminalDeclarations) {
+//				return "%terminals {...}";
+//			}
+//			if (element instanceof Grammar_PrecedenceTable) {
+//				return "%precedence {...}";
+//			}
+//			if (element instanceof Production) {
+//				String name = ((Production) element).getName();
+//				return (name == null ? "(production)" : name);
+//			}
 			return element.toString();
 		}
 

@@ -26,9 +26,7 @@
 -->
         <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFormattingModelBuilder" />
         <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
-<!--
-        <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagStructureViewFactory" />
--->
+        <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlStructureViewFactory" />
         <lang.braceMatcher language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlBraceMatcher" />
         <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFoldingBuilder" />
         <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlCommenter" />
