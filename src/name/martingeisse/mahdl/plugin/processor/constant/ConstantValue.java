@@ -90,14 +90,6 @@ public abstract class ConstantValue {
 			return ProcessedDataType.Bit.INSTANCE;
 		}
 
-		public String getDataTypeDisplayString() {
-			return "bit";
-		}
-
-		public String getDataTypeFamilyDisplayString() {
-			return "bit";
-		}
-
 		@Override
 		public Boolean convertToBoolean() {
 			return set;
@@ -161,14 +153,6 @@ public abstract class ConstantValue {
 		@Override
 		public ProcessedDataType getDataType() {
 			return new ProcessedDataType.Vector(size);
-		}
-
-		public String getDataTypeDisplayString() {
-			return "vector[" + size + "]";
-		}
-
-		public String getDataTypeFamilyDisplayString() {
-			return "vector";
 		}
 
 		@Override
@@ -258,14 +242,6 @@ public abstract class ConstantValue {
 			return new ProcessedDataType.Memory(firstSize, secondSize);
 		}
 
-		public String getDataTypeDisplayString() {
-			return "memory[" + firstSize + "][" + secondSize + "]";
-		}
-
-		public String getDataTypeFamilyDisplayString() {
-			return "memory";
-		}
-
 		@Override
 		public Boolean convertToBoolean() {
 			return null;
@@ -323,14 +299,6 @@ public abstract class ConstantValue {
 			return ProcessedDataType.Integer.INSTANCE;
 		}
 
-		public String getDataTypeDisplayString() {
-			return "integer";
-		}
-
-		public String getDataTypeFamilyDisplayString() {
-			return "integer";
-		}
-
 		@Override
 		public Boolean convertToBoolean() {
 			return null;
@@ -383,14 +351,6 @@ public abstract class ConstantValue {
 		@Override
 		public ProcessedDataType getDataType() {
 			return ProcessedDataType.Text.INSTANCE;
-		}
-
-		public String getDataTypeDisplayString() {
-			return "text";
-		}
-
-		public String getDataTypeFamilyDisplayString() {
-			return "text";
 		}
 
 		@Override

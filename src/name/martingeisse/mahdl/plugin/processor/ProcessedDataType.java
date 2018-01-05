@@ -198,10 +198,12 @@ public abstract class ProcessedDataType {
 		@Override
 		public ConstantValue convertValueImplicitly(ConstantValue inputValue) {
 			if (inputValue instanceof ConstantValue.Memory) {
-				// TODO
-			} else {
-				return ConstantValue.Unknown.INSTANCE;
+				ConstantValue.Memory memory = (ConstantValue.Memory)inputValue;
+				if (memory.getFirstSize() == firstSize && memory.getSecondSize() == secondSize) {
+					return memory;
+				}
 			}
+			return ConstantValue.Unknown.INSTANCE;
 		}
 
 	}

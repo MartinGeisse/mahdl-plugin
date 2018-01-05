@@ -69,14 +69,14 @@ public abstract class ConstantExpressionEvaluator {
 			} else if (containerValue instanceof ConstantValue.Vector) {
 				ConstantValue.Vector vectorValue = (ConstantValue.Vector) containerValue;
 				containerSize = vectorValue.getSize();
-				containerTypeText = vectorValue.getDataTypeDisplayString();
+				containerTypeText = vectorValue.getDataType().toString();
 			} else if (containerValue instanceof ConstantValue.Memory) {
 				ConstantValue.Memory memoryType = (ConstantValue.Memory) containerValue;
 				containerSize = memoryType.getFirstSize();
-				containerTypeText = memoryType.getDataTypeDisplayString();
+				containerTypeText = memoryType.getDataType().toString();
 			} else {
 				return error(expression, "cannot index-select from an expression of type " +
-					containerValue.getDataTypeFamilyDisplayString());
+					containerValue.getDataTypeFamily().getDisplayString());
 			}
 			int intIndexValue = handleIndexValue(containerSize, containerTypeText, indexSelection.getIndex());
 			if (containerValue == null || intIndexValue < 0) {
@@ -96,10 +96,10 @@ public abstract class ConstantExpressionEvaluator {
 			} else if (containerValue instanceof ConstantValue.Vector) {
 				ConstantValue.Vector vectorValue = (ConstantValue.Vector) containerValue;
 				containerSize = vectorValue.getSize();
-				containerTypeText = vectorValue.getDataTypeDisplayString();
+				containerTypeText = vectorValue.getDataType().toString();
 			} else {
 				return error(expression, "cannot range-select from an expression of type " +
-					containerValue.getDataTypeFamilyDisplayString());
+					containerValue.getDataTypeFamily().toString());
 			}
 			int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
 			int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
@@ -217,7 +217,7 @@ public abstract class ConstantExpressionEvaluator {
 		}
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {
-			error(indexExpression, "value of type  " + indexValue.getDataTypeFamilyDisplayString() + " cannot be converted to integer");
+			error(indexExpression, "value of type  " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
 			return -1;
 		}
 		if (numericIndexValue.compareTo(BigInteger.ZERO) < 0) {

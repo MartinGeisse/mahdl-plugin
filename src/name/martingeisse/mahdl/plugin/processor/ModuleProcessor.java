@@ -10,9 +10,10 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
-import org.relaxng.datatype.Datatype;
 
+import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -31,6 +32,8 @@ import java.util.function.Predicate;
  * but there would need to be an agreement which step reports which errors. And so on.
  */
 public abstract class ModuleProcessor {
+
+	private static final BigInteger MAX_SIZE_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
 	private final Module module;
 
@@ -112,6 +115,8 @@ public abstract class ModuleProcessor {
 		for (PortDefinition port : module.getPorts().getAll()) {
 			processPortDefinition(port);
 		}
+		previouslyAssignedSignals = new HashSet<>();
+		newlyAssignedSignals = new HashSet<>();
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
@@ -232,19 +237,21 @@ public abstract class ModuleProcessor {
 		if (value.getDataTypeFamily() == ProcessedDataType.Family.UNKNOWN) {
 			return -1;
 		}
-		TODO
-
-		if (value instanceof ConstantValue.Unknown)
-
-		if (!processConstantExpression(expression)) {
-			return;
-		}
-		// TODO must be >0. If the size contains any usage of constants, skip this test, since the constants may
-		// be changed at instantiation. Repeat the full test for instantiation
-		if (size < 0) {
-			onError(expression, "negative size is not allowed");
+		BigInteger integerValue = value.convertToInteger();
+		if (integerValue == null) {
+			onError(expression, "cannot convert " + value + " to integer");
 			return -1;
 		}
+		if (integerValue.compareTo(MAX_SIZE_VALUE) > 0) {
+			onError(expression, "size too large: " + integerValue);
+			return -1;
+		}
+		int intValue = integerValue.intValue();
+		if (intValue < 0) {
+			onError(expression, "size cannot be negative: " + integerValue);
+			return -1;
+		}
+		return intValue;
 	}
 
 	protected abstract void onError(PsiElement errorSource, String message);
