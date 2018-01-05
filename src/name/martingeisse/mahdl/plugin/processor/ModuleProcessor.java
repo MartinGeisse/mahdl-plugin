@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import org.relaxng.datatype.Datatype;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +36,7 @@ public abstract class ModuleProcessor {
 
 	private ImmutableMap<String, Named> definitions;
 	private Map<String, ConstantValue> constants;
+	private ConstantExpressionEvaluator constantExpressionEvaluator;
 	private Set<String> previouslyAssignedSignals;
 	private Set<String> newlyAssignedSignals;
 
@@ -61,7 +63,7 @@ public abstract class ModuleProcessor {
 			}
 		}
 
-		// collect definitions
+		// collect definitions TODO see TODO comment in ModuleAnalyzer
 		definitions = new ModuleAnalyzer(module) {
 			@Override
 			protected void onError(PsiElement errorSource, String message) {
@@ -71,7 +73,7 @@ public abstract class ModuleProcessor {
 
 		// evaluate constants
 		constants = new HashMap<>();
-		ConstantExpressionEvaluator constantExpressionEvaluator = new ConstantExpressionEvaluator(constants) {
+		constantExpressionEvaluator = new ConstantExpressionEvaluator(constants) {
 			@Override
 			protected void onError(PsiElement errorSource, String message) {
 				ModuleProcessor.this.onError(errorSource, message);
@@ -81,16 +83,26 @@ public abstract class ModuleProcessor {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
 				ImplementationItem_SignalLikeDefinition signalLike = (ImplementationItem_SignalLikeDefinition)implementationItem;
 				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
-					DataType dataType = signalLike.getDataType();
+					// for constants, the data type must be valid based on the constants defined above
+					ProcessedDataType processedDataType = processDataType(signalLike.getDataType());
 					for (DeclaredSignalLike declaredSignalLike : signalLike.getSignalNames().getAll()) {
 						if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
+
+							DeclaredSignalLike_WithoutInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithoutInitializer)declaredSignalLike;
 							onError(declaredSignalLike, "constant must have an initializer");
-							// TODO add a special "error" constant value so later code knows the value exists, but errors found there should be suppressed!
-							continue;
+							constants.put(typedDeclaredSignalLike.getIdentifier().getText(), ConstantValue.Unknown.INSTANCE);
+
+						} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
+
+							DeclaredSignalLike_WithInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithInitializer)declaredSignalLike;
+							ConstantValue value = constantExpressionEvaluator.evaluate(typedDeclaredSignalLike.getInitializer());
+							constants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertValueImplicitly(value));
+
+						} else {
+
+							onError(declaredSignalLike, "unknown PSI node");
+
 						}
-						DeclaredSignalLike_WithInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithInitializer)declaredSignalLike;
-						ConstantValue value = constantExpressionEvaluator.evaluate(typedDeclaredSignalLike.getInitializer());
-						constants.put(typedDeclaredSignalLike.getIdentifier().getText(), convertValue(value, dataType));
 					}
 				}
 			}
@@ -124,10 +136,6 @@ public abstract class ModuleProcessor {
 				}
 			}
 		}
-
-	}
-
-	private ConstantValue convertValue(ConstantValue originalValue, DataType targetType) {
 
 	}
 
@@ -197,33 +205,46 @@ public abstract class ModuleProcessor {
 		newlyAssignedSignals.add(signalName);
 	}
 
-	private void processDataType(DataType dataType) {
-		if (dataType instanceof DataType_Vector) {
+	private ProcessedDataType processDataType(DataType dataType) {
+		if (dataType instanceof DataType_Bit) {
+			return ProcessedDataType.Bit.INSTANCE;
+		} else if (dataType instanceof DataType_Vector) {
 			DataType_Vector vector = (DataType_Vector) dataType;
-			processConstantSizeExpression(vector.getSize());
+			int size = processConstantSizeExpression(vector.getSize());
+			return size < 0 ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Vector(size);
 		} else if (dataType instanceof DataType_Memory) {
 			DataType_Memory memory = (DataType_Memory) dataType;
-			processConstantSizeExpression(memory.getFirstSize());
-			processConstantSizeExpression(memory.getSecondSize());
+			int firstSize = processConstantSizeExpression(memory.getFirstSize());
+			int secondSize = processConstantSizeExpression(memory.getSecondSize());
+			return (firstSize < 0 || secondSize < 0) ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Memory(firstSize, secondSize);
+		} else if (dataType instanceof DataType_Integer) {
+			return ProcessedDataType.Integer.INSTANCE;
+		} else if (dataType instanceof DataType_Text) {
+			return ProcessedDataType.Text.INSTANCE;
+		} else {
+			onError(dataType, "unknown data type");
+			return ProcessedDataType.Unknown.INSTANCE;
 		}
 	}
 
-	private void processConstantSizeExpression(Expression expression) {
+	private int processConstantSizeExpression(Expression expression) {
+		ConstantValue value = constantExpressionEvaluator.evaluate(expression);
+		if (value.getDataTypeFamily() == ProcessedDataType.Family.UNKNOWN) {
+			return -1;
+		}
+		TODO
+
+		if (value instanceof ConstantValue.Unknown)
+
 		if (!processConstantExpression(expression)) {
 			return;
 		}
 		// TODO must be >0. If the size contains any usage of constants, skip this test, since the constants may
 		// be changed at instantiation. Repeat the full test for instantiation
-	}
-
-	// note: in v1, a constant expression cannot refer to constant ports
-	private boolean processConstantExpression(Expression expression) {
-		processExpression(expression);
-
-	}
-
-	private DataType processExpression(Expression expression) {
-
+		if (size < 0) {
+			onError(expression, "negative size is not allowed");
+			return -1;
+		}
 	}
 
 	protected abstract void onError(PsiElement errorSource, String message);

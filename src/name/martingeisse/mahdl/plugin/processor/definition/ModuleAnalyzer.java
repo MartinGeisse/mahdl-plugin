@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * TODO check if this whole package / this class is actually useful:
+ * - should we include constants here? They are evaluated separately for a reason
+ * - how useful is this information compared to raw PSI nodes? One advantage is being mapped by name
  */
 public abstract class ModuleAnalyzer {
 

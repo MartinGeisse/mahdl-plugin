@@ -1,5 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.constant;
 
+import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.math.BigInteger;
@@ -13,13 +14,49 @@ public abstract class ConstantValue {
 	private ConstantValue() {
 	}
 
-	public abstract String getDataTypeDisplayString();
-	public abstract String getDataTypeFamilyDisplayString();
+	public abstract ProcessedDataType.Family getDataTypeFamily();
+	public abstract ProcessedDataType getDataType();
 
 	public abstract Boolean convertToBoolean();
 	public abstract BigInteger convertToInteger();
 	public abstract ConstantValue selectIndex(int index);
 	public abstract ConstantValue selectRange(int from, int to);
+
+	public static final class Unknown extends ConstantValue {
+
+		public static final Unknown INSTANCE = new Unknown();
+
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.UNKNOWN;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return ProcessedDataType.Unknown.INSTANCE;
+		}
+
+		@Override
+		public Boolean convertToBoolean() {
+			return null;
+		}
+
+		@Override
+		public BigInteger convertToInteger() {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectIndex(int index) {
+			return null;
+		}
+
+		@Override
+		public ConstantValue selectRange(int from, int to) {
+			return null;
+		}
+
+	}
 
 	public static final class Bit extends ConstantValue {
 
@@ -41,6 +78,16 @@ public abstract class ConstantValue {
 		@Override
 		public int hashCode() {
 			return Boolean.hashCode(set);
+		}
+
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.BIT;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return ProcessedDataType.Bit.INSTANCE;
 		}
 
 		public String getDataTypeDisplayString() {
@@ -104,6 +151,16 @@ public abstract class ConstantValue {
 		@Override
 		public int hashCode() {
 			return new HashCodeBuilder().append(size).append(bits).toHashCode();
+		}
+
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.VECTOR;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return new ProcessedDataType.Vector(size);
 		}
 
 		public String getDataTypeDisplayString() {
@@ -191,6 +248,16 @@ public abstract class ConstantValue {
 			return new HashCodeBuilder().append(firstSize).append(secondSize).append(bits).toHashCode();
 		}
 
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.MEMORY;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return new ProcessedDataType.Memory(firstSize, secondSize);
+		}
+
 		public String getDataTypeDisplayString() {
 			return "memory[" + firstSize + "][" + secondSize + "]";
 		}
@@ -246,6 +313,16 @@ public abstract class ConstantValue {
 			return value.hashCode();
 		}
 
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.INTEGER;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return ProcessedDataType.Integer.INSTANCE;
+		}
+
 		public String getDataTypeDisplayString() {
 			return "integer";
 		}
@@ -296,6 +373,16 @@ public abstract class ConstantValue {
 		@Override
 		public int hashCode() {
 			return value.hashCode();
+		}
+
+		@Override
+		public ProcessedDataType.Family getDataTypeFamily() {
+			return ProcessedDataType.Family.TEXT;
+		}
+
+		@Override
+		public ProcessedDataType getDataType() {
+			return ProcessedDataType.Text.INSTANCE;
 		}
 
 		public String getDataTypeDisplayString() {
