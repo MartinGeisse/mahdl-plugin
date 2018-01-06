@@ -21,14 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_Signal extends Expression  {
+public final class PortDefinitionGroup extends ASTWrapperPsiElement  {
 
-    public Expression_Signal(@NotNull ASTNode node) {
+    public PortDefinitionGroup(@NotNull ASTNode node) {
         super(node);
     }
 
-        public LeafPsiElement getSignalName() {
-            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
+        public PortDirection getDirection() {
+            return (PortDirection)InternalPsiUtil.getChild(this, 0);
+        }
+        public DataType getDataType() {
+            return (DataType)InternalPsiUtil.getChild(this, 1);
+        }
+        public ListNode<PortDefinition> getDefinitions() {
+            return (ListNode<PortDefinition>)InternalPsiUtil.getChild(this, 2);
         }
     
 			

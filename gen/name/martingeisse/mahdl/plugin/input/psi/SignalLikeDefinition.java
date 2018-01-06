@@ -21,21 +21,18 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_InstancePort extends Expression  {
+public abstract class SignalLikeDefinition extends ASTWrapperPsiElement implements PsiNameIdentifierOwner {
 
-    public Expression_InstancePort(@NotNull ASTNode node) {
+    public SignalLikeDefinition(@NotNull ASTNode node) {
         super(node);
     }
 
-        public InstanceReferenceName getInstanceName() {
-            return (InstanceReferenceName)InternalPsiUtil.getChild(this, 0);
-        }
-        public InstancePortName getPortName() {
-            return (InstancePortName)InternalPsiUtil.getChild(this, 2);
-        }
     
 			
 	
+			public void superclassDelete() throws IncorrectOperationException {
+			super.delete();
+		}
 	
 	
 }

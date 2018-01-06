@@ -21,17 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class QualifiedIdentifier extends ASTWrapperPsiElement  {
+public final class Expression_Identifier extends Expression  {
 
-    public QualifiedIdentifier(@NotNull ASTNode node) {
+    public Expression_Identifier(@NotNull ASTNode node) {
         super(node);
     }
 
-        public ListNode<LeafPsiElement> getSegments() {
-            return (ListNode<LeafPsiElement>)InternalPsiUtil.getChild(this, 0);
+        public LeafPsiElement getIdentifier() {
+            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
 			
+			public PsiReference getReference() {
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
+		}
 	
 	
 	

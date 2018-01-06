@@ -21,14 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class DeclaredSignalLike extends ASTWrapperPsiElement  {
+public final class QualifiedModuleName extends ASTWrapperPsiElement  {
 
-    public DeclaredSignalLike(@NotNull ASTNode node) {
+    public QualifiedModuleName(@NotNull ASTNode node) {
         super(node);
     }
 
+        public ListNode<LeafPsiElement> getSegments() {
+            return (ListNode<LeafPsiElement>)InternalPsiUtil.getChild(this, 0);
+        }
     
 			
+			public PsiReference getReference() {
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
+		}
 	
 	
 	

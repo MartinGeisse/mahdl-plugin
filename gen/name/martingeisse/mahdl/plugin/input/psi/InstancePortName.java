@@ -21,23 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_SignalLikeDefinition extends ImplementationItem  {
+public final class InstancePortName extends ASTWrapperPsiElement  {
 
-    public ImplementationItem_SignalLikeDefinition(@NotNull ASTNode node) {
+    public InstancePortName(@NotNull ASTNode node) {
         super(node);
     }
 
-        public SignalLikeKind getKind() {
-            return (SignalLikeKind)InternalPsiUtil.getChild(this, 0);
-        }
-        public DataType getDataType() {
-            return (DataType)InternalPsiUtil.getChild(this, 1);
-        }
-        public ListNode<DeclaredSignalLike> getSignalNames() {
-            return (ListNode<DeclaredSignalLike>)InternalPsiUtil.getChild(this, 2);
+        public LeafPsiElement getIdentifier() {
+            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
 			
+			public PsiReference getReference() {
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
+		}
 	
 	
 	

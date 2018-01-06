@@ -21,20 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_InstancePort extends Expression  {
+public final class InstanceReferenceName extends ASTWrapperPsiElement  {
 
-    public Expression_InstancePort(@NotNull ASTNode node) {
+    public InstanceReferenceName(@NotNull ASTNode node) {
         super(node);
     }
 
-        public InstanceReferenceName getInstanceName() {
-            return (InstanceReferenceName)InternalPsiUtil.getChild(this, 0);
-        }
-        public InstancePortName getPortName() {
-            return (InstancePortName)InternalPsiUtil.getChild(this, 2);
+        public LeafPsiElement getIdentifier() {
+            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
 			
+			public PsiReference getReference() {
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
+		}
 	
 	
 	

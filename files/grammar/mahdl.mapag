@@ -62,15 +62,16 @@
 //
 
 module ::= KW_MODULE IDENTIFIER:moduleName SEMICOLON
-		KW_INTERFACE OPENING_CURLY_BRACE portDefinition*:ports CLOSING_CURLY_BRACE
+		KW_INTERFACE OPENING_CURLY_BRACE portDefinitionGroup*:portDefinitionGroups CLOSING_CURLY_BRACE
 		implementationItem*:implementationItems;
-
 
 //
 // interface
 //
 
-portDefinition ::= portDirection:direction dataType:dataType (IDENTIFIER, COMMA)+:identifiers SEMICOLON;
+portDefinitionGroup ::= portDirection:direction dataType:dataType (portDefinition, COMMA)+:definitions SEMICOLON;
+
+portDefinition ::= IDENTIFIER:identifier;
 
 portDirection ::= {
 	input ::= KW_INPUT;
@@ -80,14 +81,20 @@ portDirection ::= {
 
 
 //
-// implementation
+// implementation (general)
 //
 
 implementationItem ::= {
-	signalLikeDefinition ::= signalLikeKind:kind dataType:dataType (declaredSignalLike, COMMA)+:signalNames SEMICOLON;
-	moduleInstance ::= qualifiedIdentifier:moduleName IDENTIFIER:instanceName OPENING_PARENTHESIS portConnection*:portConnections CLOSING_PARENTHESIS SEMICOLON;
+	signalLikeDefinitionGroup ::= signalLikeKind:kind dataType:dataType (signalLikeDefinition, COMMA)+:definitions SEMICOLON;
+	moduleInstance ::= qualifiedModuleName:moduleName IDENTIFIER:instanceName OPENING_PARENTHESIS portConnection*:portConnections CLOSING_PARENTHESIS SEMICOLON;
 	doBlock ::= KW_DO OPENING_PARENTHESIS doBlockTrigger:trigger CLOSING_PARENTHESIS statement:statement;
 }
+
+
+
+//
+// signal-like objects
+//
 
 signalLikeKind ::= {
 	constant ::= KW_CONSTANT;
@@ -95,12 +102,26 @@ signalLikeKind ::= {
 	register ::= KW_REGISTER;
 }
 
-declaredSignalLike ::= {
+signalLikeDefinition ::= {
 	withoutInitializer ::= IDENTIFIER:identifier;
 	withInitializer ::= IDENTIFIER:identifier EQUALS expression:initializer;
 }
 
-portConnection ::= IDENTIFIER:portName COLON expression:expression SEMICOLON;
+
+//
+// module instances
+//
+
+qualifiedModuleName ::= (IDENTIFIER, DOT)+:segments;
+
+portConnection ::= instancePortName:portName COLON expression:expression SEMICOLON;
+
+instancePortName ::= IDENTIFIER:identifier;
+
+
+//
+// do-blocks and statements
+//
 
 doBlockTrigger ::= {
 	combinatorial ::= OP_TIMES;
@@ -123,11 +144,16 @@ caseItem ::= {
 	default ::= KW_DEFAULT COLON statement*:statements;
 }
 
+
+//
+// expressions
+//
+
 expression ::= {
 
 	literal ::= literal:literal;
-	signal ::= IDENTIFIER:signalName;
-	instancePort ::= IDENTIFIER:instanceName DOT IDENTIFIER:portName;
+	identifier ::= IDENTIFIER:identifier;
+	instancePort ::= instanceReferenceName:instanceName DOT instancePortName:portName;
 	indexSelection ::= expression:container OPENING_SQUARE_BRACKET expression:index CLOSING_SQUARE_BRACKET;
 	rangeSelection ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_SQUARE_BRACKET;
 	parenthesized ::= OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS;
@@ -162,6 +188,8 @@ expression ::= {
 
 }
 
+instanceReferenceName ::= IDENTIFIER:identifier;
+
 literal ::= {
 	integer ::= INTEGER_LITERAL:value;
 	vector ::= VECTOR_LITERAL:value;
@@ -179,5 +207,3 @@ dataType ::= {
 	integer ::= KW_INTEGER;
 	text ::= KW_TEXT;
 }
-
-qualifiedIdentifier ::= (IDENTIFIER, DOT)+:segments;

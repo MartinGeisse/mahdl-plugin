@@ -75,8 +75,6 @@ public class Symbols {
 	public static final MahdlElementType dataType_Memory = new MahdlElementType("dataType_Memory");
 	public static final MahdlElementType dataType_Text = new MahdlElementType("dataType_Text");
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
-	public static final MahdlElementType declaredSignalLike_WithInitializer = new MahdlElementType("declaredSignalLike_WithInitializer");
-	public static final MahdlElementType declaredSignalLike_WithoutInitializer = new MahdlElementType("declaredSignalLike_WithoutInitializer");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
 	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
 	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
@@ -97,29 +95,34 @@ public class Symbols {
 	public static final MahdlElementType expression_BinaryTimes = new MahdlElementType("expression_BinaryTimes");
 	public static final MahdlElementType expression_BinaryXor = new MahdlElementType("expression_BinaryXor");
 	public static final MahdlElementType expression_FunctionCall = new MahdlElementType("expression_FunctionCall");
+	public static final MahdlElementType expression_Identifier = new MahdlElementType("expression_Identifier");
 	public static final MahdlElementType expression_IndexSelection = new MahdlElementType("expression_IndexSelection");
 	public static final MahdlElementType expression_InstancePort = new MahdlElementType("expression_InstancePort");
 	public static final MahdlElementType expression_Literal = new MahdlElementType("expression_Literal");
 	public static final MahdlElementType expression_Mux = new MahdlElementType("expression_Mux");
 	public static final MahdlElementType expression_Parenthesized = new MahdlElementType("expression_Parenthesized");
 	public static final MahdlElementType expression_RangeSelection = new MahdlElementType("expression_RangeSelection");
-	public static final MahdlElementType expression_Signal = new MahdlElementType("expression_Signal");
 	public static final MahdlElementType expression_UnaryMinus = new MahdlElementType("expression_UnaryMinus");
 	public static final MahdlElementType expression_UnaryNot = new MahdlElementType("expression_UnaryNot");
 	public static final MahdlElementType expression_UnaryPlus = new MahdlElementType("expression_UnaryPlus");
 	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
-	public static final MahdlElementType implementationItem_SignalLikeDefinition = new MahdlElementType("implementationItem_SignalLikeDefinition");
+	public static final MahdlElementType implementationItem_SignalLikeDefinitionGroup = new MahdlElementType("implementationItem_SignalLikeDefinitionGroup");
+	public static final MahdlElementType instancePortName = new MahdlElementType("instancePortName");
+	public static final MahdlElementType instanceReferenceName = new MahdlElementType("instanceReferenceName");
 	public static final MahdlElementType literal_Integer = new MahdlElementType("literal_Integer");
 	public static final MahdlElementType literal_Text = new MahdlElementType("literal_Text");
 	public static final MahdlElementType literal_Vector = new MahdlElementType("literal_Vector");
 	public static final MahdlElementType module = new MahdlElementType("module");
 	public static final MahdlElementType portConnection = new MahdlElementType("portConnection");
 	public static final MahdlElementType portDefinition = new MahdlElementType("portDefinition");
+	public static final MahdlElementType portDefinitionGroup = new MahdlElementType("portDefinitionGroup");
 	public static final MahdlElementType portDirection_Inout = new MahdlElementType("portDirection_Inout");
 	public static final MahdlElementType portDirection_Input = new MahdlElementType("portDirection_Input");
 	public static final MahdlElementType portDirection_Output = new MahdlElementType("portDirection_Output");
-	public static final MahdlElementType qualifiedIdentifier = new MahdlElementType("qualifiedIdentifier");
+	public static final MahdlElementType qualifiedModuleName = new MahdlElementType("qualifiedModuleName");
+	public static final MahdlElementType signalLikeDefinition_WithInitializer = new MahdlElementType("signalLikeDefinition_WithInitializer");
+	public static final MahdlElementType signalLikeDefinition_WithoutInitializer = new MahdlElementType("signalLikeDefinition_WithoutInitializer");
 	public static final MahdlElementType signalLikeKind_Constant = new MahdlElementType("signalLikeKind_Constant");
 	public static final MahdlElementType signalLikeKind_Register = new MahdlElementType("signalLikeKind_Register");
 	public static final MahdlElementType signalLikeKind_Signal = new MahdlElementType("signalLikeKind_Signal");
@@ -132,12 +135,12 @@ public class Symbols {
 	public static final MahdlElementType synthetic_List_CaseItem = new MahdlElementType("synthetic_List_CaseItem");
 	public static final MahdlElementType synthetic_List_ImplementationItem = new MahdlElementType("synthetic_List_ImplementationItem");
 	public static final MahdlElementType synthetic_List_PortConnection = new MahdlElementType("synthetic_List_PortConnection");
-	public static final MahdlElementType synthetic_List_PortDefinition = new MahdlElementType("synthetic_List_PortDefinition");
+	public static final MahdlElementType synthetic_List_PortDefinitionGroup = new MahdlElementType("synthetic_List_PortDefinitionGroup");
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
-	public static final MahdlElementType synthetic_SeparatedList_DeclaredSignalLike_COMMA = new MahdlElementType("synthetic_SeparatedList_DeclaredSignalLike_COMMA");
 	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA");
-	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_COMMA = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_COMMA");
 	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT");
+	public static final MahdlElementType synthetic_SeparatedList_PortDefinition_COMMA = new MahdlElementType("synthetic_SeparatedList_PortDefinition_COMMA");
+	public static final MahdlElementType synthetic_SeparatedList_SignalLikeDefinition_COMMA = new MahdlElementType("synthetic_SeparatedList_SignalLikeDefinition_COMMA");
 
 
 	//

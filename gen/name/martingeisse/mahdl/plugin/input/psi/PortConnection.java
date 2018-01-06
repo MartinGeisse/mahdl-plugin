@@ -27,8 +27,8 @@ public final class PortConnection extends ASTWrapperPsiElement  {
         super(node);
     }
 
-        public LeafPsiElement getPortName() {
-            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
+        public InstancePortName getPortName() {
+            return (InstancePortName)InternalPsiUtil.getChild(this, 0);
         }
         public Expression getExpression() {
             return (Expression)InternalPsiUtil.getChild(this, 2);

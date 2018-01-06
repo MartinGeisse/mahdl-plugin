@@ -27,8 +27,8 @@ public final class ImplementationItem_ModuleInstance extends ImplementationItem 
         super(node);
     }
 
-        public QualifiedIdentifier getModuleName() {
-            return (QualifiedIdentifier)InternalPsiUtil.getChild(this, 0);
+        public QualifiedModuleName getModuleName() {
+            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 0);
         }
         public LeafPsiElement getInstanceName() {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 1);

@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class DeclaredSignalLike_WithoutInitializer extends DeclaredSignalLike  {
+public final class SignalLikeDefinition_WithoutInitializer extends SignalLikeDefinition  {
 
-    public DeclaredSignalLike_WithoutInitializer(@NotNull ASTNode node) {
+    public SignalLikeDefinition_WithoutInitializer(@NotNull ASTNode node) {
         super(node);
     }
 
@@ -31,8 +31,30 @@ public final class DeclaredSignalLike_WithoutInitializer extends DeclaredSignalL
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
+        public LeafPsiElement getNameIdentifier() {
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getNameIdentifier(this);
+        }
+
+		
+		public String getName() {
+			LeafPsiElement nameIdentifier = getNameIdentifier();
+			return (nameIdentifier == null ? null : nameIdentifier.getText());
+		}
+
+		public PsiElement setName(String newName) throws IncorrectOperationException {
+			LeafPsiElement nameIdentifier = getNameIdentifier();
+			if (nameIdentifier == null) {
+				throw new IncorrectOperationException("name identifier not found");
+			}
+			return (LeafPsiElement) nameIdentifier.replaceWithText(newName);
+		}
+
 	
 	
+	
+			public void delete() throws IncorrectOperationException {
+			name.martingeisse.mahdl.plugin.input.psi.PsiUtil.delete(this);
+		}
 	
 }

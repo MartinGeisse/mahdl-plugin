@@ -21,17 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_InstancePort extends Expression  {
+public final class ImplementationItem_SignalLikeDefinitionGroup extends ImplementationItem  {
 
-    public Expression_InstancePort(@NotNull ASTNode node) {
+    public ImplementationItem_SignalLikeDefinitionGroup(@NotNull ASTNode node) {
         super(node);
     }
 
-        public InstanceReferenceName getInstanceName() {
-            return (InstanceReferenceName)InternalPsiUtil.getChild(this, 0);
+        public SignalLikeKind getKind() {
+            return (SignalLikeKind)InternalPsiUtil.getChild(this, 0);
         }
-        public InstancePortName getPortName() {
-            return (InstancePortName)InternalPsiUtil.getChild(this, 2);
+        public DataType getDataType() {
+            return (DataType)InternalPsiUtil.getChild(this, 1);
+        }
+        public ListNode<SignalLikeDefinition> getDefinitions() {
+            return (ListNode<SignalLikeDefinition>)InternalPsiUtil.getChild(this, 2);
         }
     
 			
