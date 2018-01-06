@@ -37,9 +37,9 @@ public abstract class ModuleProcessor {
 
 	private final Module module;
 
-	private ImmutableMap<String, Named> definitions;
 	private Map<String, ConstantValue> constants;
 	private ConstantExpressionEvaluator constantExpressionEvaluator;
+	private Map<String, Named> definitions;
 	private Set<String> previouslyAssignedSignals;
 	private Set<String> newlyAssignedSignals;
 
@@ -65,14 +65,6 @@ public abstract class ModuleProcessor {
 				break;
 			}
 		}
-
-		// collect definitions TODO see TODO comment in ModuleAnalyzer
-		definitions = new ModuleAnalyzer(module) {
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				ModuleProcessor.this.onError(errorSource, message);
-			}
-		}.analyze();
 
 		// evaluate constants
 		constants = new HashMap<>();
@@ -110,6 +102,25 @@ public abstract class ModuleProcessor {
 				}
 			}
 		}
+
+		// collect definitions
+		{
+			ModuleAnalyzer moduleAnalyzer = new ModuleAnalyzer(module) {
+
+				@Override
+				protected void onError(PsiElement errorSource, String message) {
+					ModuleProcessor.this.onError(errorSource, message);
+				}
+
+				@Override
+				protected ProcessedDataType processDataType(DataType dataType) {
+					return ModuleProcessor.this.processDataType(dataType);
+				}
+
+			};
+			definitions = moduleAnalyzer.registerConstants(constants).analyzeNonConstants().getDefinitions();
+		}
+
 
 		// process the module
 		for (PortDefinition port : module.getPorts().getAll()) {

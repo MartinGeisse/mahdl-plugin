@@ -62,7 +62,7 @@ public abstract class ConstantValue {
 
 		private final boolean set;
 
-		Bit(boolean set) {
+		public Bit(boolean set) {
 			this.set = set;
 		}
 
@@ -118,7 +118,7 @@ public abstract class ConstantValue {
 		private final int size;
 		private final BitSet bits;
 
-		Vector(int size, BitSet bits) {
+		public Vector(int size, BitSet bits) {
 			this.size = size;
 			this.bits = bits;
 		}
@@ -200,7 +200,7 @@ public abstract class ConstantValue {
 		private final int firstSize, secondSize;
 		private final BitSet bits;
 
-		Memory(int firstSize, int secondSize, BitSet bits) {
+		public Memory(int firstSize, int secondSize, BitSet bits) {
 			this.firstSize = firstSize;
 			this.secondSize = secondSize;
 			this.bits = bits;
@@ -271,7 +271,7 @@ public abstract class ConstantValue {
 
 		private final BigInteger value;
 
-		Integer(BigInteger value) {
+		public Integer(BigInteger value) {
 			this.value = value;
 		}
 
@@ -325,7 +325,7 @@ public abstract class ConstantValue {
 
 		private final String value;
 
-		Text(String value) {
+		public Text(String value) {
 			this.value = value;
 		}
 

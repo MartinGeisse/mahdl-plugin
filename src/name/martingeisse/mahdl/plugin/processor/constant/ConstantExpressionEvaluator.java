@@ -2,6 +2,7 @@ package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
+import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 
 import java.math.BigInteger;
 import java.util.BitSet;
@@ -169,21 +170,10 @@ public abstract class ConstantExpressionEvaluator {
 			return null;
 		}
 		final BigInteger integerValue = new BigInteger(digits, radix);
-		final int bitLength = integerValue.bitLength();
-		if (bitLength > size) {
+		if (integerValue.bitLength() > size) {
 			return null;
 		}
-
-		final BitSet bits = new BitSet();
-		int bitIndex = 0;
-		while (bitIndex < bitLength) {
-			if (integerValue.testBit(bitIndex)) {
-				bits.set(bitIndex);
-			}
-			bitIndex++;
-		}
-		return new ConstantValue.Vector(size, bits);
-
+		return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integerValue, size));
 	}
 
 	private ConstantValue.Text parseText(String rawText) {

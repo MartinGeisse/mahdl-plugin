@@ -1,6 +1,7 @@
 package name.martingeisse.mahdl.plugin.processor;
 
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 /**
@@ -130,25 +131,11 @@ public abstract class ProcessedDataType {
 				}
 			} else if (inputValue instanceof ConstantValue.Integer) {
 				ConstantValue.Integer integer = (ConstantValue.Integer)inputValue;
-
-				/*
-				convertToInteger:
-
-			final int length = bits.length();
-			int index = 0;
-			BigInteger significance = BigInteger.ONE;
-			BigInteger result = BigInteger.ZERO;
-			while (index < length) {
-				if (bits.get(index)) {
-					result = result.add(significance);
-					index++;
-					significance = significance.shiftLeft(1);
+				if (integer.getValue().bitLength() > size) {
+					// no automatic truncating
+					return ConstantValue.Unknown.INSTANCE;
 				}
-			}
-			return result;
-
-				 */
-				// TODO
+				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integer.getValue(), size));
 			} else {
 				return ConstantValue.Unknown.INSTANCE;
 			}

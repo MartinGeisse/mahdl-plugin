@@ -3,14 +3,15 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.Expression;
+import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
 
 /**
  *
  */
 public final class Signal extends SignalLike {
 
-	public Signal(PsiElement nameElement, DataType dataTypeElement, Expression initializer) {
-		super(nameElement, dataTypeElement, initializer);
+	public Signal(PsiElement nameElement, DataType dataTypeElement, ProcessedDataType processedDataType, Expression initializer) {
+		super(nameElement, dataTypeElement, processedDataType, initializer);
 	}
 
 }
