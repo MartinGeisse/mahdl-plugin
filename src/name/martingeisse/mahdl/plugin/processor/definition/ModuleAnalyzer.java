@@ -31,10 +31,8 @@ public abstract class ModuleAnalyzer {
 	 * Registers all constants. This must be done before the actual analysis, and after the constants have been
 	 * evaluated, because all constants -- even those defined later -- are needed in evaluated form for this analyzer
 	 * to work.
-	 *
-	 * Returns this.
 	 */
-	public final ModuleAnalyzer registerConstants(Map<String, ConstantValue> constantValues) {
+	public final void registerConstants(Map<String, ConstantValue> constantValues) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
 				ImplementationItem_SignalLikeDefinition typedImplementationItem = (ImplementationItem_SignalLikeDefinition) implementationItem;
@@ -66,15 +64,12 @@ public abstract class ModuleAnalyzer {
 				}
 			}
 		}
-		return this;
 	}
 
 	/**
 	 * Returns all named definitions (ports and implementation items) from the specified module, mapped by name.
-	 *
-	 * Returns this.
 	 */
-	public final ModuleAnalyzer analyzeNonConstants() {
+	public final void analyzeNonConstants() {
 
 		// ports
 		for (PortDefinition portDefinition : module.getPorts().getAll()) {
@@ -117,7 +112,6 @@ public abstract class ModuleAnalyzer {
 			}
 		}
 
-		return this;
 	}
 
 	private void add(Named element) {

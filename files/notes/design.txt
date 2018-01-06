@@ -1,0 +1,19 @@
+
+data types:
+- which data types can be used for hardware constructs (wires, registers, ports)?
+	- which cannot? those that have no canonical representation as bits!
+	- integer: no, because this data type is unbounded
+	- text: no, because this data type is unbounded
+	- bit, vector: yes
+	- memory: yes. This decision was not totally clear at first, because
+			hardware does not allow to read/write the whole memory at once
+		- memory is treated as a data type, not as an implementation item.
+			This type has a well-defined representation as bits -- a two-dimensional
+			array (vs. vector, which is one-dimensional).
+		- this means we can have memory constants, memory wires, memory registers and
+			memory ports in principle.
+		- memory ports have no useful meaning in hardware (would mean: R/W whole memory at once)
+		- memory registers represent synchronous RAM or ROM
+		- asynchronous ROM could be represented as either constants or signals.
+		- decision: we don't want to prevent ALL nonsense at language level. That's impossible.
+			So we allow both memory wires and memory constants.

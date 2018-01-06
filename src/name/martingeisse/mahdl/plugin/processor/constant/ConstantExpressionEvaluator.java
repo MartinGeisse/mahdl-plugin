@@ -2,10 +2,11 @@ package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
+import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 
 import java.math.BigInteger;
-import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,10 +20,47 @@ public abstract class ConstantExpressionEvaluator {
 
 	private static final BigInteger MAX_INDEX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
-	private final Map<String, ConstantValue> definedConstants;
+	private final Module module;
+	private final Map<String, ConstantValue> definedConstants = new HashMap<>();
 
-	public ConstantExpressionEvaluator(Map<String, ConstantValue> definedConstants) {
-		this.definedConstants = definedConstants;
+	public ConstantExpressionEvaluator(Module module) {
+		this.module = module;
+	}
+
+	public Map<String, ConstantValue> getDefinedConstants() {
+		return definedConstants;
+	}
+
+	public void processConstantDefinitions() {
+		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
+				ImplementationItem_SignalLikeDefinition signalLike = (ImplementationItem_SignalLikeDefinition)implementationItem;
+				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
+					// for constants, the data type must be valid based on the constants defined above
+					ProcessedDataType processedDataType = processDataType(signalLike.getDataType());
+					for (DeclaredSignalLike declaredSignalLike : signalLike.getSignalNames().getAll()) {
+						if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
+
+							DeclaredSignalLike_WithoutInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithoutInitializer)declaredSignalLike;
+							onError(declaredSignalLike, "constant must have an initializer");
+							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), ConstantValue.Unknown.INSTANCE);
+
+						} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
+
+							DeclaredSignalLike_WithInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithInitializer)declaredSignalLike;
+							ConstantValue value = evaluate(typedDeclaredSignalLike.getInitializer());
+							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertValueImplicitly(value));
+
+						} else {
+
+							onError(declaredSignalLike, "unknown PSI node");
+
+						}
+					}
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -146,6 +184,7 @@ public abstract class ConstantExpressionEvaluator {
 	}
 
 	protected abstract void onError(PsiElement errorSource, String message);
+	protected abstract ProcessedDataType processDataType(DataType dataType);
 
 	private ConstantValue error(PsiElement element, String message) {
 		onError(element, message);

@@ -37,8 +37,9 @@ public abstract class ModuleProcessor {
 
 	private final Module module;
 
-	private Map<String, ConstantValue> constants;
 	private ConstantExpressionEvaluator constantExpressionEvaluator;
+	private Map<String, ConstantValue> constants;
+	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
 	private Set<String> previouslyAssignedSignals;
 	private Set<String> newlyAssignedSignals;
@@ -67,75 +68,52 @@ public abstract class ModuleProcessor {
 		}
 
 		// evaluate constants
-		constants = new HashMap<>();
-		constantExpressionEvaluator = new ConstantExpressionEvaluator(constants) {
+		constantExpressionEvaluator = new ConstantExpressionEvaluator(module) {
+
 			@Override
 			protected void onError(PsiElement errorSource, String message) {
 				ModuleProcessor.this.onError(errorSource, message);
 			}
-		};
-		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				ImplementationItem_SignalLikeDefinition signalLike = (ImplementationItem_SignalLikeDefinition)implementationItem;
-				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
-					// for constants, the data type must be valid based on the constants defined above
-					ProcessedDataType processedDataType = processDataType(signalLike.getDataType());
-					for (DeclaredSignalLike declaredSignalLike : signalLike.getSignalNames().getAll()) {
-						if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
 
-							DeclaredSignalLike_WithoutInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithoutInitializer)declaredSignalLike;
-							onError(declaredSignalLike, "constant must have an initializer");
-							constants.put(typedDeclaredSignalLike.getIdentifier().getText(), ConstantValue.Unknown.INSTANCE);
-
-						} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
-
-							DeclaredSignalLike_WithInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithInitializer)declaredSignalLike;
-							ConstantValue value = constantExpressionEvaluator.evaluate(typedDeclaredSignalLike.getInitializer());
-							constants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertValueImplicitly(value));
-
-						} else {
-
-							onError(declaredSignalLike, "unknown PSI node");
-
-						}
-					}
-				}
+			@Override
+			protected ProcessedDataType processDataType(DataType dataType) {
+				return ModuleProcessor.this.processDataType(dataType);
 			}
-		}
+
+		};
+		constantExpressionEvaluator.processConstantDefinitions();
+		constants = constantExpressionEvaluator.getDefinedConstants();
 
 		// collect definitions
-		{
-			ModuleAnalyzer moduleAnalyzer = new ModuleAnalyzer(module) {
+		moduleAnalyzer = new ModuleAnalyzer(module) {
 
-				@Override
-				protected void onError(PsiElement errorSource, String message) {
-					ModuleProcessor.this.onError(errorSource, message);
-				}
+			@Override
+			protected void onError(PsiElement errorSource, String message) {
+				ModuleProcessor.this.onError(errorSource, message);
+			}
 
-				@Override
-				protected ProcessedDataType processDataType(DataType dataType) {
-					return ModuleProcessor.this.processDataType(dataType);
-				}
+			@Override
+			protected ProcessedDataType processDataType(DataType dataType) {
+				return ModuleProcessor.this.processDataType(dataType);
+			}
 
-			};
-			definitions = moduleAnalyzer.registerConstants(constants).analyzeNonConstants().getDefinitions();
+		};
+		moduleAnalyzer.registerConstants(constants);
+		moduleAnalyzer.analyzeNonConstants();
+		definitions = moduleAnalyzer.getDefinitions();
+
+		// process named definitions
+		for (Named item : definitions.values()) {
+			processDefinition(item);
 		}
 
-
-		// process the module
-		for (PortDefinition port : module.getPorts().getAll()) {
-			processPortDefinition(port);
-		}
+		// process do-blocks
 		previouslyAssignedSignals = new HashSet<>();
 		newlyAssignedSignals = new HashSet<>();
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				processSignalLikeDefinition((ImplementationItem_SignalLikeDefinition) implementationItem);
-			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-				processModuleInstance((ImplementationItem_ModuleInstance) implementationItem);
-			} else if (implementationItem instanceof ImplementationItem_DoBlock) {
+			if (implementationItem instanceof ImplementationItem_DoBlock) {
 				processDoBlock((ImplementationItem_DoBlock)implementationItem);
 			}
 			previouslyAssignedSignals.addAll(newlyAssignedSignals);
@@ -143,6 +121,7 @@ public abstract class ModuleProcessor {
 		}
 
 		// now check that all ports and signals without initializer have been assigned to
+		// TODO check assignment to instance ports
 		for (Named definition : definitions.values()) {
 			if (definition instanceof Signal || definition instanceof Port) {
 				String kind = (definition instanceof Signal) ? "signal" : "port";
@@ -155,27 +134,38 @@ public abstract class ModuleProcessor {
 
 	}
 
-	private void processPortDefinition(PortDefinition port) {
-		DataType dataType = port.getDataType();
-		processDataType(dataType);
-		if (!(dataType instanceof DataType_Bit) && !(dataType instanceof DataType_Vector)) {
-			onError(dataType, "data type '" + dataType.getText() + "' not allowed for ports");
-		}
-	}
-
-	private void processSignalLikeDefinition(ImplementationItem_SignalLikeDefinition signalLikeDefinition) {
-		processDataType(signalLikeDefinition.getDataType());
-		if (signalLikeDefinition.getKind() instanceof SignalLikeKind_Constant) {
-			// TODO ???? the initializers for constants have been evaluated and annotated already, because we needed them
-			// to reason about data types
+	private void processDefinition(Named item) {
+		if (item instanceof Constant) {
+			// constants have been handled by the constant evaluator already
 			return;
+		} else if (item instanceof SignalLike) {
+			SignalLike signalLike = (SignalLike)item;
+			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
+			if (dataTypeFamily == ProcessedDataType.Family.UNKNOWN) {
+				// don't complain about type errors if we don't even know the type -- in that case,
+				// the reason why we don't know the type already appears as an error
+				return;
+			}
+			String usage;
+			boolean valid;
+			if (item instanceof Port) {
+				usage = "ports";
+				valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
+			} else if (item instanceof Signal || item instanceof Register) {
+				usage = "signals";
+				valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
+			} else {
+				return;
+			}
+			if (!valid) {
+				onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
+			}
+		} else if (item instanceof ModuleInstance) {
+			// TODO
 		}
-		// TODO
 	}
 
-	private void processModuleInstance(ImplementationItem_ModuleInstance moduleInstance) {
-		// TODO
-	}
+
 
 	private void processDoBlock(ImplementationItem_DoBlock doBlock) {
 
