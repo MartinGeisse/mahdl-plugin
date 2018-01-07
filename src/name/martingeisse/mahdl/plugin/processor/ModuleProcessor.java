@@ -121,11 +121,17 @@ public abstract class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		// TODO check assignment to instance ports
 		for (Named definition : definitions.values()) {
-			if (definition instanceof Signal || definition instanceof Port) {
-				String kind = (definition instanceof Signal) ? "signal" : "port";
-				SignalLike signalOrPort = (SignalLike)definition;
-				if (signalOrPort.getInitializer() == null && !previouslyAssignedSignals.contains(signalOrPort.getName())) {
-					onError(signalOrPort.getNameElement(), "missing assignment for " + kind + " '" + signalOrPort.getName() + "'");
+			if (definition instanceof Port) {
+				Port port = (Port)definition;
+				if (port.getDirectionElement() instanceof PortDirection_Output) {
+					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
+						onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
+					}
+				}
+			} else if (definition instanceof Signal) {
+				Signal signal = (Signal)definition;
+				if (signal.getInitializer() == null && !previouslyAssignedSignals.contains(signal.getName())) {
+					onError(signal.getNameElement(), "missing assignment for signal '" + signal.getName() + "'");
 				}
 			}
 		}

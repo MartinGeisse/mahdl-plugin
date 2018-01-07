@@ -8,12 +8,12 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
-import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
+import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
 
 /**
  *
  */
-final class PsiUtil {
+public final class PsiUtil {
 
 	// prevent instantiation
 	private PsiUtil() {
@@ -78,7 +78,7 @@ final class PsiUtil {
 	}
 
 	public static PsiReference getReference(Expression_Identifier node) {
-		return null; // TODO return new fewefwefwefwfew(node);
+		return new IdentifierExpressionReference(node);
 	}
 
 	public static PsiReference getReference(InstanceReferenceName node) {
