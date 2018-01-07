@@ -21,30 +21,15 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_ModuleInstance extends ImplementationItem  {
+public final class ImplementationItem_Error extends ImplementationItem  {
 
-    public ImplementationItem_ModuleInstance(@NotNull ASTNode node) {
+    public ImplementationItem_Error(@NotNull ASTNode node) {
         super(node);
     }
 
-        public QualifiedModuleName getModuleName() {
-            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 0);
-        }
-        public InstanceName getInstanceName() {
-            return (InstanceName)InternalPsiUtil.getChild(this, 1);
-        }
-        public ListNode<PortConnection> getPortConnections() {
-            return (ListNode<PortConnection>)InternalPsiUtil.getChild(this, 3);
-        }
     
 			
 	
-			public void superclassDelete() throws IncorrectOperationException {
-			super.delete();
-		}
 	
-			public void delete() throws IncorrectOperationException {
-			name.martingeisse.mahdl.plugin.input.psi.PsiUtil.delete(this);
-		}
 	
 }

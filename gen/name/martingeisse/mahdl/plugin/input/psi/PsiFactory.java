@@ -28,6 +28,9 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_List_CaseItem) {
                 return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
             }
+                    if (type == Symbols.instanceName) {
+                return new InstanceName(node);
+            }
                     if (type == Symbols.literal_Integer) {
                 return new Literal_Integer(node);
             }
@@ -48,6 +51,9 @@ public class PsiFactory {
             }
                     if (type == Symbols.implementationItem_DoBlock) {
                 return new ImplementationItem_DoBlock(node);
+            }
+                    if (type == Symbols.implementationItem_Error) {
+                return new ImplementationItem_Error(node);
             }
                     if (type == Symbols.qualifiedModuleName) {
                 return new QualifiedModuleName(node);
@@ -86,7 +92,7 @@ public class PsiFactory {
                 return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelection, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
-                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock), ImplementationItem.class);
+                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock, Symbols.implementationItem_Error), ImplementationItem.class);
             }
                     if (type == Symbols.caseItem_Value) {
                 return new CaseItem_Value(node);

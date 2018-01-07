@@ -1,6 +1,8 @@
 package name.martingeisse.mahdl.plugin.input.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -9,6 +11,12 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
+import name.martingeisse.mahdl.plugin.input.ModuleReference;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.mutable.MutableObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -39,6 +47,38 @@ public final class PsiUtil {
 		}
 	}
 
+	public static VirtualFile getSourceRoot(PsiElement psiElement) {
+
+//		com.intellij.openapi.module.Module ideModule = ModuleUtil.findModuleForPsiElement(moduleName);
+//		if (ideModule == null) {
+//			return null;
+//		}
+
+
+		PsiFile originPsiFile = psiElement.getContainingFile();
+		if (originPsiFile == null) {
+			return null;
+		}
+		Project project = originPsiFile.getProject();
+		if (project == null) {
+			return null;
+		}
+		VirtualFile originVirtualFile = originPsiFile.getVirtualFile();
+		if (originVirtualFile == null) {
+			return null;
+		}
+//		com.intellij.openapi.module.Module ideModule = ModuleUtil.findModuleForFile(virtualFile, project);
+//		if (ideModule == null) {
+//			return null;
+//		}
+//		ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(ideModule);
+//		if (moduleRootManager == null) {
+//			return null;
+//		}
+
+		return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(originVirtualFile);
+	}
+
 	//
 	// naming support
 	//
@@ -61,8 +101,8 @@ public final class PsiUtil {
 		}
 	}
 
-	public static LeafPsiElement getNameIdentifier(ImplementationItem_ModuleInstance node) {
-		return node.getInstanceName();
+	public static LeafPsiElement getNameIdentifier(InstanceName node) {
+		return node.getIdentifier();
 	}
 
 	//
@@ -70,7 +110,7 @@ public final class PsiUtil {
 	//
 
 	public static PsiReference getReference(QualifiedModuleName node) {
-		return null; // TODO return new fewefwefwefwfew(node);
+		return new ModuleReference(node);
 	}
 
 	public static PsiReference getReference(InstancePortName node) {
@@ -116,6 +156,24 @@ public final class PsiUtil {
 			}
 		}
 		throw new IncorrectOperationException("could not determine containing virtual file to reparse after safe delete");
+	}
+
+	//
+	// other
+	//
+
+	public static String[] parseQualifiedModuleName(QualifiedModuleName name) {
+		List<String> segments = new ArrayList<>();
+		for (LeafPsiElement segment : name.getSegments().getAll()) {
+			segments.add(segment.getText());
+		}
+		return segments.toArray(new String[segments.size()]);
+	}
+
+	public static String getSimpleModuleName(QualifiedModuleName name) {
+		MutableObject<LeafPsiElement> elementHolder = new MutableObject<>();
+		name.getSegments().foreach(elementHolder::setValue);
+		return elementHolder.getValue().getText();
 	}
 
 }
