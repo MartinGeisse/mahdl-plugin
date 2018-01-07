@@ -1,6 +1,5 @@
 package name.martingeisse.mahdl.plugin.processor;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -12,7 +11,6 @@ import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -182,8 +180,8 @@ public abstract class ModuleProcessor {
 	}
 
 	private void handleAssignedTo(Expression destination) {
-		if (destination instanceof Expression_Signal) {
-			LeafPsiElement signalNameElement = ((Expression_Signal) destination).getSignalName();
+		if (destination instanceof Expression_Identifier) {
+			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
 			handleAssignedTo(signalNameElement.getText(), signalNameElement);
 		} else if (destination instanceof Expression_IndexSelection) {
 			Expression container = ((Expression_IndexSelection) destination).getContainer();

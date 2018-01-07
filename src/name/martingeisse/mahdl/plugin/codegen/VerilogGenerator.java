@@ -30,32 +30,32 @@ public class VerilogGenerator {
 		VelocityContext context = new VelocityContext();
 		context.put("moduleName", module.getModuleName().getText());
 
-		List<Port> ports = new ArrayList<>();
-		for (PortDefinition portDefinition : module.getPorts().getAll()) {
-			for (LeafPsiElement identifierElement : portDefinition.getIdentifiers().getAll()) {
-				Port port = new Port();
-				port.comma = (ports.isEmpty() ? "" : ", ");
-				if (portDefinition.getDirection() instanceof PortDirection_Input) {
-					port.direction = "input";
-				} else if (portDefinition.getDirection() instanceof PortDirection_Output) {
-					port.direction = "output";
-				} else if (portDefinition.getDirection() instanceof PortDirection_Inout) {
-					port.direction = "inout";
-				} else {
-					throw new RuntimeException("unknown port direction: " + portDefinition.getDirection());
-				}
-				if (portDefinition.getDataType() instanceof DataType_Bit) {
-					port.dataType = "";
-				} else if (portDefinition.getDataType() instanceof DataType_Vector) {
-					port.dataType = vectorTypeRangeToString((DataType_Vector) portDefinition.getDataType());
-				} else {
-					throw new RuntimeException("unexpected data type for port: " + portDefinition.getDataType());
-				}
-				port.name = identifierElement.getText();
-				ports.add(port);
-			}
-		}
-		context.put("ports", ports);
+//		List<Port> ports = new ArrayList<>();
+//		for (PortDefinition portDefinition : module.getPorts().getAll()) {
+//			for (LeafPsiElement identifierElement : portDefinition.getIdentifiers().getAll()) {
+//				Port port = new Port();
+//				port.comma = (ports.isEmpty() ? "" : ", ");
+//				if (portDefinition.getDirection() instanceof PortDirection_Input) {
+//					port.direction = "input";
+//				} else if (portDefinition.getDirection() instanceof PortDirection_Output) {
+//					port.direction = "output";
+//				} else if (portDefinition.getDirection() instanceof PortDirection_Inout) {
+//					port.direction = "inout";
+//				} else {
+//					throw new RuntimeException("unknown port direction: " + portDefinition.getDirection());
+//				}
+//				if (portDefinition.getDataType() instanceof DataType_Bit) {
+//					port.dataType = "";
+//				} else if (portDefinition.getDataType() instanceof DataType_Vector) {
+//					port.dataType = vectorTypeRangeToString((DataType_Vector) portDefinition.getDataType());
+//				} else {
+//					throw new RuntimeException("unexpected data type for port: " + portDefinition.getDataType());
+//				}
+//				port.name = identifierElement.getText();
+//				ports.add(port);
+//			}
+//		}
+//		context.put("ports", ports);
 
 		MahdlVelocityEngine.engine.getTemplate("verilog-module.vm").merge(context, out);
 	}

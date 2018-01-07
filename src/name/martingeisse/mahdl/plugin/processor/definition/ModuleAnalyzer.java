@@ -34,20 +34,20 @@ public abstract class ModuleAnalyzer {
 	 */
 	public final void registerConstants(Map<String, ConstantValue> constantValues) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				ImplementationItem_SignalLikeDefinition typedImplementationItem = (ImplementationItem_SignalLikeDefinition) implementationItem;
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+				ImplementationItem_SignalLikeDefinitionGroup typedImplementationItem = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 				if (typedImplementationItem.getKind() instanceof SignalLikeKind_Constant) {
 					DataType dataType = typedImplementationItem.getDataType();
 					ProcessedDataType processedDataType = processDataType(dataType);
-					for (DeclaredSignalLike declaredSignalLike : typedImplementationItem.getSignalNames().getAll()) {
+					for (SignalLikeDefinition signalLikeDefinition : typedImplementationItem.getDefinitions().getAll()) {
 						PsiElement nameElement;
 						Expression initializer;
-						if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
-							DeclaredSignalLike_WithoutInitializer typedDeclaredSignal = (DeclaredSignalLike_WithoutInitializer) declaredSignalLike;
+						if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
+							SignalLikeDefinition_WithoutInitializer typedDeclaredSignal = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
 							nameElement = typedDeclaredSignal.getIdentifier();
 							initializer = null;
-						} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
-							DeclaredSignalLike_WithInitializer typedDeclaredSignal = (DeclaredSignalLike_WithInitializer) declaredSignalLike;
+						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
+							SignalLikeDefinition_WithInitializer typedDeclaredSignal = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
 							nameElement = typedDeclaredSignal.getIdentifier();
 							initializer = typedDeclaredSignal.getInitializer();
 						} else {
@@ -56,7 +56,7 @@ public abstract class ModuleAnalyzer {
 						String name = nameElement.getText();
 						ConstantValue value = constantValues.get(name);
 						if (value == null) {
-							onError(declaredSignalLike, "value for this constant is missing in the constant value map");
+							onError(signalLikeDefinition, "value for this constant is missing in the constant value map");
 							value = ConstantValue.Unknown.INSTANCE;
 						}
 						add(new Constant(nameElement, dataType, processedDataType, initializer, value));
@@ -72,30 +72,30 @@ public abstract class ModuleAnalyzer {
 	public final void analyzeNonConstants() {
 
 		// ports
-		for (PortDefinition portDefinition : module.getPorts().getAll()) {
-			for (LeafPsiElement nameElement : portDefinition.getIdentifiers().getAll()) {
-				DataType dataType = portDefinition.getDataType();
-				Port port = new Port(nameElement, portDefinition.getDirection(), dataType, processDataType(dataType));
+		for (PortDefinitionGroup portDefinitionGroup : module.getPortDefinitionGroups().getAll()) {
+			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+				DataType dataType = portDefinitionGroup.getDataType();
+				Port port = new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, processDataType(dataType));
 				add(port);
 			}
 		}
 
 		// implementation items
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				ImplementationItem_SignalLikeDefinition typedImplementationItem = (ImplementationItem_SignalLikeDefinition) implementationItem;
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+				ImplementationItem_SignalLikeDefinitionGroup typedImplementationItem = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 				if (typedImplementationItem.getKind() instanceof SignalLikeKind_Constant) {
 					continue;
 				}
-				for (DeclaredSignalLike declaredSignalLike : typedImplementationItem.getSignalNames().getAll()) {
+				for (SignalLikeDefinition signalLikeDefinition : typedImplementationItem.getDefinitions().getAll()) {
 					LeafPsiElement nameElement;
 					Expression initializer;
-					if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
-						DeclaredSignalLike_WithoutInitializer typedDeclaredSignal = (DeclaredSignalLike_WithoutInitializer) declaredSignalLike;
+					if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
+						SignalLikeDefinition_WithoutInitializer typedDeclaredSignal = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
 						nameElement = typedDeclaredSignal.getIdentifier();
 						initializer = null;
-					} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
-						DeclaredSignalLike_WithInitializer typedDeclaredSignal = (DeclaredSignalLike_WithInitializer) declaredSignalLike;
+					} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
+						SignalLikeDefinition_WithInitializer typedDeclaredSignal = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
 						nameElement = typedDeclaredSignal.getIdentifier();
 						initializer = typedDeclaredSignal.getInitializer();
 					} else {
@@ -123,11 +123,11 @@ public abstract class ModuleAnalyzer {
 	protected abstract void onError(PsiElement errorSource, String message);
 	protected abstract ProcessedDataType processDataType(DataType dataType);
 
-	private SignalLike convertSignalLike(ImplementationItem_SignalLikeDefinition signalLikeDefinition,
+	private SignalLike convertSignalLike(ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
 												LeafPsiElement nameElement,
 												Expression initializer) {
-		SignalLikeKind kind = signalLikeDefinition.getKind();
-		DataType dataType = signalLikeDefinition.getDataType();
+		SignalLikeKind kind = signalLikeDefinitionGroup.getKind();
+		DataType dataType = signalLikeDefinitionGroup.getDataType();
 		ProcessedDataType processedDataType = processDataType(dataType);
 		if (kind instanceof SignalLikeKind_Constant) {
 			throw new IllegalArgumentException("this method should not be called for constants");

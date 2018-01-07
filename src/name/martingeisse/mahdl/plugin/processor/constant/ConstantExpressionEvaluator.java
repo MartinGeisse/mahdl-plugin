@@ -33,27 +33,27 @@ public abstract class ConstantExpressionEvaluator {
 
 	public void processConstantDefinitions() {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			if (implementationItem instanceof ImplementationItem_SignalLikeDefinition) {
-				ImplementationItem_SignalLikeDefinition signalLike = (ImplementationItem_SignalLikeDefinition)implementationItem;
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup)implementationItem;
 				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
 					// for constants, the data type must be valid based on the constants defined above
 					ProcessedDataType processedDataType = processDataType(signalLike.getDataType());
-					for (DeclaredSignalLike declaredSignalLike : signalLike.getSignalNames().getAll()) {
-						if (declaredSignalLike instanceof DeclaredSignalLike_WithoutInitializer) {
+					for (SignalLikeDefinition signalLikeDefinition : signalLike.getDefinitions().getAll()) {
+						if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
 
-							DeclaredSignalLike_WithoutInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithoutInitializer)declaredSignalLike;
-							onError(declaredSignalLike, "constant must have an initializer");
+							SignalLikeDefinition_WithoutInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
+							onError(signalLikeDefinition, "constant must have an initializer");
 							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), ConstantValue.Unknown.INSTANCE);
 
-						} else if (declaredSignalLike instanceof DeclaredSignalLike_WithInitializer) {
+						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
 
-							DeclaredSignalLike_WithInitializer typedDeclaredSignalLike = (DeclaredSignalLike_WithInitializer)declaredSignalLike;
+							SignalLikeDefinition_WithInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
 							ConstantValue value = evaluate(typedDeclaredSignalLike.getInitializer());
 							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertValueImplicitly(value));
 
 						} else {
 
-							onError(declaredSignalLike, "unknown PSI node");
+							onError(signalLikeDefinition, "unknown PSI node");
 
 						}
 					}
@@ -83,9 +83,9 @@ public abstract class ConstantExpressionEvaluator {
 				return nonConstant(expression);
 			}
 
-		} else if (expression instanceof Expression_Signal) {
+		} else if (expression instanceof Expression_Identifier) {
 
-			String name = ((Expression_Signal) expression).getSignalName().getText();
+			String name = ((Expression_Identifier) expression).getIdentifier().getText();
 			ConstantValue value = definedConstants.get(name);
 			if (value == null) {
 				return error(expression, "undefined constant: '" + name + "'");

@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_DoBlock;
 import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_SignalLikeDefinition;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_SignalLikeDefinitionGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +28,7 @@ public class MahdlFoldingBuilder implements FoldingBuilder {
 	}
 
 	private void collectFoldingRegions(PsiElement psiElement, List<FoldingDescriptor> destination) {
-		if (psiElement instanceof ImplementationItem_SignalLikeDefinition || psiElement instanceof ImplementationItem_DoBlock) {
+		if (psiElement instanceof ImplementationItem_SignalLikeDefinitionGroup || psiElement instanceof ImplementationItem_DoBlock) {
 			destination.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange()));
 		}
 		for (PsiElement child : psiElement.getChildren()) {
