@@ -101,8 +101,8 @@ public final class PsiUtil {
 		}
 	}
 
-	public static LeafPsiElement getNameIdentifier(InstanceName node) {
-		return node.getIdentifier();
+	public static LeafPsiElement getNameIdentifier(ImplementationItem_ModuleInstance node) {
+		return node.getInstanceName();
 	}
 
 	//

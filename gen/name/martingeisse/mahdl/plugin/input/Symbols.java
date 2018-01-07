@@ -109,7 +109,6 @@ public class Symbols {
 	public static final MahdlElementType implementationItem_Error = new MahdlElementType("implementationItem_Error");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
 	public static final MahdlElementType implementationItem_SignalLikeDefinitionGroup = new MahdlElementType("implementationItem_SignalLikeDefinitionGroup");
-	public static final MahdlElementType instanceName = new MahdlElementType("instanceName");
 	public static final MahdlElementType instancePortName = new MahdlElementType("instancePortName");
 	public static final MahdlElementType instanceReferenceName = new MahdlElementType("instanceReferenceName");
 	public static final MahdlElementType literal_Integer = new MahdlElementType("literal_Integer");

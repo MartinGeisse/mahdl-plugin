@@ -28,9 +28,6 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_List_CaseItem) {
                 return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
             }
-                    if (type == Symbols.instanceName) {
-                return new InstanceName(node);
-            }
                     if (type == Symbols.literal_Integer) {
                 return new Literal_Integer(node);
             }
