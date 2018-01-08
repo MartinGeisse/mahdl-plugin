@@ -20,9 +20,7 @@
         <fileTypeFactory implementation="name.martingeisse.mahdl.plugin.MahdlFileTypeFactory" />
         <lang.syntaxHighlighterFactory language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlSyntaxHighlighterFactory" />
         <lang.parserDefinition language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlParserDefinition" />
-<!--
-        <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFindUsagesProvider" />
--->
+        <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlFindUsagesProvider" />
         <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlRefactoringSupportProvider" />
         <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFormattingModelBuilder" />
         <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
