@@ -11,6 +11,7 @@ import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
+import name.martingeisse.mahdl.plugin.input.NonterminalGroups;
 import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.TokenGroups;
 import org.jetbrains.annotations.NotNull;
@@ -34,43 +35,38 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 	);
 
 	private static final TokenSet NORMALLY_INDENTED_SYMBOLS = TokenSet.create(
-//		Symbols.grammar_TerminalDeclarations_Identifiers_List,
-//		Symbols.grammar_PrecedenceTable_PrecedenceDeclarations_List,
-//		Symbols.production_Multi_Alternatives_List,
-//		Symbols.alternativeAttribute_ResolveBlock_ResolveDeclarations_List
+		Symbols.synthetic_List_PortDefinitionGroup,
+		Symbols.synthetic_List_PortConnection,
+		Symbols.synthetic_List_Statement,
+		Symbols.synthetic_List_CaseItem
 	);
 
-	private static final TokenSet NOT_INDENTED_SYMBOLS = TokenSet.create(
+	private static final TokenSet NOT_INDENTED_SYMBOLS = TokenSet.orSet(NonterminalGroups.STATEMENTS, TokenSet.create(
 
-//		// relative to its parent, a closing brace is never indented
-//		Symbols.CLOSING_CURLY_BRACE,
-//
-//		// list elements for which the list is already indented normally
-//		Symbols.terminalDeclaration,
-//		Symbols.precedenceDeclaration_Normal,
-//		Symbols.precedenceDeclaration_ErrorWithSemicolon,
-//		Symbols.precedenceDeclaration_ErrorWithoutSemicolon,
-//		Symbols.production_Multi_Alternatives_Named,
-//		Symbols.production_Multi_Alternatives_Named_Named,
-//		Symbols.production_Multi_Alternatives_Unnamed_Unnamed,
-//		Symbols.resolveDeclaration,
-//
-//		// top-level elements
-//		Symbols.grammar_TerminalDeclarations,
-//		Symbols.grammar_PrecedenceTable,
-//		Symbols.grammar_Productions_List,
-//		Symbols.KW_START,
-//		Symbols.production_SingleUnnamed,
-//		Symbols.production_SingleNamed,
-//		Symbols.production_Multi,
-//		Symbols.production_ErrorWithNonterminalNameWithSemicolon,
-//		Symbols.production_ErrorWithNonterminalNameWithClosingCurlyBrace,
-//		Symbols.production_ErrorWithNonterminalNameAtEof,
-//		Symbols.production_ErrorWithoutNonterminalNameWithSemicolon,
-//		Symbols.production_ErrorWithoutNonterminalNameWithClosingCurlyBrace,
-//		Symbols.production_ErrorWithoutNonterminalNameAtEof
+		// relative to its parent, a closing parenthesis/bracket/brace is never indented
+		Symbols.CLOSING_PARENTHESIS,
+		Symbols.CLOSING_SQUARE_BRACKET,
+		Symbols.CLOSING_CURLY_BRACE,
 
-	);
+		// list elements for which the list is already indented normally
+		Symbols.portDefinitionGroup,
+		Symbols.portConnection,
+		// all statements -- merged into the TokenSet above
+		Symbols.caseItem_Default,
+		Symbols.caseItem_Value,
+
+		// top-level elements
+		Symbols.KW_INTERFACE,
+		Symbols.synthetic_List_ImplementationItem,
+		Symbols.implementationItem_SignalLikeDefinitionGroup,
+		Symbols.KW_CONSTANT,
+		Symbols.KW_SIGNAL,
+		Symbols.KW_REGISTER,
+		Symbols.implementationItem_DoBlock,
+		Symbols.KW_DO,
+		Symbols.implementationItem_ModuleInstance
+
+	));
 
 	private static final TokenSet POSTFIX_OPERATORS = TokenSet.create(
 //		Symbols.ASTERISK, Symbols.PLUS, Symbols.QUESTION_MARK
