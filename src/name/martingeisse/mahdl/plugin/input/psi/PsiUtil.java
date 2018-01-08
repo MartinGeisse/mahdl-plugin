@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
+import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.ModuleInstanceReference;
 import name.martingeisse.mahdl.plugin.input.ModuleReference;
 import org.apache.commons.lang3.StringUtils;
@@ -115,7 +116,7 @@ public final class PsiUtil {
 	}
 
 	public static PsiReference getReference(InstancePortName node) {
-		return null; // TODO return new fewefwefwefwfew(node);
+		return new ModuleInstancePortReference(node);
 	}
 
 	public static PsiReference getReference(Expression_Identifier node) {
