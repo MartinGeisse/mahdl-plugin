@@ -22,8 +22,8 @@
         <lang.parserDefinition language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlParserDefinition" />
 <!--
         <lang.findUsagesProvider language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagFindUsagesProvider" />
-        <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mapag.ide.MapagRefactoringSupportProvider" />
 -->
+        <lang.refactoringSupport language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlRefactoringSupportProvider" />
         <lang.formatter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFormattingModelBuilder" />
         <annotator language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlAnnotator" />
         <lang.psiStructureViewFactory language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlStructureViewFactory" />
