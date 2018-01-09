@@ -49,7 +49,7 @@ public abstract class ConstantExpressionEvaluator {
 
 							SignalLikeDefinition_WithInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
 							ConstantValue value = evaluate(typedDeclaredSignalLike.getInitializer());
-							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertValueImplicitly(value));
+							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertConstantValueImplicitly(value));
 
 						} else {
 

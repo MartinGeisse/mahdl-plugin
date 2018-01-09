@@ -37,6 +37,7 @@ public abstract class ModuleProcessor {
 	private Map<String, ConstantValue> constants;
 	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
+	private ExpressionTypeChecker expressionTypeChecker;
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
 
 	public ModuleProcessor(Module module) {
@@ -97,6 +98,9 @@ public abstract class ModuleProcessor {
 		moduleAnalyzer.analyzeNonConstants();
 		definitions = moduleAnalyzer.getDefinitions();
 
+		// this object checks for type errors in expressions and determines their result type
+		expressionTypeChecker = new ExpressionTypeChecker(definitions);
+
 		// this object detects duplicate or missing assignments
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector() {
 
@@ -139,19 +143,33 @@ public abstract class ModuleProcessor {
 				// the reason why we don't know the type already appears as an error
 				return;
 			}
-			String usage;
-			boolean valid;
-			if (item instanceof Port) {
-				usage = "ports";
-				valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
-			} else if (item instanceof Signal || item instanceof Register) {
-				usage = "signals";
-				valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
-			} else {
-				return;
+			allowedDataTypeCheck:
+			{
+				String usage;
+				boolean valid;
+				if (item instanceof Port) {
+					usage = "ports";
+					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
+				} else if (item instanceof Signal || item instanceof Register) {
+					usage = "signals";
+					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
+				} else {
+					break allowedDataTypeCheck;
+				}
+				if (!valid) {
+					onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
+				}
 			}
-			if (!valid) {
-				onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
+			if (signalLike.getInitializer() != null) {
+				// TODO: if the initializer is constant, we should try to convert that value to the signalLike's type.
+				// Converting a constant value can handle a broader range of types than a run-time conversion.
+				// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
+				// the vector size, but at runtime this is forbidden because integers are.
+				ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
+				if (!signalLike.getProcessedDataType().canConvertRuntimeValueOfTypeImplicitly(initializerDataType)) {
+					onError(signalLike.getInitializer(), "cannot assign value of type " + initializerDataType +
+						" to a signal or register of type " + signalLike.getProcessedDataType());
+				}
 			}
 		} else if (item instanceof ModuleInstance) {
 			ModuleInstance moduleInstance = (ModuleInstance) item;
@@ -176,11 +194,13 @@ public abstract class ModuleProcessor {
 			}
 			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
 				String portName = portConnection.getPortName().getIdentifier().getText();
-				Expression expression = portConnection.getExpression();
 				inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
 				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
 				if (portDefinitionGroup == null) {
 					onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+				} else {
+					Expression expression = portConnection.getExpression();
+					// TODO check type
 				}
 			}
 		}
