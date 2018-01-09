@@ -2,7 +2,6 @@ package name.martingeisse.mahdl.plugin.processor;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -12,9 +11,7 @@ import name.martingeisse.mahdl.plugin.processor.definition.*;
 
 import java.math.BigInteger;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -40,8 +37,7 @@ public abstract class ModuleProcessor {
 	private Map<String, ConstantValue> constants;
 	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
-	private Set<String> previouslyAssignedSignals;
-	private Set<String> newlyAssignedSignals;
+	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
 
 	public ModuleProcessor(Module module) {
 		this.module = module;
@@ -107,52 +103,25 @@ public abstract class ModuleProcessor {
 		}
 
 		// process do-blocks
-		previouslyAssignedSignals = new HashSet<>();
-		newlyAssignedSignals = new HashSet<>();
+		inconsistentAssignmentDetector = new InconsistentAssignmentDetector() {
+
+			@Override
+			protected void onError(PsiElement errorSource, String message) {
+				ModuleProcessor.this.onError(errorSource, message);
+			}
+
+		};
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
 			if (implementationItem instanceof ImplementationItem_DoBlock) {
 				processDoBlock((ImplementationItem_DoBlock) implementationItem);
 			}
-			previouslyAssignedSignals.addAll(newlyAssignedSignals);
-			newlyAssignedSignals.clear();
+			inconsistentAssignmentDetector.finishSection();
 		}
 
 		// now check that all ports and signals without initializer have been assigned to
-		for (Named definition : definitions.values()) {
-			if (definition instanceof Port) {
-				Port port = (Port) definition;
-				if (port.getDirectionElement() instanceof PortDirection_Output) {
-					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
-						onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
-					}
-				}
-			} else if (definition instanceof Signal) {
-				Signal signal = (Signal) definition;
-				if (signal.getInitializer() == null && !previouslyAssignedSignals.contains(signal.getName())) {
-					onError(signal.getNameElement(), "missing assignment for signal '" + signal.getName() + "'");
-				}
-			} else if (definition instanceof ModuleInstance) {
-				ModuleInstance moduleInstance = (ModuleInstance) definition;
-				String instanceName = moduleInstance.getName();
-				ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
-				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
-				if (untypedResolvedModule instanceof Module) {
-					Module resolvedModule = (Module) untypedResolvedModule;
-					for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-						if (portDefinitionGroup.getDirection() instanceof PortDirection_Output) {
-							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-								String prefixedPortName = instanceName + '.' + portDefinition.getName();
-								if (!previouslyAssignedSignals.contains(prefixedPortName)) {
-									onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		inconsistentAssignmentDetector.checkMissingAssignments(definitions.values());
 
 	}
 
@@ -206,7 +175,7 @@ public abstract class ModuleProcessor {
 			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
 				String portName = portConnection.getPortName().getIdentifier().getText();
 				Expression expression = portConnection.getExpression();
-				newlyAssignedSignals.add(instanceName + '.' + portName);
+				inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
 				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
 				if (portDefinitionGroup == null) {
 					onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
@@ -223,40 +192,10 @@ public abstract class ModuleProcessor {
 				return false;
 			}
 			if (element instanceof Statement_Assignment) {
-				handleAssignedTo(((Statement_Assignment) element).getLeftSide());
+				inconsistentAssignmentDetector.handleAssignment((Statement_Assignment) element);
 			}
 			return true;
 		});
-	}
-
-	private void handleAssignedTo(Expression destination) {
-		if (destination instanceof Expression_Identifier) {
-			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
-			handleAssignedTo(signalNameElement.getText(), signalNameElement);
-		} else if (destination instanceof Expression_IndexSelection) {
-			Expression container = ((Expression_IndexSelection) destination).getContainer();
-			handleAssignedTo(container);
-		} else if (destination instanceof Expression_RangeSelection) {
-			Expression container = ((Expression_RangeSelection) destination).getContainer();
-			handleAssignedTo(container);
-		} else if (destination instanceof Expression_Parenthesized) {
-			Expression inner = ((Expression_Parenthesized) destination).getExpression();
-			handleAssignedTo(inner);
-		} else if (destination instanceof Expression_BinaryConcat) {
-			Expression_BinaryConcat typed = (Expression_BinaryConcat) destination;
-			handleAssignedTo(typed.getLeftOperand());
-			handleAssignedTo(typed.getRightOperand());
-		} else if (destination instanceof Expression_InstancePort) {
-			Expression_InstancePort typed = (Expression_InstancePort) destination;
-			handleAssignedTo(typed.getInstanceName().getText() + '.' + typed.getPortName().getText(), typed);
-		}
-	}
-
-	private void handleAssignedTo(String signalName, PsiElement errorSource) {
-		if (previouslyAssignedSignals.contains(signalName)) {
-			onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
-		}
-		newlyAssignedSignals.add(signalName);
 	}
 
 	private ProcessedDataType processDataType(DataType dataType) {
