@@ -11,23 +11,24 @@ import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * This class handles the common logic between error annotations, code generation etc., and provides a unified
- * framework for the individual steps such as constant evaluation, type checking, name resolution, and so on.
- *
- * It emerged from the observation that even a simple task such as annotating the code with error markers is
- * similar to compiling it, in that information about the code must be collected in multiple interdependent steps.
- * Without a central framework for these steps, a lot of code gets duplicated between them.
- *
- * For example, it is not possible to check type correctness without evaluating constants, becuase constants are
- * used to specify array sizes. Type correctness is needed to evaluate constants though. Both of these steps can
- * run into the same errors in various sub-steps, so they would take an annotation holder to report these errors --
- * but there would need to be an agreement which step reports which errors. And so on.
+ * This class handles the common logic between error annotations, code generation etc., and provides a unified framework
+ * for the individual steps such as constant evaluation, type checking, name resolution, and so on.
+ * <p>
+ * It emerged from the observation that even a simple task such as annotating the code with error markers is similar to
+ * compiling it, in that information about the code must be collected in multiple interdependent steps. Without a
+ * central framework for these steps, a lot of code gets duplicated between them.
+ * <p>
+ * For example, it is not possible to check type correctness without evaluating constants, becuase constants are used to
+ * specify array sizes. Type correctness is needed to evaluate constants though. Both of these steps can run into the
+ * same errors in various sub-steps, so they would take an annotation holder to report these errors -- but there would
+ * need to be an agreement which step reports which errors. And so on.
  */
 public abstract class ModuleProcessor {
 
@@ -112,26 +113,43 @@ public abstract class ModuleProcessor {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
 			if (implementationItem instanceof ImplementationItem_DoBlock) {
-				processDoBlock((ImplementationItem_DoBlock)implementationItem);
+				processDoBlock((ImplementationItem_DoBlock) implementationItem);
 			}
 			previouslyAssignedSignals.addAll(newlyAssignedSignals);
 			newlyAssignedSignals.clear();
 		}
 
 		// now check that all ports and signals without initializer have been assigned to
-		// TODO check assignment to instance ports
 		for (Named definition : definitions.values()) {
 			if (definition instanceof Port) {
-				Port port = (Port)definition;
+				Port port = (Port) definition;
 				if (port.getDirectionElement() instanceof PortDirection_Output) {
 					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
 						onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
 					}
 				}
 			} else if (definition instanceof Signal) {
-				Signal signal = (Signal)definition;
+				Signal signal = (Signal) definition;
 				if (signal.getInitializer() == null && !previouslyAssignedSignals.contains(signal.getName())) {
 					onError(signal.getNameElement(), "missing assignment for signal '" + signal.getName() + "'");
+				}
+			} else if (definition instanceof ModuleInstance) {
+				ModuleInstance moduleInstance = (ModuleInstance) definition;
+				String instanceName = moduleInstance.getName();
+				ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
+				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+				if (untypedResolvedModule instanceof Module) {
+					Module resolvedModule = (Module) untypedResolvedModule;
+					for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
+						if (portDefinitionGroup.getDirection() instanceof PortDirection_Output) {
+							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+								String prefixedPortName = instanceName + '.' + portDefinition.getName();
+								if (!previouslyAssignedSignals.contains(prefixedPortName)) {
+									onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -143,7 +161,7 @@ public abstract class ModuleProcessor {
 			// constants have been handled by the constant evaluator already
 			return;
 		} else if (item instanceof SignalLike) {
-			SignalLike signalLike = (SignalLike)item;
+			SignalLike signalLike = (SignalLike) item;
 			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
 			if (dataTypeFamily == ProcessedDataType.Family.UNKNOWN) {
 				// don't complain about type errors if we don't even know the type -- in that case,
@@ -165,11 +183,37 @@ public abstract class ModuleProcessor {
 				onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
 			}
 		} else if (item instanceof ModuleInstance) {
-			// TODO
+			ModuleInstance moduleInstance = (ModuleInstance) item;
+			String instanceName = moduleInstance.getName();
+			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
+			PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+			Module resolvedModule;
+			if (untypedResolvedModule instanceof Module) {
+				resolvedModule = (Module) untypedResolvedModule;
+			} else {
+				onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
+				resolvedModule = null;
+			}
+			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
+			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
+				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+					String portName = portDefinition.getName();
+					if (portName != null) {
+						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+					}
+				}
+			}
+			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
+				String portName = portConnection.getPortName().getIdentifier().getText();
+				Expression expression = portConnection.getExpression();
+				newlyAssignedSignals.add(instanceName + '.' + portName);
+				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
+				if (portDefinitionGroup == null) {
+					onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+				}
+			}
 		}
 	}
-
-
 
 	private void processDoBlock(ImplementationItem_DoBlock doBlock) {
 
@@ -199,11 +243,11 @@ public abstract class ModuleProcessor {
 			Expression inner = ((Expression_Parenthesized) destination).getExpression();
 			handleAssignedTo(inner);
 		} else if (destination instanceof Expression_BinaryConcat) {
-			Expression_BinaryConcat typed = (Expression_BinaryConcat)destination;
+			Expression_BinaryConcat typed = (Expression_BinaryConcat) destination;
 			handleAssignedTo(typed.getLeftOperand());
 			handleAssignedTo(typed.getRightOperand());
 		} else if (destination instanceof Expression_InstancePort) {
-			Expression_InstancePort typed = (Expression_InstancePort)destination;
+			Expression_InstancePort typed = (Expression_InstancePort) destination;
 			handleAssignedTo(typed.getInstanceName().getText() + '.' + typed.getPortName().getText(), typed);
 		}
 	}
@@ -266,8 +310,8 @@ public abstract class ModuleProcessor {
 	//
 
 	/**
-	 * The specified body is executed for each element, pre-order, and should return true if its
-	 * children should be visited too.
+	 * The specified body is executed for each element, pre-order, and should return true if its children should be
+	 * visited too.
 	 */
 	private void foreachPreOrder(PsiElement root, Predicate<PsiElement> body) {
 		if (!body.test(root)) {
