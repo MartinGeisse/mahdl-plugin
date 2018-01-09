@@ -97,12 +97,7 @@ public abstract class ModuleProcessor {
 		moduleAnalyzer.analyzeNonConstants();
 		definitions = moduleAnalyzer.getDefinitions();
 
-		// process named definitions
-		for (Named item : definitions.values()) {
-			processDefinition(item);
-		}
-
-		// process do-blocks
+		// this object detects duplicate or missing assignments
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector() {
 
 			@Override
@@ -111,6 +106,13 @@ public abstract class ModuleProcessor {
 			}
 
 		};
+
+		// process named definitions
+		for (Named item : definitions.values()) {
+			processDefinition(item);
+		}
+
+		// process do-blocks
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
