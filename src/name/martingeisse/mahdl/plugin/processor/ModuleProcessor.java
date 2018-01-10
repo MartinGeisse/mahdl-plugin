@@ -238,6 +238,11 @@ public abstract class ModuleProcessor {
 					// output ports to l-value expressions. Only inout ports cannot be directly bound, because the
 					// flow direction is unclear. BUT: How does flow direction work with tri-state wires at all?
 					// This hints at not allowing inout ports and tri-state logic at all. Check this.
+					// --> internal tristate buses don't exist in FPGAs. On technologies where they exist, one would
+					//     better define/use a specialized HDL construct for them, not normal signals and registers.
+					// --> external tristate buses can be controlled by using separate input, output, enable signals
+					//     and binding them via the pin map / constraints file. This is slightly more cumbersome, but
+					//     worth a try to keep the language simple.
 				}
 			}
 		}
