@@ -34,6 +34,7 @@ public abstract class ModuleProcessor {
 	private final Module module;
 
 	private ConstantExpressionEvaluator constantExpressionEvaluator;
+	private ConstantExpressionEvaluator exceptionThrowingConstantExpressionEvaluator;
 	private Map<String, ConstantValue> constants;
 	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
@@ -46,6 +47,14 @@ public abstract class ModuleProcessor {
 
 	public Module getModule() {
 		return module;
+	}
+
+	public Map<String, ConstantValue> getConstants() {
+		return constants;
+	}
+
+	public Map<String, Named> getDefinitions() {
+		return definitions;
 	}
 
 	public void process() {
@@ -79,6 +88,19 @@ public abstract class ModuleProcessor {
 		};
 		constantExpressionEvaluator.processConstantDefinitions();
 		constants = constantExpressionEvaluator.getDefinedConstants();
+		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator() {
+
+			@Override
+			protected void onError(PsiElement errorSource, String message) {
+				throw new ConstantEvaluationException();
+			}
+
+			@Override
+			protected ProcessedDataType processDataType(DataType dataType) {
+				return ModuleProcessor.this.processDataType(dataType);
+			}
+
+		};
 
 		// collect definitions
 		moduleAnalyzer = new ModuleAnalyzer(module) {
@@ -165,6 +187,7 @@ public abstract class ModuleProcessor {
 				// Converting a constant value can handle a broader range of types than a run-time conversion.
 				// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
 				// the vector size, but at runtime this is forbidden because integers are.
+				// TODO use tryEvaluateConstantExpression() for that
 				ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
 				if (!signalLike.getProcessedDataType().canConvertRuntimeValueOfTypeImplicitly(initializerDataType)) {
 					onError(signalLike.getInitializer(), "cannot assign value of type " + initializerDataType +
@@ -207,17 +230,34 @@ public abstract class ModuleProcessor {
 	}
 
 	private void processDoBlock(ImplementationItem_DoBlock doBlock) {
+		DoBlockTrigger trigger = doBlock.getTrigger();
+		if (trigger instanceof DoBlockTrigger_Clocked) {
+			Expression clockExpression = ((DoBlockTrigger_Clocked)trigger).getClockExpression();
+			// TODO check
+		}
+		processStatement(doBlock.getStatement());
+	}
 
-		// look for duplicate assignments
-		foreachPreOrder(doBlock, element -> {
-			if (element instanceof Expression) {
-				return false;
+	private void processStatement(Statement statement) {
+		if (statement instanceof Statement_Assignment) {
+			Statement_Assignment assignment = (Statement_Assignment)statement;
+			// TODO assignment.getLeftSide();
+			// TODO assignment.getRightSide();
+			inconsistentAssignmentDetector.handleAssignment(assignment);
+		} else if (statement instanceof Statement_Block) {
+			Statement_Block block = (Statement_Block)statement;
+			for (Statement subStatement : block.getBody().getAll()) {
+				processStatement(subStatement);
 			}
-			if (element instanceof Statement_Assignment) {
-				inconsistentAssignmentDetector.handleAssignment((Statement_Assignment) element);
-			}
-			return true;
-		});
+		} else if (statement instanceof Statement_IfThen) {
+			// TODO
+		} else if (statement instanceof Statement_IfThenElse) {
+			// TODO
+		} else if (statement instanceof Statement_Switch) {
+			// TODO
+		} else if (statement instanceof Statement_Break) {
+			// TODO
+		}
 	}
 
 	private ProcessedDataType processDataType(DataType dataType) {
@@ -266,21 +306,15 @@ public abstract class ModuleProcessor {
 
 	protected abstract void onError(PsiElement errorSource, String message);
 
-	//
-	// low-level helper methods
-	//
+	private ConstantValue tryEvaluateConstantExpression(Expression expression) {
+		try {
+			return exceptionThrowingConstantExpressionEvaluator.evaluate(expression);
+		} catch (ConstantEvaluationException e) {
+			return null;
+		}
+	}
 
-	/**
-	 * The specified body is executed for each element, pre-order, and should return true if its children should be
-	 * visited too.
-	 */
-	private void foreachPreOrder(PsiElement root, Predicate<PsiElement> body) {
-		if (!body.test(root)) {
-			return;
-		}
-		if (root instanceof ASTDelegatePsiElement) {
-			InternalPsiUtil.foreachChild((ASTDelegatePsiElement) root, child -> foreachPreOrder(child, body));
-		}
+	private static class ConstantEvaluationException extends RuntimeException {
 	}
 
 }
