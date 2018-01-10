@@ -23,8 +23,6 @@ public abstract class ProcessedDataType {
 
 	public abstract ConstantValue convertConstantValueImplicitly(ConstantValue inputValue);
 
-	public abstract boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType);
-
 	public static final class Unknown extends ProcessedDataType {
 
 		public static final Unknown INSTANCE = new Unknown();
@@ -51,12 +49,6 @@ public abstract class ProcessedDataType {
 		@Override
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			return ConstantValue.Unknown.INSTANCE;
-		}
-
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			// if this type appears, we already have an error, and we don't want follow-up errors to appear
-			return true;
 		}
 
 	}
@@ -89,10 +81,6 @@ public abstract class ProcessedDataType {
 			return inputValue instanceof ConstantValue.Bit ? inputValue : ConstantValue.Unknown.INSTANCE;
 		}
 
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			return valueType instanceof Bit;
-		}
 	}
 
 	// note: the Java BitSet uses the same index values as the MaHDL vector, just the from/to notation is reversed.
@@ -154,11 +142,6 @@ public abstract class ProcessedDataType {
 			}
 		}
 
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			return valueType instanceof Vector && ((Vector) valueType).size == size;
-		}
-
 	}
 
 	public static final class Memory extends ProcessedDataType {
@@ -212,11 +195,6 @@ public abstract class ProcessedDataType {
 			return ConstantValue.Unknown.INSTANCE;
 		}
 
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			// assigning to a whole memory at once at run-time is impossible
-			return false;
-		}
 	}
 
 	public static final class Integer extends ProcessedDataType {
@@ -251,11 +229,6 @@ public abstract class ProcessedDataType {
 			}
 		}
 
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			// integer cannot appear at run-time
-			return false;
-		}
 	}
 
 	public static final class Text extends ProcessedDataType {
@@ -290,11 +263,6 @@ public abstract class ProcessedDataType {
 			}
 		}
 
-		@Override
-		public boolean canConvertRuntimeValueOfTypeImplicitly(ProcessedDataType valueType) {
-			// text cannot appear at run-time
-			return false;
-		}
 	}
 
 }

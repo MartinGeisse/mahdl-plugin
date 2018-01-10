@@ -189,10 +189,7 @@ public abstract class ModuleProcessor {
 				// the vector size, but at runtime this is forbidden because integers are.
 				// TODO use tryEvaluateConstantExpression() for that
 				ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
-				if (!signalLike.getProcessedDataType().canConvertRuntimeValueOfTypeImplicitly(initializerDataType)) {
-					onError(signalLike.getInitializer(), "cannot assign value of type " + initializerDataType +
-						" to a signal or register of type " + signalLike.getProcessedDataType());
-				}
+				checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
 			}
 		} else if (item instanceof ModuleInstance) {
 			ModuleInstance moduleInstance = (ModuleInstance) item;
@@ -222,8 +219,25 @@ public abstract class ModuleProcessor {
 				if (portDefinitionGroup == null) {
 					onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
 				} else {
+					// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
+					ProcessedDataType portType = processDataType(portDefinitionGroup.getDataType());
 					Expression expression = portConnection.getExpression();
-					// TODO check type
+					ProcessedDataType expressionType = expressionTypeChecker.check(expression);
+
+					// TODO check type in/out/inout
+
+					// TODO how does binding an inout port work at all?
+					// TODO followup: should we allow this kind of binding for non-input ports? Or should we rather demand
+					// that e.g. output ports be read by using an instance port reference?
+					// TODO followup: Should we allow inout ports at all? We don't have Z values, after all.
+					// TODO followup: If we demand that output ports be bound via instance port references, why not
+					// input ports as well?
+					// But binding ports directly looks much cleaner!
+					// -->
+					// combined followup: We should probably allow directly binding input ports to expressions, and
+					// output ports to l-value expressions. Only inout ports cannot be directly bound, because the
+					// flow direction is unclear. BUT: How does flow direction work with tri-state wires at all?
+					// This hints at not allowing inout ports and tri-state logic at all. Check this.
 				}
 			}
 		}
@@ -315,6 +329,25 @@ public abstract class ModuleProcessor {
 	}
 
 	private static class ConstantEvaluationException extends RuntimeException {
+	}
+
+	private void checkRuntimeAssignment(PsiElement errorSource, ProcessedDataType variableType, ProcessedDataType valueType) {
+		ProcessedDataType.Family variableTypeFamily = variableType.getFamily();
+		ProcessedDataType.Family valueTypeFamily = valueType.getFamily();
+		if (variableTypeFamily == ProcessedDataType.Family.UNKNOWN || valueTypeFamily == ProcessedDataType.Family.UNKNOWN) {
+			// if either type is unknown, an error has already been reported, and we don't want any followup errors
+			return;
+		}
+		if (variableTypeFamily != ProcessedDataType.Family.BIT && variableTypeFamily != ProcessedDataType.Family.VECTOR) {
+			// integer and text should not exist at run-time, and a whole memory cannot be assigned to at once
+			onError(errorSource, "cannot run-time assign to type " + variableType);
+			return;
+		}
+		if (!valueType.equals(variableType)) {
+			// otherwise, the types must be equal. They're bit or vector of some size, and we don't have any implicit
+			// conversion, truncating or expanding.
+			onError(errorSource, "cannot convert from type " + valueType + " to type " + variableType + " at run-time");
+		}
 	}
 
 }
