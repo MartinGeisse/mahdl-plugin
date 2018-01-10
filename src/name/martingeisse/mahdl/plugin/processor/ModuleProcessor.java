@@ -238,11 +238,27 @@ public abstract class ModuleProcessor {
 					// output ports to l-value expressions. Only inout ports cannot be directly bound, because the
 					// flow direction is unclear. BUT: How does flow direction work with tri-state wires at all?
 					// This hints at not allowing inout ports and tri-state logic at all. Check this.
+					//
 					// --> internal tristate buses don't exist in FPGAs. On technologies where they exist, one would
 					//     better define/use a specialized HDL construct for them, not normal signals and registers.
+					//     They shouldn't even extend far throughout the chip because
+					//     (1) timing restrictions -- the signal can only run so far in a single cycle
+					//     (2) coordination -- additional signals are used to control the direction
+					//     So internal tristate buses are a tool to minimize logic on a low-level, possibly with
+					//     a pull-up or pull-down as a wired AND/OR, or to implement a mux. This isn't something
+					//     a modern HDL should deal with.
+					//
+					//     Net search confirms this, e.g.:
+					//			TL;DR: as semiconductor technology advances, the limiting
+					// 			factor in an FPGA shifts from not having enough transistors
+					// 			to wire speed: smaller wires have higher resistance and so
+					// 			they are slower than the old fat wires. When transistor count
+					// 			is the limiting factor, tri-state drivers make sense. When
+					// 			wire speed the limiting factor, they don't.
+					//
 					// --> external tristate buses can be controlled by using separate input, output, enable signals
 					//     and binding them via the pin map / constraints file. This is slightly more cumbersome, but
-					//     worth a try to keep the language simple.
+					//     worth a try to keep the language simple. This is something that could be improved though.
 				}
 			}
 		}
