@@ -88,7 +88,7 @@ public abstract class ModuleProcessor {
 		};
 		constantExpressionEvaluator.processConstantDefinitions();
 		constants = constantExpressionEvaluator.getDefinedConstants();
-		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator() {
+		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator(module) {
 
 			@Override
 			protected void onError(PsiElement errorSource, String message) {

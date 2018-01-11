@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class PortDirection_Inout extends PortDirection  {
+public final class PortDirection_In extends PortDirection  {
 
-    public PortDirection_Inout(@NotNull ASTNode node) {
+    public PortDirection_In(@NotNull ASTNode node) {
         super(node);
     }
 

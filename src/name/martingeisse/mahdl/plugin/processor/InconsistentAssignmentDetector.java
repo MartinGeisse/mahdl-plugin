@@ -29,7 +29,7 @@ public abstract class InconsistentAssignmentDetector {
 		for (Named definition : definitions) {
 			if (definition instanceof Port) {
 				Port port = (Port) definition;
-				if (port.getDirectionElement() instanceof PortDirection_Output) {
+				if (port.getDirectionElement() instanceof PortDirection_Out) {
 					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
 						onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
 					}
@@ -47,7 +47,7 @@ public abstract class InconsistentAssignmentDetector {
 				if (untypedResolvedModule instanceof Module) {
 					Module resolvedModule = (Module) untypedResolvedModule;
 					for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-						if (portDefinitionGroup.getDirection() instanceof PortDirection_Output) {
+						if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
 							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 								String prefixedPortName = instanceName + '.' + portDefinition.getName();
 								if (!previouslyAssignedSignals.contains(prefixedPortName)) {

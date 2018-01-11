@@ -24,13 +24,12 @@ public class Symbols {
 	public static final MahdlElementType KW_DO = new MahdlElementType("KW_DO");
 	public static final MahdlElementType KW_ELSE = new MahdlElementType("KW_ELSE");
 	public static final MahdlElementType KW_IF = new MahdlElementType("KW_IF");
-	public static final MahdlElementType KW_INOUT = new MahdlElementType("KW_INOUT");
-	public static final MahdlElementType KW_INPUT = new MahdlElementType("KW_INPUT");
+	public static final MahdlElementType KW_IN = new MahdlElementType("KW_IN");
 	public static final MahdlElementType KW_INTEGER = new MahdlElementType("KW_INTEGER");
 	public static final MahdlElementType KW_INTERFACE = new MahdlElementType("KW_INTERFACE");
 	public static final MahdlElementType KW_MEMORY = new MahdlElementType("KW_MEMORY");
 	public static final MahdlElementType KW_MODULE = new MahdlElementType("KW_MODULE");
-	public static final MahdlElementType KW_OUTPUT = new MahdlElementType("KW_OUTPUT");
+	public static final MahdlElementType KW_OUT = new MahdlElementType("KW_OUT");
 	public static final MahdlElementType KW_REGISTER = new MahdlElementType("KW_REGISTER");
 	public static final MahdlElementType KW_SIGNAL = new MahdlElementType("KW_SIGNAL");
 	public static final MahdlElementType KW_SWITCH = new MahdlElementType("KW_SWITCH");
@@ -118,9 +117,8 @@ public class Symbols {
 	public static final MahdlElementType portConnection = new MahdlElementType("portConnection");
 	public static final MahdlElementType portDefinition = new MahdlElementType("portDefinition");
 	public static final MahdlElementType portDefinitionGroup = new MahdlElementType("portDefinitionGroup");
-	public static final MahdlElementType portDirection_Inout = new MahdlElementType("portDirection_Inout");
-	public static final MahdlElementType portDirection_Input = new MahdlElementType("portDirection_Input");
-	public static final MahdlElementType portDirection_Output = new MahdlElementType("portDirection_Output");
+	public static final MahdlElementType portDirection_In = new MahdlElementType("portDirection_In");
+	public static final MahdlElementType portDirection_Out = new MahdlElementType("portDirection_Out");
 	public static final MahdlElementType qualifiedModuleName = new MahdlElementType("qualifiedModuleName");
 	public static final MahdlElementType signalLikeDefinition_WithInitializer = new MahdlElementType("signalLikeDefinition_WithInitializer");
 	public static final MahdlElementType signalLikeDefinition_WithoutInitializer = new MahdlElementType("signalLikeDefinition_WithoutInitializer");

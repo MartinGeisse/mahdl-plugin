@@ -35,12 +35,10 @@ public class VerilogGenerator {
 //			for (LeafPsiElement identifierElement : portDefinition.getIdentifiers().getAll()) {
 //				Port port = new Port();
 //				port.comma = (ports.isEmpty() ? "" : ", ");
-//				if (portDefinition.getDirection() instanceof PortDirection_Input) {
+//				if (portDefinition.getDirection() instanceof PortDirection_In) {
 //					port.direction = "input";
-//				} else if (portDefinition.getDirection() instanceof PortDirection_Output) {
+//				} else if (portDefinition.getDirection() instanceof PortDirection_Out) {
 //					port.direction = "output";
-//				} else if (portDefinition.getDirection() instanceof PortDirection_Inout) {
-//					port.direction = "inout";
 //				} else {
 //					throw new RuntimeException("unknown port direction: " + portDefinition.getDirection());
 //				}

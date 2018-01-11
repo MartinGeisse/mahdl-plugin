@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryShiftLeft extends Expression implements BinaryOperation {
+public final class Expression_BinaryShiftLeft extends Expression  {
 
     public Expression_BinaryShiftLeft(@NotNull ASTNode node) {
         super(node);

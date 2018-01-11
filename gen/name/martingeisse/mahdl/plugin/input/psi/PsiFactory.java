@@ -223,14 +223,11 @@ public class PsiFactory {
                     if (type == Symbols.signalLikeKind_Register) {
                 return new SignalLikeKind_Register(node);
             }
-                    if (type == Symbols.portDirection_Input) {
-                return new PortDirection_Input(node);
+                    if (type == Symbols.portDirection_In) {
+                return new PortDirection_In(node);
             }
-                    if (type == Symbols.portDirection_Output) {
-                return new PortDirection_Output(node);
-            }
-                    if (type == Symbols.portDirection_Inout) {
-                return new PortDirection_Inout(node);
+                    if (type == Symbols.portDirection_Out) {
+                return new PortDirection_Out(node);
             }
                     if (type == Symbols.synthetic_SeparatedList_SignalLikeDefinition_COMMA) {
                 return new ListNode<SignalLikeDefinition>(node, TokenSet.create(Symbols.signalLikeDefinition_WithoutInitializer, Symbols.signalLikeDefinition_WithInitializer), SignalLikeDefinition.class);

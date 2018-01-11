@@ -85,9 +85,8 @@ UnsignedInteger = "0" | {PositiveInteger}
 // module and interface keywords
 module { return Symbols.KW_MODULE; }
 interface { return Symbols.KW_INTERFACE; }
-input { return Symbols.KW_INPUT; }
-output { return Symbols.KW_OUTPUT; }
-inout { return Symbols.KW_INOUT; }
+in { return Symbols.KW_IN; }
+out { return Symbols.KW_OUT; }
 
 // value source kind keywords
 constant { return Symbols.KW_CONSTANT; }

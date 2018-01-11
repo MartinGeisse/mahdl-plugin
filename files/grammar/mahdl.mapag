@@ -19,7 +19,7 @@
 	OP_MUX, OP_CONCAT,
 
 	// keywords
-	KW_MODULE, KW_INTERFACE, KW_INPUT, KW_OUTPUT, KW_INOUT,
+	KW_MODULE, KW_INTERFACE, KW_IN, KW_OUT,
 	KW_CONSTANT, KW_SIGNAL, KW_REGISTER,
 	KW_BIT, KW_VECTOR, KW_MEMORY, KW_INTEGER, KW_TEXT,
 	KW_DO, KW_IF, KW_ELSE, KW_SWITCH, KW_CASE, KW_DEFAULT, KW_BREAK,
@@ -74,9 +74,8 @@ portDefinitionGroup ::= portDirection:direction dataType:dataType (portDefinitio
 portDefinition ::= IDENTIFIER:identifier;
 
 portDirection ::= {
-	input ::= KW_INPUT;
-	output ::= KW_OUTPUT;
-	inout ::= KW_INOUT;
+	in ::= KW_IN;
+	out ::= KW_OUT;
 }
 
 
