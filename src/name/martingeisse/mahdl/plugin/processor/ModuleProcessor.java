@@ -226,7 +226,7 @@ public abstract class ModuleProcessor {
 						checkRuntimeAssignment(expression, portType, expressionType);
 					} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
 						checkRuntimeAssignment(expression, expressionType, portType);
-						// TODO ensure that the expression denotes an l-value
+						checkLValue(expression, true, false);
 					}
 				}
 			}
@@ -248,11 +248,12 @@ public abstract class ModuleProcessor {
 	private void processStatement(Statement statement) {
 		if (statement instanceof Statement_Assignment) {
 			Statement_Assignment assignment = (Statement_Assignment) statement;
-			// TODO assignment.getLeftSide();
-			// TODO assignment.getRightSide();
-			// checkLValue
-			// expressiontypechecker
 			inconsistentAssignmentDetector.handleAssignment(assignment);
+			ProcessedDataType leftType = expressionTypeChecker.check(assignment.getLeftSide());
+			ProcessedDataType rightType = expressionTypeChecker.check(assignment.getRightSide());
+			checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
+			// TODO assign to signal / register in comb / clocked context
+			checkLValue(assignment.getLeftSide(), true, true);
 		} else if (statement instanceof Statement_Block) {
 			Statement_Block block = (Statement_Block) statement;
 			for (Statement subStatement : block.getBody().getAll()) {
@@ -393,9 +394,11 @@ public abstract class ModuleProcessor {
 		} else if (expression instanceof Expression_InstancePort) {
 			// TODO
 		} else if (expression instanceof Expression_BinaryConcat) {
-			// TODO
+			Expression_BinaryConcat concat = (Expression_BinaryConcat)expression;
+			checkLValue(concat.getLeftOperand(), allowContinuous, allowClocked);
+			checkLValue(concat.getRightOperand(), allowContinuous, allowClocked);
 		} else if (expression instanceof Expression_Parenthesized) {
-			// TODO
+			checkLValue(((Expression_Parenthesized) expression).getExpression(), allowContinuous, allowClocked);
 		} else {
 			onError(expression, "expression cannot be assigned to");
 		}
