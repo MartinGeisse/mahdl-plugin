@@ -1,7 +1,7 @@
 package name.martingeisse.mahdl.plugin.processor;
 
-import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -12,7 +12,6 @@ import name.martingeisse.mahdl.plugin.processor.definition.*;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * This class handles the common logic between error annotations, code generation etc., and provides a unified framework
@@ -223,42 +222,12 @@ public abstract class ModuleProcessor {
 					ProcessedDataType portType = processDataType(portDefinitionGroup.getDataType());
 					Expression expression = portConnection.getExpression();
 					ProcessedDataType expressionType = expressionTypeChecker.check(expression);
-
-					// TODO check type in/out/inout
-
-					// TODO how does binding an inout port work at all?
-					// TODO followup: should we allow this kind of binding for non-input ports? Or should we rather demand
-					// that e.g. output ports be read by using an instance port reference?
-					// TODO followup: Should we allow inout ports at all? We don't have Z values, after all.
-					// TODO followup: If we demand that output ports be bound via instance port references, why not
-					// input ports as well?
-					// But binding ports directly looks much cleaner!
-					// -->
-					// combined followup: We should probably allow directly binding input ports to expressions, and
-					// output ports to l-value expressions. Only inout ports cannot be directly bound, because the
-					// flow direction is unclear. BUT: How does flow direction work with tri-state wires at all?
-					// This hints at not allowing inout ports and tri-state logic at all. Check this.
-					//
-					// --> internal tristate buses don't exist in FPGAs. On technologies where they exist, one would
-					//     better define/use a specialized HDL construct for them, not normal signals and registers.
-					//     They shouldn't even extend far throughout the chip because
-					//     (1) timing restrictions -- the signal can only run so far in a single cycle
-					//     (2) coordination -- additional signals are used to control the direction
-					//     So internal tristate buses are a tool to minimize logic on a low-level, possibly with
-					//     a pull-up or pull-down as a wired AND/OR, or to implement a mux. This isn't something
-					//     a modern HDL should deal with.
-					//
-					//     Net search confirms this, e.g.:
-					//			TL;DR: as semiconductor technology advances, the limiting
-					// 			factor in an FPGA shifts from not having enough transistors
-					// 			to wire speed: smaller wires have higher resistance and so
-					// 			they are slower than the old fat wires. When transistor count
-					// 			is the limiting factor, tri-state drivers make sense. When
-					// 			wire speed the limiting factor, they don't.
-					//
-					// --> external tristate buses can be controlled by using separate input, output, enable signals
-					//     and binding them via the pin map / constraints file. This is slightly more cumbersome, but
-					//     worth a try to keep the language simple. This is something that could be improved though.
+					if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+						checkRuntimeAssignment(expression, portType, expressionType);
+					} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+						checkRuntimeAssignment(expression, expressionType, portType);
+						// TODO ensure that the expression denotes an l-value
+					}
 				}
 			}
 		}
@@ -267,31 +236,51 @@ public abstract class ModuleProcessor {
 	private void processDoBlock(ImplementationItem_DoBlock doBlock) {
 		DoBlockTrigger trigger = doBlock.getTrigger();
 		if (trigger instanceof DoBlockTrigger_Clocked) {
-			Expression clockExpression = ((DoBlockTrigger_Clocked)trigger).getClockExpression();
-			// TODO check
+			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
+			ProcessedDataType clockExpressionType = expressionTypeChecker.check(clockExpression);
+			if (clockExpressionType.getFamily() != ProcessedDataType.Family.BIT) {
+				onError(clockExpression, "cannot use an expression of type " + clockExpressionType + " as clock");
+			}
 		}
 		processStatement(doBlock.getStatement());
 	}
 
 	private void processStatement(Statement statement) {
 		if (statement instanceof Statement_Assignment) {
-			Statement_Assignment assignment = (Statement_Assignment)statement;
+			Statement_Assignment assignment = (Statement_Assignment) statement;
 			// TODO assignment.getLeftSide();
 			// TODO assignment.getRightSide();
+			// checkLValue
+			// expressiontypechecker
 			inconsistentAssignmentDetector.handleAssignment(assignment);
 		} else if (statement instanceof Statement_Block) {
-			Statement_Block block = (Statement_Block)statement;
+			Statement_Block block = (Statement_Block) statement;
 			for (Statement subStatement : block.getBody().getAll()) {
 				processStatement(subStatement);
 			}
 		} else if (statement instanceof Statement_IfThen) {
-			// TODO
+			Statement_IfThen ifThenStatement = (Statement_IfThen) statement;
+			processIfStatement(ifThenStatement.getCondition(), ifThenStatement.getThenBranch(), null);
 		} else if (statement instanceof Statement_IfThenElse) {
-			// TODO
+			Statement_IfThenElse ifThenElseStatement = (Statement_IfThenElse) statement;
+			processIfStatement(ifThenElseStatement.getCondition(), ifThenElseStatement.getThenBranch(), ifThenElseStatement.getElseBranch());
 		} else if (statement instanceof Statement_Switch) {
 			// TODO
+			throw new RuntimeException("switch statements not implemented yet");
 		} else if (statement instanceof Statement_Break) {
 			// TODO
+			throw new RuntimeException("break statements not implemented yet");
+		}
+	}
+
+	private void processIfStatement(Expression condition, Statement thenBranch, Statement elseBranch) {
+		ProcessedDataType conditionType = expressionTypeChecker.check(condition);
+		if (conditionType.getFamily() != ProcessedDataType.Family.BIT) {
+			onError(condition, "cannot use an expression of type " + conditionType + " as condition");
+		}
+		processStatement(thenBranch);
+		if (elseBranch != null) {
+			processStatement(elseBranch);
 		}
 	}
 
@@ -371,4 +360,44 @@ public abstract class ModuleProcessor {
 		}
 	}
 
+	private void checkLValue(Expression expression, boolean allowContinuous, boolean allowClocked) {
+		if (expression instanceof Expression_Identifier) {
+			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
+			String identifierText = identifierElement.getText();
+			Named definition = definitions.get(identifierText);
+			if (definition != null) {
+				// undefined symbols are already marked by the ExpressionTypeChecker
+				if (definition instanceof Port) {
+					PortDirection direction = ((Port) definition).getDirectionElement();
+					if (!(direction instanceof PortDirection_Out)) {
+						onError(expression, "input port " + definition.getName() + " cannot be assigned to");
+					} else if (!allowContinuous) {
+						onError(expression, "continuous assignment not allowed in this context");
+					}
+				} else if (definition instanceof Signal) {
+					if (!allowContinuous) {
+						onError(expression, "continuous assignment not allowed in this context");
+					}
+				} else if (definition instanceof Register) {
+					if (!allowClocked) {
+						onError(expression, "clocked assignment not allowed in this context");
+					}
+				} else if (definition instanceof Constant) {
+					onError(expression, "cannot assign to constant");
+				}
+			}
+		} else if (expression instanceof Expression_IndexSelection) {
+			checkLValue(((Expression_IndexSelection) expression).getContainer(), allowContinuous, allowClocked);
+		} else if (expression instanceof Expression_RangeSelection) {
+			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
+		} else if (expression instanceof Expression_InstancePort) {
+			// TODO
+		} else if (expression instanceof Expression_BinaryConcat) {
+			// TODO
+		} else if (expression instanceof Expression_Parenthesized) {
+			// TODO
+		} else {
+			onError(expression, "expression cannot be assigned to");
+		}
+	}
 }
