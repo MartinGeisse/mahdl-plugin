@@ -1,15 +1,16 @@
 package name.martingeisse.mahdl.plugin.processor;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
+import name.martingeisse.mahdl.plugin.processor.type.ExpressionTypeChecker;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,22 +27,23 @@ import java.util.Map;
  * same errors in various sub-steps, so they would take an annotation holder to report these errors -- but there would
  * need to be an agreement which step reports which errors. And so on.
  */
-public abstract class ModuleProcessor {
-
-	private static final BigInteger MAX_SIZE_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
+public final class ModuleProcessor {
 
 	private final Module module;
+	private final ErrorHandler errorHandler;
 
 	private ConstantExpressionEvaluator constantExpressionEvaluator;
+	private DataTypeProcessorImpl dataTypeProcessor;
 	private ConstantExpressionEvaluator exceptionThrowingConstantExpressionEvaluator;
-	private Map<String, ConstantValue> constants;
 	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
 	private ExpressionTypeChecker expressionTypeChecker;
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
+	private RuntimeAssignmentChecker runtimeAssignmentChecker;
 
-	public ModuleProcessor(Module module) {
+	public ModuleProcessor(Module module, ErrorHandler errorHandler) {
 		this.module = module;
+		this.errorHandler = errorHandler;
 	}
 
 	public Module getModule() {
@@ -49,7 +51,7 @@ public abstract class ModuleProcessor {
 	}
 
 	public Map<String, ConstantValue> getConstants() {
-		return constants;
+		return constantExpressionEvaluator.getDefinedConstants();
 	}
 
 	public Map<String, Named> getDefinitions() {
@@ -65,72 +67,35 @@ public abstract class ModuleProcessor {
 				String expectedFileName = moduleName + '.' + MahdlFileType.DEFAULT_EXTENSION;
 				String actualFileName = ((MahdlSourceFile) element).getName();
 				if (!actualFileName.equals(expectedFileName)) {
-					onError(module.getModuleName(), "module '" + moduleName + "' should be defined in a file named '" + expectedFileName + "'");
+					errorHandler.onError(module.getModuleName(), "module '" + moduleName + "' should be defined in a file named '" + expectedFileName + "'");
 				}
 				break;
 			}
 		}
 
-		// evaluate constants
-		constantExpressionEvaluator = new ConstantExpressionEvaluator(module) {
-
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				ModuleProcessor.this.onError(errorSource, message);
-			}
-
-			@Override
-			protected ProcessedDataType processDataType(DataType dataType) {
-				return ModuleProcessor.this.processDataType(dataType);
-			}
-
-		};
-		constantExpressionEvaluator.processConstantDefinitions();
-		constants = constantExpressionEvaluator.getDefinedConstants();
-		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator(module) {
-
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				throw new ConstantEvaluationException();
-			}
-
-			@Override
-			protected ProcessedDataType processDataType(DataType dataType) {
-				return ModuleProcessor.this.processDataType(dataType);
-			}
-
-		};
+		// evaluate constants. The ConstantExpressionEvaluator and the DataTypeProcessor work in lockstep here since
+		// every constant definition may use the constants defined above for its data type.
+		constantExpressionEvaluator = new ConstantExpressionEvaluator(errorHandler, module);
+		dataTypeProcessor = new DataTypeProcessorImpl(errorHandler, constantExpressionEvaluator);
+		constantExpressionEvaluator.processConstantDefinitions(dataTypeProcessor);
+		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator((errorSource, message) -> {
+			throw new ConstantEvaluationException();
+		}, module);
 
 		// collect definitions
-		moduleAnalyzer = new ModuleAnalyzer(module) {
-
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				ModuleProcessor.this.onError(errorSource, message);
-			}
-
-			@Override
-			protected ProcessedDataType processDataType(DataType dataType) {
-				return ModuleProcessor.this.processDataType(dataType);
-			}
-
-		};
-		moduleAnalyzer.registerConstants(constants);
+		moduleAnalyzer = new ModuleAnalyzer(errorHandler, dataTypeProcessor, module);
+		moduleAnalyzer.registerConstants(constantExpressionEvaluator.getDefinedConstants());
 		moduleAnalyzer.analyzeNonConstants();
 		definitions = moduleAnalyzer.getDefinitions();
 
 		// this object checks for type errors in expressions and determines their result type
-		expressionTypeChecker = new ExpressionTypeChecker(definitions);
+		expressionTypeChecker = new ExpressionTypeChecker(errorHandler, definitions);
 
 		// this object detects duplicate or missing assignments
-		inconsistentAssignmentDetector = new InconsistentAssignmentDetector() {
+		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
 
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				ModuleProcessor.this.onError(errorSource, message);
-			}
-
-		};
+		// this object checks run-time assignments and detects type errors and assignment to non-L-values
+		runtimeAssignmentChecker = new RuntimeAssignmentChecker(errorHandler, definitions);
 
 		// process named definitions
 		for (Named item : definitions.values()) {
@@ -178,7 +143,7 @@ public abstract class ModuleProcessor {
 					break allowedDataTypeCheck;
 				}
 				if (!valid) {
-					onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
+					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
 				}
 			}
 			if (signalLike.getInitializer() != null) {
@@ -199,7 +164,7 @@ public abstract class ModuleProcessor {
 			if (untypedResolvedModule instanceof Module) {
 				resolvedModule = (Module) untypedResolvedModule;
 			} else {
-				onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
+				errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
 				resolvedModule = null;
 			}
 			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
@@ -216,10 +181,10 @@ public abstract class ModuleProcessor {
 				inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
 				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
 				if (portDefinitionGroup == null) {
-					onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+					errorHandler.onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
 				} else {
 					// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-					ProcessedDataType portType = processDataType(portDefinitionGroup.getDataType());
+					ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
 					Expression expression = portConnection.getExpression();
 					ProcessedDataType expressionType = expressionTypeChecker.check(expression);
 					if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
@@ -239,7 +204,7 @@ public abstract class ModuleProcessor {
 			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
 			ProcessedDataType clockExpressionType = expressionTypeChecker.check(clockExpression);
 			if (clockExpressionType.getFamily() != ProcessedDataType.Family.BIT) {
-				onError(clockExpression, "cannot use an expression of type " + clockExpressionType + " as clock");
+				errorHandler.onError(clockExpression, "cannot use an expression of type " + clockExpressionType + " as clock");
 			}
 		}
 		processStatement(doBlock.getStatement());
@@ -277,59 +242,13 @@ public abstract class ModuleProcessor {
 	private void processIfStatement(Expression condition, Statement thenBranch, Statement elseBranch) {
 		ProcessedDataType conditionType = expressionTypeChecker.check(condition);
 		if (conditionType.getFamily() != ProcessedDataType.Family.BIT) {
-			onError(condition, "cannot use an expression of type " + conditionType + " as condition");
+			errorHandler.onError(condition, "cannot use an expression of type " + conditionType + " as condition");
 		}
 		processStatement(thenBranch);
 		if (elseBranch != null) {
 			processStatement(elseBranch);
 		}
 	}
-
-	private ProcessedDataType processDataType(DataType dataType) {
-		if (dataType instanceof DataType_Bit) {
-			return ProcessedDataType.Bit.INSTANCE;
-		} else if (dataType instanceof DataType_Vector) {
-			DataType_Vector vector = (DataType_Vector) dataType;
-			int size = processConstantSizeExpression(vector.getSize());
-			return size < 0 ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Vector(size);
-		} else if (dataType instanceof DataType_Memory) {
-			DataType_Memory memory = (DataType_Memory) dataType;
-			int firstSize = processConstantSizeExpression(memory.getFirstSize());
-			int secondSize = processConstantSizeExpression(memory.getSecondSize());
-			return (firstSize < 0 || secondSize < 0) ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Memory(firstSize, secondSize);
-		} else if (dataType instanceof DataType_Integer) {
-			return ProcessedDataType.Integer.INSTANCE;
-		} else if (dataType instanceof DataType_Text) {
-			return ProcessedDataType.Text.INSTANCE;
-		} else {
-			onError(dataType, "unknown data type");
-			return ProcessedDataType.Unknown.INSTANCE;
-		}
-	}
-
-	private int processConstantSizeExpression(Expression expression) {
-		ConstantValue value = constantExpressionEvaluator.evaluate(expression);
-		if (value.getDataTypeFamily() == ProcessedDataType.Family.UNKNOWN) {
-			return -1;
-		}
-		BigInteger integerValue = value.convertToInteger();
-		if (integerValue == null) {
-			onError(expression, "cannot convert " + value + " to integer");
-			return -1;
-		}
-		if (integerValue.compareTo(MAX_SIZE_VALUE) > 0) {
-			onError(expression, "size too large: " + integerValue);
-			return -1;
-		}
-		int intValue = integerValue.intValue();
-		if (intValue < 0) {
-			onError(expression, "size cannot be negative: " + integerValue);
-			return -1;
-		}
-		return intValue;
-	}
-
-	protected abstract void onError(PsiElement errorSource, String message);
 
 	private ConstantValue tryEvaluateConstantExpression(Expression expression) {
 		try {
@@ -342,65 +261,4 @@ public abstract class ModuleProcessor {
 	private static class ConstantEvaluationException extends RuntimeException {
 	}
 
-	private void checkRuntimeAssignment(PsiElement errorSource, ProcessedDataType variableType, ProcessedDataType valueType) {
-		ProcessedDataType.Family variableTypeFamily = variableType.getFamily();
-		ProcessedDataType.Family valueTypeFamily = valueType.getFamily();
-		if (variableTypeFamily == ProcessedDataType.Family.UNKNOWN || valueTypeFamily == ProcessedDataType.Family.UNKNOWN) {
-			// if either type is unknown, an error has already been reported, and we don't want any followup errors
-			return;
-		}
-		if (variableTypeFamily != ProcessedDataType.Family.BIT && variableTypeFamily != ProcessedDataType.Family.VECTOR) {
-			// integer and text should not exist at run-time, and a whole memory cannot be assigned to at once
-			onError(errorSource, "cannot run-time assign to type " + variableType);
-			return;
-		}
-		if (!valueType.equals(variableType)) {
-			// otherwise, the types must be equal. They're bit or vector of some size, and we don't have any implicit
-			// conversion, truncating or expanding.
-			onError(errorSource, "cannot convert from type " + valueType + " to type " + variableType + " at run-time");
-		}
-	}
-
-	private void checkLValue(Expression expression, boolean allowContinuous, boolean allowClocked) {
-		if (expression instanceof Expression_Identifier) {
-			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
-			String identifierText = identifierElement.getText();
-			Named definition = definitions.get(identifierText);
-			if (definition != null) {
-				// undefined symbols are already marked by the ExpressionTypeChecker
-				if (definition instanceof Port) {
-					PortDirection direction = ((Port) definition).getDirectionElement();
-					if (!(direction instanceof PortDirection_Out)) {
-						onError(expression, "input port " + definition.getName() + " cannot be assigned to");
-					} else if (!allowContinuous) {
-						onError(expression, "continuous assignment not allowed in this context");
-					}
-				} else if (definition instanceof Signal) {
-					if (!allowContinuous) {
-						onError(expression, "continuous assignment not allowed in this context");
-					}
-				} else if (definition instanceof Register) {
-					if (!allowClocked) {
-						onError(expression, "clocked assignment not allowed in this context");
-					}
-				} else if (definition instanceof Constant) {
-					onError(expression, "cannot assign to constant");
-				}
-			}
-		} else if (expression instanceof Expression_IndexSelection) {
-			checkLValue(((Expression_IndexSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_RangeSelection) {
-			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_InstancePort) {
-			// TODO
-		} else if (expression instanceof Expression_BinaryConcat) {
-			Expression_BinaryConcat concat = (Expression_BinaryConcat)expression;
-			checkLValue(concat.getLeftOperand(), allowContinuous, allowClocked);
-			checkLValue(concat.getRightOperand(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_Parenthesized) {
-			checkLValue(((Expression_Parenthesized) expression).getExpression(), allowContinuous, allowClocked);
-		} else {
-			onError(expression, "expression cannot be assigned to");
-		}
-	}
 }

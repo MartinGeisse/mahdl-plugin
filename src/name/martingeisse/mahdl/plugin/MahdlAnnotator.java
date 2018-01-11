@@ -23,12 +23,7 @@ public class MahdlAnnotator implements Annotator {
 	}
 
 	private void annotate(@NotNull Module module, @NotNull AnnotationHolder annotationHolder) {
-		new ModuleProcessor(module) {
-			@Override
-			protected void onError(PsiElement errorSource, String message) {
-				annotationHolder.createErrorAnnotation(errorSource, message);
-			}
-		}.process();
+		new ModuleProcessor(module, annotationHolder::createErrorAnnotation).process();
 	}
 
 }

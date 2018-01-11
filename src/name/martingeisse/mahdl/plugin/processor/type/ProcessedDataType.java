@@ -1,4 +1,4 @@
-package name.martingeisse.mahdl.plugin.processor;
+package name.martingeisse.mahdl.plugin.processor.type;
 
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;

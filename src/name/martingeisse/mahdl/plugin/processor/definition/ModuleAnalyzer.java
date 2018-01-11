@@ -3,8 +3,10 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,12 +14,16 @@ import java.util.Map;
 /**
  *
  */
-public abstract class ModuleAnalyzer {
+public final class ModuleAnalyzer {
 
+	private final ErrorHandler errorHandler;
+	private final DataTypeProcessor dataTypeProcessor;
 	private final Module module;
 	private final Map<String, Named> definitions;
 
-	public ModuleAnalyzer(Module module) {
+	public ModuleAnalyzer(ErrorHandler errorHandler, DataTypeProcessor dataTypeProcessor, Module module) {
+		this.errorHandler = errorHandler;
+		this.dataTypeProcessor = dataTypeProcessor;
 		this.module = module;
 		this.definitions = new HashMap<>();
 	}
@@ -38,7 +44,7 @@ public abstract class ModuleAnalyzer {
 				ImplementationItem_SignalLikeDefinitionGroup typedImplementationItem = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 				if (typedImplementationItem.getKind() instanceof SignalLikeKind_Constant) {
 					DataType dataType = typedImplementationItem.getDataType();
-					ProcessedDataType processedDataType = processDataType(dataType);
+					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
 					for (SignalLikeDefinition signalLikeDefinition : typedImplementationItem.getDefinitions().getAll()) {
 						PsiElement nameElement;
 						Expression initializer;
@@ -56,7 +62,7 @@ public abstract class ModuleAnalyzer {
 						String name = nameElement.getText();
 						ConstantValue value = constantValues.get(name);
 						if (value == null) {
-							onError(signalLikeDefinition, "value for this constant is missing in the constant value map");
+							errorHandler.onError(signalLikeDefinition, "value for this constant is missing in the constant value map");
 							value = ConstantValue.Unknown.INSTANCE;
 						}
 						add(new Constant(nameElement, dataType, processedDataType, initializer, value));
@@ -75,7 +81,7 @@ public abstract class ModuleAnalyzer {
 		for (PortDefinitionGroup portDefinitionGroup : module.getPortDefinitionGroups().getAll()) {
 			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 				DataType dataType = portDefinitionGroup.getDataType();
-				Port port = new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, processDataType(dataType));
+				Port port = new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, dataTypeProcessor.processDataType(dataType));
 				add(port);
 			}
 		}
@@ -116,19 +122,16 @@ public abstract class ModuleAnalyzer {
 
 	private void add(Named element) {
 		if (definitions.put(element.getName(), element) != null) {
-			onError(element.getNameElement(), "redefinition of '" + element.getName() + "'");
+			errorHandler.onError(element.getNameElement(), "redefinition of '" + element.getName() + "'");
 		}
 	}
-
-	protected abstract void onError(PsiElement errorSource, String message);
-	protected abstract ProcessedDataType processDataType(DataType dataType);
 
 	private SignalLike convertSignalLike(ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
 												LeafPsiElement nameElement,
 												Expression initializer) {
 		SignalLikeKind kind = signalLikeDefinitionGroup.getKind();
 		DataType dataType = signalLikeDefinitionGroup.getDataType();
-		ProcessedDataType processedDataType = processDataType(dataType);
+		ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
 		if (kind instanceof SignalLikeKind_Constant) {
 			throw new IllegalArgumentException("this method should not be called for constants");
 		} else if (kind instanceof SignalLikeKind_Signal) {

@@ -3,7 +3,7 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.Expression;
-import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 
 /**

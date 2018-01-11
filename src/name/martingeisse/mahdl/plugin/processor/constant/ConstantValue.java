@@ -1,6 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.constant;
 
-import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.math.BigInteger;

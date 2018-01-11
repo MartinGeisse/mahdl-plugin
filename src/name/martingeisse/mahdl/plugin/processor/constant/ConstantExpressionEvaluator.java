@@ -2,7 +2,9 @@ package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 
 import java.math.BigInteger;
@@ -14,16 +16,18 @@ import java.util.regex.Pattern;
 /**
  *
  */
-public abstract class ConstantExpressionEvaluator {
+public final class ConstantExpressionEvaluator {
 
 	private static final Pattern VECTOR_PATTERN = Pattern.compile("([0-9]+)([bodh])([0-9]+)");
 
 	private static final BigInteger MAX_INDEX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
+	private final ErrorHandler errorHandler;
 	private final Module module;
 	private final Map<String, ConstantValue> definedConstants = new HashMap<>();
 
-	public ConstantExpressionEvaluator(Module module) {
+	public ConstantExpressionEvaluator(ErrorHandler errorHandler, Module module) {
+		this.errorHandler = errorHandler;
 		this.module = module;
 	}
 
@@ -31,18 +35,26 @@ public abstract class ConstantExpressionEvaluator {
 		return definedConstants;
 	}
 
-	public void processConstantDefinitions() {
+	/**
+	 * Processes the constant definitions from the module and stores their values. Each constant has an initializer
+	 * that is evaluated and converted to the data type of the constant. Subsequent constants can use the value of
+	 * previous constants to define their data type. Thus, this constant evaluator and the specified data type
+	 * processor must work in lockstep to define constants and data types. Sepcifically, for each data type being
+	 * processed, the data type processor must take the up-to-date constant values returned by getDefinedConstants()
+	 * at the time the data type is being processed into account.
+	 */
+	public void processConstantDefinitions(DataTypeProcessor dataTypeProcessor) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
 				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup)implementationItem;
 				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
 					// for constants, the data type must be valid based on the constants defined above
-					ProcessedDataType processedDataType = processDataType(signalLike.getDataType());
+					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(signalLike.getDataType());
 					for (SignalLikeDefinition signalLikeDefinition : signalLike.getDefinitions().getAll()) {
 						if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
 
 							SignalLikeDefinition_WithoutInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
-							onError(signalLikeDefinition, "constant must have an initializer");
+							errorHandler.onError(signalLikeDefinition, "constant must have an initializer");
 							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), ConstantValue.Unknown.INSTANCE);
 
 						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
@@ -53,7 +65,7 @@ public abstract class ConstantExpressionEvaluator {
 
 						} else {
 
-							onError(signalLikeDefinition, "unknown PSI node");
+							errorHandler.onError(signalLikeDefinition, "unknown PSI node");
 
 						}
 					}
@@ -183,11 +195,8 @@ public abstract class ConstantExpressionEvaluator {
 		}
 	}
 
-	protected abstract void onError(PsiElement errorSource, String message);
-	protected abstract ProcessedDataType processDataType(DataType dataType);
-
 	private ConstantValue error(PsiElement element, String message) {
-		onError(element, message);
+		errorHandler.onError(element, message);
 		return null;
 	}
 

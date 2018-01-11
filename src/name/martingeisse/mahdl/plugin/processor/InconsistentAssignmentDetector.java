@@ -13,12 +13,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- *
+ * This object detects multiple or missing assignments to signals. It is not concerned with type safety.
  */
-public abstract class InconsistentAssignmentDetector {
+public final class InconsistentAssignmentDetector {
 
+	private final ErrorHandler errorHandler;
 	private final Set<String> previouslyAssignedSignals = new HashSet<>();
 	private final Set<String> newlyAssignedSignals = new HashSet<>();
+
+	public InconsistentAssignmentDetector(ErrorHandler errorHandler) {
+		this.errorHandler = errorHandler;
+	}
 
 	public void finishSection() {
 		previouslyAssignedSignals.addAll(newlyAssignedSignals);
@@ -31,13 +36,13 @@ public abstract class InconsistentAssignmentDetector {
 				Port port = (Port) definition;
 				if (port.getDirectionElement() instanceof PortDirection_Out) {
 					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
-						onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
+						errorHandler.onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
 					}
 				}
 			} else if (definition instanceof Signal) {
 				Signal signal = (Signal) definition;
 				if (signal.getInitializer() == null && !previouslyAssignedSignals.contains(signal.getName())) {
-					onError(signal.getNameElement(), "missing assignment for signal '" + signal.getName() + "'");
+					errorHandler.onError(signal.getNameElement(), "missing assignment for signal '" + signal.getName() + "'");
 				}
 			} else if (definition instanceof ModuleInstance) {
 				ModuleInstance moduleInstance = (ModuleInstance) definition;
@@ -51,7 +56,7 @@ public abstract class InconsistentAssignmentDetector {
 							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 								String prefixedPortName = instanceName + '.' + portDefinition.getName();
 								if (!previouslyAssignedSignals.contains(prefixedPortName)) {
-									onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
+									errorHandler.onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
 								}
 							}
 						}
@@ -98,11 +103,9 @@ public abstract class InconsistentAssignmentDetector {
 
 	private void handleAssignedToInternal(String signalName, PsiElement errorSource) {
 		if (previouslyAssignedSignals.contains(signalName)) {
-			onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
+			errorHandler.onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
 		}
 		newlyAssignedSignals.add(signalName);
 	}
-
-	protected abstract void onError(PsiElement errorSource, String message);
 
 }
