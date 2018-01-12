@@ -8,7 +8,6 @@ import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvalu
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
-import name.martingeisse.mahdl.plugin.processor.type.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.util.HashMap;
