@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018 Martin Geisse
+ * This file is distributed under the terms of the MIT license.
+ */
 package name.martingeisse.mahdl.plugin.processor;
 
 import com.intellij.psi.PsiElement;
@@ -117,80 +121,80 @@ public final class ModuleProcessor {
 	}
 
 	private void processDefinition(Named item) {
-		if (item instanceof Constant) {
-			// constants have been handled by the constant evaluator already
-			return;
-		} else if (item instanceof SignalLike) {
-			SignalLike signalLike = (SignalLike) item;
-			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
-			if (dataTypeFamily == ProcessedDataType.Family.UNKNOWN) {
-				// don't complain about type errors if we don't even know the type -- in that case,
-				// the reason why we don't know the type already appears as an error
-				return;
-			}
-			allowedDataTypeCheck:
-			{
-				String usage;
-				boolean valid;
-				if (item instanceof Port) {
-					usage = "ports";
-					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
-				} else if (item instanceof Signal || item instanceof Register) {
-					usage = "signals";
-					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
-				} else {
-					break allowedDataTypeCheck;
+		// constants have been handled by the constant evaluator already
+		if (!(item instanceof Constant)) {
+			if (item instanceof SignalLike) {
+				SignalLike signalLike = (SignalLike) item;
+				ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
+				if (dataTypeFamily == ProcessedDataType.Family.UNKNOWN) {
+					// don't complain about type errors if we don't even know the type -- in that case,
+					// the reason why we don't know the type already appears as an error
+					return;
 				}
-				if (!valid) {
-					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
-				}
-			}
-			if (signalLike.getInitializer() != null) {
-				// TODO: if the initializer is constant, we should try to convert that value to the signalLike's type.
-				// Converting a constant value can handle a broader range of types than a run-time conversion.
-				// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
-				// the vector size, but at runtime this is forbidden because integers are.
-				// TODO use tryEvaluateConstantExpression() for that
-				ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
-				checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
-			}
-		} else if (item instanceof ModuleInstance) {
-			ModuleInstance moduleInstance = (ModuleInstance) item;
-			String instanceName = moduleInstance.getName();
-			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
-			PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
-			Module resolvedModule;
-			if (untypedResolvedModule instanceof Module) {
-				resolvedModule = (Module) untypedResolvedModule;
-			} else {
-				errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
-				resolvedModule = null;
-			}
-			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
-			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-					String portName = portDefinition.getName();
-					if (portName != null) {
-						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+				allowedDataTypeCheck:
+				{
+					String usage;
+					boolean valid;
+					if (item instanceof Port) {
+						usage = "ports";
+						valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
+					} else if (item instanceof Signal || item instanceof Register) {
+						usage = "signals";
+						valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
+					} else {
+						break allowedDataTypeCheck;
+					}
+					if (!valid) {
+						errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
 					}
 				}
-			}
-			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
-				String portName = portConnection.getPortName().getIdentifier().getText();
-				inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
-				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
-				if (portDefinitionGroup == null) {
-					errorHandler.onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+				if (signalLike.getInitializer() != null) {
+					// TODO: if the initializer is constant, we should try to convert that value to the signalLike's type.
+					// Converting a constant value can handle a broader range of types than a run-time conversion.
+					// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
+					// the vector size, but at runtime this is forbidden because integers are.
+					// TODO use tryEvaluateConstantExpression() for that
+					ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
+					checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
+				}
+			} else if (item instanceof ModuleInstance) {
+				ModuleInstance moduleInstance = (ModuleInstance) item;
+				String instanceName = moduleInstance.getName();
+				ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
+				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+				Module resolvedModule;
+				if (untypedResolvedModule instanceof Module) {
+					resolvedModule = (Module) untypedResolvedModule;
 				} else {
-					// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-					ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
-					Expression expression = portConnection.getExpression();
-					ProcessedDataType expressionType = expressionTypeChecker.check(expression);
-					if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
-						checkRuntimeAssignment(expression, portType, expressionType);
-					} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-						checkRuntimeAssignment(expression, expressionType, portType);
-						checkLValue(expression, true, false);
+					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
+					resolvedModule = null;
+				}
+				Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
+				for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
+					for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+						String portName = portDefinition.getName();
+						if (portName != null) {
+							portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+						}
+					}
+				}
+				for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
+					String portName = portConnection.getPortName().getIdentifier().getText();
+					inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
+					PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
+					if (portDefinitionGroup == null) {
+						errorHandler.onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+					} else {
+						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
+						ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+						Expression expression = portConnection.getExpression();
+						ProcessedDataType expressionType = expressionTypeChecker.check(expression);
+						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+							checkRuntimeAssignment(expression, portType, expressionType);
+						} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+							checkRuntimeAssignment(expression, expressionType, portType);
+							checkLValue(expression, true, false);
+						}
 					}
 				}
 			}
