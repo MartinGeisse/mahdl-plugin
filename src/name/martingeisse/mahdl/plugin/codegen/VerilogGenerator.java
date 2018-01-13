@@ -2,6 +2,7 @@ package name.martingeisse.mahdl.plugin.codegen;
 
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
+import name.martingeisse.mahdl.plugin.processor.ModuleProcessor;
 import org.apache.velocity.VelocityContext;
 
 import java.io.IOException;
@@ -26,7 +27,13 @@ public class VerilogGenerator {
 		generateModule(toplevelModule);
 	}
 
-	private void generateModule(Module module) throws IOException {
+	private void generateModule(Module module) throws IOException, ModuleHasErrorsException, ModuleCannotGenerateCodeException {
+
+		ModuleProcessor moduleProcessor = new ModuleProcessor(module, (errorSource, message) -> {
+			throw new ModuleHasErrorsException(message);
+		});
+		moduleProcessor.process();
+
 		VelocityContext context = new VelocityContext();
 		context.put("moduleName", module.getModuleName().getText());
 

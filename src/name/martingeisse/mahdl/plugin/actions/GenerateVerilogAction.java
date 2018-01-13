@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.codegen.VerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
+import org.apache.commons.lang3.mutable.MutableObject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -49,6 +50,7 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 		// do it!
 		StringWriter buffer = new StringWriter();
 		new VerilogGenerator(sourceFile.getModule(), buffer).run();
+		MutableObject<Exception> exceptionHolder = new MutableObject<>();
 		ApplicationManager.getApplication().runWriteAction(() -> {
 			try {
 
@@ -81,9 +83,12 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 				}
 
 			} catch (IOException e) {
-				throw new RuntimeException("unexpected IOException", e);
+				exceptionHolder.setValue(e);
 			}
 		});
+		if (exceptionHolder.getValue() != null) {
+			throw exceptionHolder.getValue();
+		}
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}

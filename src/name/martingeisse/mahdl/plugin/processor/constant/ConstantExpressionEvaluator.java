@@ -1,11 +1,14 @@
 package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -31,6 +34,7 @@ public final class ConstantExpressionEvaluator {
 		this.module = module;
 	}
 
+	@NotNull
 	public Map<String, ConstantValue> getDefinedConstants() {
 		return definedConstants;
 	}
@@ -43,7 +47,7 @@ public final class ConstantExpressionEvaluator {
 	 * processed, the data type processor must take the up-to-date constant values returned by getDefinedConstants()
 	 * at the time the data type is being processed into account.
 	 */
-	public void processConstantDefinitions(DataTypeProcessor dataTypeProcessor) {
+	public void processConstantDefinitions(@NotNull DataTypeProcessor dataTypeProcessor) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
 				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup)implementationItem;
@@ -76,21 +80,20 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	/**
-	 * Returns null for non-constant expressions or errors.
+	 * Returns a ConstantValue.Unknown for non-constant expressions or errors and also reports those to the error reporter.
 	 */
-	public final ConstantValue evaluate(Expression expression) {
+	@NotNull
+	public final ConstantValue evaluate(@NotNull Expression expression) {
 		if (expression instanceof Expression_Literal) {
 
 			Literal literal = ((Expression_Literal) expression).getLiteral();
 			if (literal instanceof Literal_Vector) {
-				String text = ((Literal_Vector) literal).getValue().getText();
-				return parseVector(text);
+				return parseVector(((Literal_Vector) literal).getValue());
 			} else if (literal instanceof Literal_Integer) {
 				String text = ((Literal_Integer) literal).getValue().getText();
 				return new ConstantValue.Integer(new BigInteger(text));
 			} else if (literal instanceof Literal_Text) {
-				String rawText = ((Literal_Text) literal).getValue().getText();
-				return parseText(rawText);
+				return parseText(((Literal_Text) literal).getValue());
 			} else {
 				return nonConstant(expression);
 			}
@@ -114,7 +117,7 @@ public final class ConstantExpressionEvaluator {
 			ConstantValue containerValue = evaluate(indexSelection.getContainer());
 			int containerSize;
 			String containerTypeText;
-			if (containerValue == null) {
+			if (containerValue instanceof ConstantValue.Unknown) {
 				containerSize = -1;
 				containerTypeText = "(unknown)";
 			} else if (containerValue instanceof ConstantValue.Vector) {
@@ -130,10 +133,7 @@ public final class ConstantExpressionEvaluator {
 					containerValue.getDataTypeFamily().getDisplayString());
 			}
 			int intIndexValue = handleIndexValue(containerSize, containerTypeText, indexSelection.getIndex());
-			if (containerValue == null || intIndexValue < 0) {
-				return null;
-			}
-			return containerValue.selectIndex(intIndexValue);
+			return containerValue.selectIndex(intIndexValue); // TODO this can return null!
 
 		} else if (expression instanceof Expression_RangeSelection) {
 
@@ -141,7 +141,7 @@ public final class ConstantExpressionEvaluator {
 			ConstantValue containerValue = evaluate(rangeSelection.getContainer());
 			int containerSize;
 			String containerTypeText;
-			if (containerValue == null) {
+			if (containerValue instanceof ConstantValue.Unknown) {
 				containerSize = -1;
 				containerTypeText = "(unknown)";
 			} else if (containerValue instanceof ConstantValue.Vector) {
@@ -154,10 +154,7 @@ public final class ConstantExpressionEvaluator {
 			}
 			int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
 			int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
-			if (containerValue == null || intFromIndexValue < 0 || intToIndexValue < 0) {
-				return null;
-			}
-			return containerValue.selectRange(intFromIndexValue, intToIndexValue);
+			return containerValue.selectRange(intFromIndexValue, intToIndexValue); // TODO this can return null!
 
 		} else if (expression instanceof UnaryOperation) {
 
@@ -178,10 +175,23 @@ public final class ConstantExpressionEvaluator {
 			ConstantValue conditionValue = evaluate(mux.getCondition());
 			ConstantValue thenValue = evaluate(mux.getThenBranch());
 			ConstantValue elseValue = evaluate(mux.getElseBranch());
+			if (conditionValue instanceof ConstantValue.Unknown) {
+				// if the condition has errors, don't also complain that it's not a boolean
+				return conditionValue;
+			}
 			Boolean booleanCondition = conditionValue.convertToBoolean();
-			return booleanCondition == null ? null : booleanCondition ? thenValue : elseValue;
+			if (booleanCondition == null) {
+				return error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
+			}
+			return booleanCondition ? thenValue : elseValue;
 
 		} else if (expression instanceof Expression_FunctionCall) {
+			Expression_FunctionCall functionCall = (Expression_FunctionCall)expression;
+			String functionName = functionCall.getFunctionName().getText();
+			StandardFunction standardFunction = StandardFunction.getFromNameInCode(functionName);
+			if (standardFunction == null) {
+				return error(functionCall.getFunctionName(), "unknown function");
+			}
 
 			// TODO
 			return error(expression, "not yet implemented");
@@ -195,19 +205,23 @@ public final class ConstantExpressionEvaluator {
 		}
 	}
 
+	@NotNull
 	private ConstantValue error(PsiElement element, String message) {
 		errorHandler.onError(element, message);
-		return null;
+		return ConstantValue.Unknown.INSTANCE;
 	}
 
+	@NotNull
 	private ConstantValue nonConstant(PsiElement element) {
 		return error(element, "expression must be constant");
 	}
 
-	private ConstantValue.Vector parseVector(String text) {
+	@NotNull
+	private ConstantValue parseVector(LeafPsiElement textElement) {
+		String text = textElement.getText();
 		Matcher matcher = VECTOR_PATTERN.matcher(text);
 		if (!matcher.matches()) {
-			return null;
+			return error(textElement, "malformed vector");
 		}
 		int size = Integer.parseInt(matcher.group(1));
 		char radixCode = matcher.group(2).charAt(0);
@@ -215,26 +229,28 @@ public final class ConstantExpressionEvaluator {
 
 		int radix = radixCode == 'b' ? 2 : radixCode == 'o' ? 8 : radixCode == 'd' ? 10 : radixCode == 'h' ? 16 : 0;
 		if (radix == 0) {
-			return null;
+			return error(textElement, "unknown radix '" + radixCode);
 		}
 		final BigInteger integerValue = new BigInteger(digits, radix);
 		if (integerValue.bitLength() > size) {
-			return null;
+			return error(textElement, "vector literal contains a value larger than its sepcified size");
 		}
 		return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integerValue, size));
 	}
 
-	private ConstantValue.Text parseText(String rawText) {
+	@NotNull
+	private ConstantValue parseText(LeafPsiElement textElement) {
+		String rawText = textElement.getText();
 		if (rawText.charAt(0) != '"' || rawText.charAt(rawText.length() - 1) != '"') {
-			return null;
+			return error(textElement, "missing quotation marks");
 		}
 		StringBuilder builder = new StringBuilder();
 		boolean escape = false;
 		for (int i = 1; i < rawText.length() - 1; i++) {
 			char c = rawText.charAt(i);
 			if (escape) {
-				// escapes not supported (yet), and it's not clear whether we need them
-				return null;
+				// escapes are not supported (yet), and it's not clear whether we need them
+				return error(textElement, "text escape sequences are not supported yet");
 			} else if (c == '\\') {
 				escape = true;
 			} else {
@@ -242,17 +258,13 @@ public final class ConstantExpressionEvaluator {
 			}
 		}
 		if (escape) {
-			// unfinished escape sequence
-			return null; // TODO we need better error output for such cases, e.g. use an exception (and then never return null)
+			return error(textElement, "unterminated escape sequence");
 		}
 		return new ConstantValue.Text(builder.toString());
 	}
 
 	private int handleIndexValue(int containerSize, String containerType, Expression indexExpression) {
 		ConstantValue indexValue = evaluate(indexExpression);
-		if (indexValue == null) {
-			return -1;
-		}
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {
 			error(indexExpression, "value of type  " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
@@ -272,7 +284,7 @@ public final class ConstantExpressionEvaluator {
 		}
 		int intValue = numericIndexValue.intValue();
 		if (intValue >= containerSize) {
-			error(indexExpression, "index too large for type " + containerType + ": " + numericIndexValue);
+			error(indexExpression, "index " + numericIndexValue + " is out of bounds for type " + containerType);
 			return -1;
 		}
 		return intValue;
