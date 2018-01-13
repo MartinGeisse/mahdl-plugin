@@ -7,6 +7,6 @@ import name.martingeisse.mahdl.plugin.input.psi.DataType;
  */
 public interface DataTypeProcessor {
 
-	public ProcessedDataType processDataType(DataType dataType);
+	ProcessedDataType processDataType(DataType dataType);
 
 }

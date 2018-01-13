@@ -5,8 +5,8 @@ package name.martingeisse.mahdl.plugin.input.psi;
  */
 public interface BinaryOperation {
 
-	public Expression getLeftOperand();
+	Expression getLeftOperand();
 
-	public Expression getRightOperand();
+	Expression getRightOperand();
 
 }

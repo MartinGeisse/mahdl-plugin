@@ -31,19 +31,8 @@ public class MahdlFindUsagesProvider implements FindUsagesProvider {
 
 	@Override
 	public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-		if (psiElement instanceof Module) {
-			return true;
-		}
-		if (psiElement instanceof PortDefinition) {
-			return true;
-		}
-		if (psiElement instanceof SignalLikeDefinition) {
-			return true;
-		}
-		if (psiElement instanceof ImplementationItem_ModuleInstance) {
-			return true;
-		}
-		return false;
+		return (psiElement instanceof Module || psiElement instanceof PortDefinition ||
+			psiElement instanceof SignalLikeDefinition || psiElement instanceof ImplementationItem_ModuleInstance);
 	}
 
 	@Nullable

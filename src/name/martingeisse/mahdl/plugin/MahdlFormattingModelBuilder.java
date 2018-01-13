@@ -84,16 +84,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
 	}
 
-	private void dump(MyBlock block, int dumpIndent) {
-		for (int i = 0; i < dumpIndent; i++) {
-			System.out.print("  ");
-		}
-		System.out.println(block.getNode().getElementType() + " -- indent: " + block.getIndent());
-		for (Block child : block.getSubBlocks()) {
-			dump((MyBlock) child, dumpIndent + 1);
-		}
-	}
-
 	@Nullable
 	@Override
 	public TextRange getRangeAffectingIndent(PsiFile psiFile, int i, ASTNode astNode) {
@@ -104,6 +94,16 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 
 		public MyBlock(@NotNull ASTNode node, @Nullable Wrap wrap) {
 			super(node, wrap, null);
+		}
+
+		public void dump(int dumpIndent) {
+			for (int i = 0; i < dumpIndent; i++) {
+				System.out.print("  ");
+			}
+			System.out.println(getNode().getElementType() + " -- indent: " + getIndent());
+			for (Block child : getSubBlocks()) {
+				((MyBlock) child).dump(dumpIndent + 1);
+			}
 		}
 
 		@Override
