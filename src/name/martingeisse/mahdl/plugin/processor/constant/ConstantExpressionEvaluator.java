@@ -16,10 +16,7 @@ import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -290,15 +287,59 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
+		if (expression.getOperand() == null) {
+			return ConstantValue.Unknown.INSTANCE;
+		}
 		ConstantValue operandValue = evaluate(expression.getOperand());
 		if (operandValue instanceof ConstantValue.Unknown) {
 			return operandValue;
 		}
-		// TODO
-		return ConstantValue.Unknown.INSTANCE;
+		if (expression instanceof Expression_UnaryNot) {
+			if (operandValue instanceof ConstantValue.Bit) {
+				boolean bitOperandValue = ((ConstantValue.Bit) operandValue).isSet();
+				return new ConstantValue.Bit(!bitOperandValue);
+			} else if (operandValue instanceof ConstantValue.Vector) {
+				ConstantValue.Vector vector = (ConstantValue.Vector) operandValue;
+				BitSet invertedBits = (BitSet) vector.getBits().clone();
+				invertedBits.flip(0, vector.getSize() - 1);
+				return new ConstantValue.Vector(vector.getSize(), invertedBits);
+			} else if (operandValue instanceof ConstantValue.Integer) {
+				// if -n == ~n + 1, then ~n == -n - 1
+				BigInteger integerOperandValue = ((ConstantValue.Integer) operandValue).getValue();
+				BigInteger invertedIntegerValue = integerOperandValue.negate().subtract(BigInteger.ONE);
+				return new ConstantValue.Integer(invertedIntegerValue);
+			} else {
+				return error(expression, "cannot bitwise-negate a value of type " + operandValue.getDataType());
+			}
+		} else if (expression instanceof Expression_UnaryPlus) {
+			if (operandValue instanceof ConstantValue.Vector || operandValue instanceof ConstantValue.Integer) {
+				return operandValue;
+			} else {
+				return error(expression, "cannot apply a unary plus to a value of type " + operandValue.getDataType());
+			}
+		} else if (expression instanceof Expression_UnaryMinus) {
+			if (operandValue instanceof ConstantValue.Vector) {
+				ConstantValue.Vector vector = (ConstantValue.Vector) operandValue;
+				int size = vector.getSize();
+				BigInteger integerValue = IntegerBitUtil.convertToInteger(vector.getBits(), size);
+				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integerValue.negate(), size));
+			} else if (operandValue instanceof ConstantValue.Integer) {
+				BigInteger integerOperandValue = ((ConstantValue.Integer) operandValue).getValue();
+				return new ConstantValue.Integer(integerOperandValue.negate());
+			} else {
+				return error(expression, "cannot apply a unary minus to a value of type " + operandValue.getDataType());
+			}
+		} else {
+			return error(expression, "unknown unary operator");
+		}
 	}
 
 	private ConstantValue evaluateBinaryOperation(BinaryOperation expression) {
+
+		// determine operand values
+		if (expression.getLeftOperand() == null || expression.getRightOperand() == null) {
+			return ConstantValue.Unknown.INSTANCE;
+		}
 		ConstantValue leftOperandValue = evaluate(expression.getLeftOperand());
 		ConstantValue rightOperandValue = evaluate(expression.getRightOperand());
 		if (leftOperandValue instanceof ConstantValue.Unknown) {
@@ -307,8 +348,29 @@ public final class ConstantExpressionEvaluator {
 		if (rightOperandValue instanceof ConstantValue.Unknown) {
 			return rightOperandValue;
 		}
+
+		// Concatenation can handle various types. All other operators can only handle vectors and integers.
+		if (expression instanceof Expression_BinaryConcat) {
+			return evaluateConcatenation((Expression_BinaryConcat)expression, leftOperandValue, rightOperandValue);
+		}
+		if (!(leftOperandValue instanceof ConstantValue.Vector) && !(leftOperandValue instanceof ConstantValue.Integer)) {
+			return error(expression, leftOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as left operand here");
+		}
+		if (!(rightOperandValue instanceof ConstantValue.Vector) && !(rightOperandValue instanceof ConstantValue.Integer)) {
+			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
+		}
+
+		// shifting can handle cases where the left and right operand are vectors of different size
+		// TODO unintuitive!
+		// TODO: allows different operand types: shift
+
+
 		// TODO
 		return ConstantValue.Unknown.INSTANCE;
+	}
+
+	private ConstantValue evaluateConcatenation(Expression_BinaryConcat expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
+		// TODO
 	}
 
 	@NotNull

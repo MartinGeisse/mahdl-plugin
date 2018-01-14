@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryConcat extends Expression  {
+public final class Expression_BinaryConcat extends Expression implements BinaryOperation {
 
     public Expression_BinaryConcat(@NotNull ASTNode node) {
         super(node);

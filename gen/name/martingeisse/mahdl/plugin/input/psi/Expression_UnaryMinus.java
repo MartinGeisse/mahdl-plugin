@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_UnaryMinus extends Expression  {
+public final class Expression_UnaryMinus extends Expression implements UnaryOperation {
 
     public Expression_UnaryMinus(@NotNull ASTNode node) {
         super(node);

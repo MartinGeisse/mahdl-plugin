@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryMinus extends Expression  {
+public final class Expression_BinaryMinus extends Expression implements BinaryOperation {
 
     public Expression_BinaryMinus(@NotNull ASTNode node) {
         super(node);

@@ -36,4 +36,28 @@ public final class IntegerBitUtil {
 		return bits;
 	}
 
+	@NotNull
+	public static BigInteger convertToInteger(@NotNull BitSet bits, int size) {
+		int index = 0;
+		BigInteger significance = BigInteger.ONE;
+		BigInteger result = BigInteger.ZERO;
+		while (index < size - 1) {
+			if (bits.get(index)) {
+				result = result.add(significance);
+				index++;
+				significance = significance.shiftLeft(1);
+			}
+		}
+		if (bits.get(size - 1)) {
+			// two's complement: the sign bit has negated significance
+			result = result.subtract(significance);
+		}
+		return result;
+	}
+
+	@NotNull
+	public static BigInteger convertToUnsignedInteger(@NotNull BitSet bits) {
+		return convertToInteger(bits, bits.length() + 1);
+	}
+
 }

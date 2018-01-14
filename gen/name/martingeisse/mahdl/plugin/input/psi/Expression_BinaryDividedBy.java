@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryDividedBy extends Expression  {
+public final class Expression_BinaryDividedBy extends Expression implements BinaryOperation {
 
     public Expression_BinaryDividedBy(@NotNull ASTNode node) {
         super(node);

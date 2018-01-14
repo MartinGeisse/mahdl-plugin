@@ -4,17 +4,19 @@
  */
 package name.martingeisse.mahdl.plugin.input.psi;
 
+import com.intellij.psi.NavigatablePsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
-public interface BinaryOperation {
+public interface BinaryOperation extends NavigatablePsiElement {
 
-	@NotNull
+	@Nullable
 	Expression getLeftOperand();
 
-	@NotNull
+	@Nullable
 	Expression getRightOperand();
 
 }
