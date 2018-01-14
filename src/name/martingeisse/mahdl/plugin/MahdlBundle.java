@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin;
 
 import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 /**
@@ -17,6 +18,7 @@ public class MahdlBundle extends AbstractBundle {
 
 	private static final MahdlBundle INSTANCE = new MahdlBundle();
 
+	@Nullable
 	public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
 		return INSTANCE.getMessage(key, params);
 	}

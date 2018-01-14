@@ -32,7 +32,7 @@ public class MahdlBraceMatcher implements PairedBraceMatcher {
 		return true;
 	}
 
-	public int getCodeConstructStart(PsiFile file, int openingBraceOffset) {
+	public int getCodeConstructStart(@Nullable PsiFile file, int openingBraceOffset) {
 		/* TODO the exact semantics of this method are currently unclear to me
 		PsiElement element = file.findElementAt(openingBraceOffset);
 		if (element == null || element instanceof PsiFile) {

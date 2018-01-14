@@ -24,20 +24,23 @@ public class ModuleInstancePortReference implements PsiReference {
 
 	private final InstancePortName instancePortName;
 
-	public ModuleInstancePortReference(InstancePortName instancePortName) {
+	public ModuleInstancePortReference(@NotNull InstancePortName instancePortName) {
 		this.instancePortName = instancePortName;
 	}
 
 	@Override
+	@NotNull
 	public PsiElement getElement() {
 		return instancePortName;
 	}
 
 	@Override
+	@NotNull
 	public TextRange getRangeInElement() {
 		return new TextRange(0, getCanonicalText().length());
 	}
 
+	@Nullable
 	private PsiElement resolveModule() {
 		PsiElement parent = instancePortName.getParent();
 		if (!(parent instanceof Expression_InstancePort)) {
@@ -95,11 +98,16 @@ public class ModuleInstancePortReference implements PsiReference {
 	}
 
 	@Override
-	public PsiElement handleElementRename(String newName) throws IncorrectOperationException {
+	@NotNull
+	public PsiElement handleElementRename(@Nullable String newName) throws IncorrectOperationException {
+		if (newName == null) {
+			throw new IncorrectOperationException("new name is null");
+		}
 		return PsiUtil.setText(instancePortName.getIdentifier(), newName);
 	}
 
 	@Override
+	@NotNull
 	public PsiElement bindToElement(@NotNull PsiElement psiElement) throws IncorrectOperationException {
 		if (psiElement instanceof PortDefinition) {
 			String newName = ((PsiNamedElement) psiElement).getName();
@@ -111,7 +119,7 @@ public class ModuleInstancePortReference implements PsiReference {
 	}
 
 	@Override
-	public boolean isReferenceTo(PsiElement psiElement) {
+	public boolean isReferenceTo(@Nullable PsiElement psiElement) {
 		if (psiElement instanceof PortDefinition) {
 			String candidatePortName = ((PortDefinition) psiElement).getName();
 			if (candidatePortName != null && candidatePortName.equals(getCanonicalText())) {

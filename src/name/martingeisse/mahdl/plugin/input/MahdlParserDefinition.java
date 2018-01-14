@@ -18,6 +18,7 @@ import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.MahdlLanguage;
 import name.martingeisse.mahdl.plugin.input.psi.PsiFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -30,16 +31,18 @@ public class MahdlParserDefinition implements ParserDefinition {
 
 	@NotNull
 	@Override
-	public Lexer createLexer(Project project) {
+	public Lexer createLexer(@Nullable Project project) {
 		return new MahdlLexer();
 	}
 
 	@Override
-	public PsiParser createParser(Project project) {
+	@NotNull
+	public PsiParser createParser(@Nullable Project project) {
 		return new MapagGeneratedMahdlParser();
 	}
 
 	@Override
+	@NotNull
 	public IFileElementType getFileNodeType() {
 		return FILE_ELEMENT_TYPE;
 	}
@@ -64,17 +67,25 @@ public class MahdlParserDefinition implements ParserDefinition {
 
 	@NotNull
 	@Override
-	public PsiElement createElement(ASTNode node) {
+	public PsiElement createElement(@Nullable ASTNode node) {
+		if (node == null) {
+			throw new RuntimeException("cannot create PSI node for null AST node");
+		}
 		return PsiFactory.createPsiElement(node);
 	}
 
 	@Override
-	public PsiFile createFile(FileViewProvider viewProvider) {
+	@NotNull
+	public PsiFile createFile(@Nullable FileViewProvider viewProvider) {
+		if (viewProvider == null) {
+			throw new RuntimeException("cannot create PsiFile for null view provider");
+		}
 		return new MahdlSourceFile(viewProvider);
 	}
 
 	@Override
-	public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+	@NotNull
+	public SpaceRequirements spaceExistanceTypeBetweenTokens(@Nullable ASTNode left, @Nullable ASTNode right) {
 		return SpaceRequirements.MAY;
 	}
 

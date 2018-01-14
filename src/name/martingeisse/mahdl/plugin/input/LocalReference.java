@@ -22,10 +22,11 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LocalReference implements PsiReference {
 
 	@Override
+	@NotNull
 	public abstract LeafPsiElement getElement();
 
 	// note: may only return true for PsiNamedElement objects!
-	protected abstract boolean isElementTargetable(PsiElement potentialTarget);
+	protected abstract boolean isElementTargetable(@NotNull PsiElement potentialTarget);
 
 	@Override
 	public TextRange getRangeInElement() {
@@ -80,11 +81,15 @@ public abstract class LocalReference implements PsiReference {
 	}
 
 	@Override
-	public PsiElement handleElementRename(String newName) throws IncorrectOperationException {
+	public PsiElement handleElementRename(@Nullable String newName) throws IncorrectOperationException {
+		if (newName == null) {
+			throw new IncorrectOperationException("new name is null");
+		}
 		return PsiUtil.setText(getElement(), newName);
 	}
 
 	@Override
+	@NotNull
 	public PsiElement bindToElement(@NotNull PsiElement psiElement) throws IncorrectOperationException {
 		if (isElementTargetable(psiElement)) {
 			String newName = ((PsiNamedElement) psiElement).getName();
@@ -96,8 +101,8 @@ public abstract class LocalReference implements PsiReference {
 	}
 
 	@Override
-	public boolean isReferenceTo(PsiElement psiElement) {
-		if (isElementTargetable(psiElement)) {
+	public boolean isReferenceTo(@Nullable PsiElement psiElement) {
+		if (psiElement != null && isElementTargetable(psiElement)) {
 			String elementName = ((PsiNamedElement) psiElement).getName();
 			if (elementName != null) {
 				String thisName = getCanonicalText();

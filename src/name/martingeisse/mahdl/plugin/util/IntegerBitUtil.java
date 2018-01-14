@@ -4,6 +4,8 @@
  */
 package name.martingeisse.mahdl.plugin.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.math.BigInteger;
 import java.util.BitSet;
 
@@ -21,7 +23,8 @@ public final class IntegerBitUtil {
 	 *
 	 * TODO test if this works correctly for negative values! The definition is OK, but the implementation is untested!
 	 */
-	public static BitSet convertToBitSet(BigInteger value, int size) {
+	@NotNull
+	public static BitSet convertToBitSet(@NotNull BigInteger value, int size) {
 		final BitSet bits = new BitSet(size);
 		int bitIndex = 0;
 		while (bitIndex < size) {

@@ -20,6 +20,8 @@ import name.martingeisse.mahdl.plugin.input.ModuleInstanceReference;
 import name.martingeisse.mahdl.plugin.input.ModuleReference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +39,13 @@ public final class PsiUtil {
 	// general
 	//
 
-	public static PsiElement setText(LeafPsiElement element, String newText) {
+	@NotNull
+	public static PsiElement setText(@NotNull LeafPsiElement element, @NotNull String newText) {
 		return (PsiElement) element.replaceWithText(newText);
 	}
 
-	public static <T> T getAncestor(PsiElement element, Class<T> nodeClass) {
+	@Nullable
+	public static <T> T getAncestor(@NotNull PsiElement element, @NotNull Class<T> nodeClass) {
 		while (true) {
 			if (nodeClass.isInstance(element)) {
 				return nodeClass.cast(element);
@@ -53,7 +57,8 @@ public final class PsiUtil {
 		}
 	}
 
-	public static VirtualFile getSourceRoot(PsiElement psiElement) {
+	@Nullable
+	public static VirtualFile getSourceRoot(@NotNull PsiElement psiElement) {
 
 //		com.intellij.openapi.module.Module ideModule = ModuleUtil.findModuleForPsiElement(moduleName);
 //		if (ideModule == null) {
@@ -89,15 +94,18 @@ public final class PsiUtil {
 	// naming support
 	//
 
-	public static LeafPsiElement getNameIdentifier(Module node) {
+	@Nullable
+	public static LeafPsiElement getNameIdentifier(@NotNull Module node) {
 		return node.getModuleName();
 	}
 
-	public static LeafPsiElement getNameIdentifier(PortDefinition node) {
+	@Nullable
+	public static LeafPsiElement getNameIdentifier(@NotNull PortDefinition node) {
 		return node.getIdentifier();
 	}
 
-	public static LeafPsiElement getNameIdentifier(SignalLikeDefinition node) {
+	@Nullable
+	public static LeafPsiElement getNameIdentifier(@NotNull SignalLikeDefinition node) {
 		if (node instanceof SignalLikeDefinition_WithoutInitializer) {
 			return ((SignalLikeDefinition_WithoutInitializer) node).getIdentifier();
 		} else if (node instanceof SignalLikeDefinition_WithInitializer) {
@@ -107,7 +115,8 @@ public final class PsiUtil {
 		}
 	}
 
-	public static LeafPsiElement getNameIdentifier(ImplementationItem_ModuleInstance node) {
+	@Nullable
+	public static LeafPsiElement getNameIdentifier(@NotNull ImplementationItem_ModuleInstance node) {
 		return node.getInstanceName();
 	}
 
@@ -115,19 +124,23 @@ public final class PsiUtil {
 	// reference support
 	//
 
-	public static PsiReference getReference(QualifiedModuleName node) {
+	@NotNull
+	public static PsiReference getReference(@NotNull QualifiedModuleName node) {
 		return new ModuleReference(node);
 	}
 
-	public static PsiReference getReference(InstancePortName node) {
+	@NotNull
+	public static PsiReference getReference(@NotNull InstancePortName node) {
 		return new ModuleInstancePortReference(node);
 	}
 
-	public static PsiReference getReference(Expression_Identifier node) {
+	@NotNull
+	public static PsiReference getReference(@NotNull Expression_Identifier node) {
 		return new IdentifierExpressionReference(node);
 	}
 
-	public static PsiReference getReference(InstanceReferenceName node) {
+	@NotNull
+	public static PsiReference getReference(@NotNull InstanceReferenceName node) {
 		return new ModuleInstanceReference(node);
 	}
 
@@ -135,23 +148,23 @@ public final class PsiUtil {
 	// safe delete
 	//
 
-	public static void delete(Module node) throws IncorrectOperationException {
+	public static void delete(@NotNull Module node) throws IncorrectOperationException {
 		delete(node, node::superclassDelete);
 	}
 
-	public static void delete(PortDefinition node) throws IncorrectOperationException {
+	public static void delete(@NotNull PortDefinition node) throws IncorrectOperationException {
 		delete(node, node::superclassDelete);
 	}
 
-	public static void delete(SignalLikeDefinition node) throws IncorrectOperationException {
+	public static void delete(@NotNull SignalLikeDefinition node) throws IncorrectOperationException {
 		delete(node, node::superclassDelete);
 	}
 
-	public static void delete(ImplementationItem_ModuleInstance node) throws IncorrectOperationException {
+	public static void delete(@NotNull ImplementationItem_ModuleInstance node) throws IncorrectOperationException {
 		delete(node, node::superclassDelete);
 	}
 
-	public static void delete(ASTWrapperPsiElement node, Runnable actualDeleteCallback) throws IncorrectOperationException {
+	public static void delete(@NotNull ASTWrapperPsiElement node, @NotNull Runnable actualDeleteCallback) throws IncorrectOperationException {
 		PsiFile psiFile = node.getContainingFile();
 		if (psiFile != null) {
 			VirtualFile virtualFile = psiFile.getVirtualFile();
@@ -168,7 +181,8 @@ public final class PsiUtil {
 	// other
 	//
 
-	public static String[] parseQualifiedModuleName(QualifiedModuleName name) {
+	@NotNull
+	public static String[] parseQualifiedModuleName(@NotNull QualifiedModuleName name) {
 		List<String> segments = new ArrayList<>();
 		for (LeafPsiElement segment : name.getSegments().getAll()) {
 			segments.add(segment.getText());
@@ -176,7 +190,8 @@ public final class PsiUtil {
 		return segments.toArray(new String[segments.size()]);
 	}
 
-	public static String getSimpleModuleName(QualifiedModuleName name) {
+	@NotNull
+	public static String getSimpleModuleName(@NotNull QualifiedModuleName name) {
 		MutableObject<LeafPsiElement> elementHolder = new MutableObject<>();
 		name.getSegments().foreach(elementHolder::setValue);
 		return elementHolder.getValue().getText();

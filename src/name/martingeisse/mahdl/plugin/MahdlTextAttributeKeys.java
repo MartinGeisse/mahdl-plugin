@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -39,7 +40,8 @@ public class MahdlTextAttributeKeys {
 	public static final TextAttributesKey[] LINE_COMMENT = single("LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
 	public static final TextAttributesKey[] BAD_CHARACTER = new TextAttributesKey[]{HighlighterColors.BAD_CHARACTER};
 
-	private static TextAttributesKey[] single(@NonNls @NotNull String externalName, TextAttributesKey fallbackAttributeKey) {
+	@NotNull
+	private static TextAttributesKey[] single(@NonNls @NotNull String externalName, @Nullable TextAttributesKey fallbackAttributeKey) {
 		return new TextAttributesKey[]{
 			TextAttributesKey.createTextAttributesKey(externalName, fallbackAttributeKey)
 		};

@@ -24,17 +24,18 @@ public class IdentifierExpressionReference extends LocalReference {
 
 	private final Expression_Identifier expression;
 
-	public IdentifierExpressionReference(Expression_Identifier expression) {
+	public IdentifierExpressionReference(@NotNull Expression_Identifier expression) {
 		this.expression = expression;
 	}
 
 	@Override
+	@NotNull
 	public LeafPsiElement getElement() {
 		return expression.getIdentifier();
 	}
 
 	@Override
-	protected boolean isElementTargetable(PsiElement potentialTarget) {
+	protected boolean isElementTargetable(@Nullable PsiElement potentialTarget) {
 		return (potentialTarget instanceof PortDefinition || potentialTarget instanceof SignalLikeDefinition || potentialTarget instanceof ImplementationItem_ModuleInstance);
 	}
 

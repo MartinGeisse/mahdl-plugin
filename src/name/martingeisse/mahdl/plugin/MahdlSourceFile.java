@@ -10,6 +10,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -26,6 +27,7 @@ public class MahdlSourceFile extends PsiFileBase {
 		return MahdlFileType.INSTANCE;
 	}
 
+	@Nullable
 	public Module getModule() {
 		for (PsiElement child : getChildren()) {
 			if (child instanceof Module) {

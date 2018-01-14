@@ -17,6 +17,7 @@ import name.martingeisse.mahdl.plugin.input.MahdlLexer;
 import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.TokenGroups;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -25,7 +26,7 @@ public class MahdlSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
 	@Override
 	@NotNull
-	public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+	public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
 		return new SyntaxHighlighterBase() {
 
 			@NotNull
@@ -36,7 +37,10 @@ public class MahdlSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
 
 			@NotNull
 			@Override
-			public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+			public TextAttributesKey[] getTokenHighlights(@Nullable IElementType tokenType) {
+				if (tokenType == null) {
+					return EMPTY;
+				}
 				if (TokenGroups.KEYWORDS.contains(tokenType)) {
 					return MahdlTextAttributeKeys.KEYWORD;
 				} else if (TokenGroups.OPERATORS.contains(tokenType)) {

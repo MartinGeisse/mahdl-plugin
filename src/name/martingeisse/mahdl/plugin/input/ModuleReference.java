@@ -29,16 +29,18 @@ public class ModuleReference implements PsiReference {
 
 	private final QualifiedModuleName moduleName;
 
-	public ModuleReference(QualifiedModuleName moduleName) {
+	public ModuleReference(@NotNull QualifiedModuleName moduleName) {
 		this.moduleName = moduleName;
 	}
 
 	@Override
+	@NotNull
 	public PsiElement getElement() {
 		return moduleName;
 	}
 
 	@Override
+	@NotNull
 	public TextRange getRangeInElement() {
 		return new TextRange(0, getCanonicalText().length());
 	}
@@ -78,7 +80,8 @@ public class ModuleReference implements PsiReference {
 	}
 
 	@Override
-	public PsiElement handleElementRename(String newName) throws IncorrectOperationException {
+	@NotNull
+	public PsiElement handleElementRename(@Nullable String newName) throws IncorrectOperationException {
 
 		// TODO have to see if the argument is a fully qualified name or a simple name. Especially
 		// when the newName does not contain a dot, we need to know if it's a local rename or if the
@@ -97,6 +100,7 @@ public class ModuleReference implements PsiReference {
 	}
 
 	@Override
+	@NotNull
 	public PsiElement bindToElement(@NotNull PsiElement psiElement) throws IncorrectOperationException {
 		if (psiElement instanceof Module) {
 			throw new IncorrectOperationException("cannot bind this reference to a non-module PSI node");
@@ -105,7 +109,7 @@ public class ModuleReference implements PsiReference {
 	}
 
 	@Override
-	public boolean isReferenceTo(PsiElement psiElement) {
+	public boolean isReferenceTo(@Nullable PsiElement psiElement) {
 		if (psiElement instanceof Module) {
 			String candidateModuleName = ((Module) psiElement).getModuleName().getText();
 			String lastSegmentOfReference = PsiUtil.getSimpleModuleName(moduleName);
@@ -127,11 +131,13 @@ public class ModuleReference implements PsiReference {
 
 		List<Object> variants = new ArrayList<>();
 		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
-		findModules(null, sourceRoot, variants);
+		if (sourceRoot != null) {
+			findModules(null, sourceRoot, variants);
+		}
 		return variants.toArray();
 	}
 
-	private void findModules(String prefix, VirtualFile folder, List<Object> variants) {
+	private void findModules(@Nullable String prefix, @NotNull VirtualFile folder, @NotNull List<Object> variants) {
 		for (VirtualFile child : folder.getChildren()) {
 			String childName = child.getName();
 			if (child.isDirectory() && childName.indexOf('.') < 0) {
