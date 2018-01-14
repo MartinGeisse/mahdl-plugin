@@ -32,10 +32,10 @@ public abstract class ConstantValue {
 	@Nullable
 	public abstract BigInteger convertToInteger();
 
-	@Nullable
+	@NotNull
 	public abstract ConstantValue selectIndex(int index);
 
-	@Nullable
+	@NotNull
 	public abstract ConstantValue selectRange(int from, int to);
 
 	public static final class Unknown extends ConstantValue {
@@ -67,15 +67,15 @@ public abstract class ConstantValue {
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectIndex(int index) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 	}
@@ -127,15 +127,15 @@ public abstract class ConstantValue {
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectIndex(int index) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 	}
@@ -213,7 +213,7 @@ public abstract class ConstantValue {
 		@NotNull
 		public ConstantValue selectIndex(int index) {
 			if (index < 0 || index >= size) {
-				return null;
+				return Unknown.INSTANCE;
 			} else {
 				return new Bit(bits.get(index));
 			}
@@ -223,7 +223,7 @@ public abstract class ConstantValue {
 		@NotNull
 		public ConstantValue selectRange(int from, int to) {
 			if (to < 0 || from < to || from >= size) {
-				return null;
+				return Unknown.INSTANCE;
 			}
 			return new Vector(from - to + 1, bits.get(to, from));
 		}
@@ -293,18 +293,18 @@ public abstract class ConstantValue {
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectIndex(int index) {
 			if (index < 0 || index >= firstSize) {
-				return null;
+				return Unknown.INSTANCE;
 			}
 			return new Vector(secondSize, bits.get(index * secondSize, (index + 1) * secondSize - 1));
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 	}
@@ -357,15 +357,15 @@ public abstract class ConstantValue {
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectIndex(int index) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 	}
@@ -418,15 +418,15 @@ public abstract class ConstantValue {
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectIndex(int index) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 		@Override
-		@Nullable
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
-			return null;
+			return Unknown.INSTANCE;
 		}
 
 	}

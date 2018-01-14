@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
@@ -15,7 +16,9 @@ import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -54,7 +57,7 @@ public final class ConstantExpressionEvaluator {
 	public void processConstantDefinitions(@NotNull DataTypeProcessor dataTypeProcessor) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
-				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup)implementationItem;
+				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
 					// for constants, the data type must be valid based on the constants defined above
 					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(signalLike.getDataType());
@@ -90,17 +93,7 @@ public final class ConstantExpressionEvaluator {
 	public final ConstantValue evaluate(@NotNull Expression expression) {
 		if (expression instanceof Expression_Literal) {
 
-			Literal literal = ((Expression_Literal) expression).getLiteral();
-			if (literal instanceof Literal_Vector) {
-				return parseVector(((Literal_Vector) literal).getValue());
-			} else if (literal instanceof Literal_Integer) {
-				String text = ((Literal_Integer) literal).getValue().getText();
-				return new ConstantValue.Integer(new BigInteger(text));
-			} else if (literal instanceof Literal_Text) {
-				return parseText(((Literal_Text) literal).getValue());
-			} else {
-				return nonConstant(expression);
-			}
+			return evaluateLiteral((Expression_Literal) expression);
 
 		} else if (expression instanceof Expression_Identifier) {
 
@@ -117,95 +110,36 @@ public final class ConstantExpressionEvaluator {
 
 		} else if (expression instanceof Expression_IndexSelection) {
 
-			Expression_IndexSelection indexSelection = (Expression_IndexSelection) expression;
-			ConstantValue containerValue = evaluate(indexSelection.getContainer());
-			int containerSize;
-			String containerTypeText;
-			if (containerValue instanceof ConstantValue.Unknown) {
-				containerSize = -1;
-				containerTypeText = "(unknown)";
-			} else if (containerValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vectorValue = (ConstantValue.Vector) containerValue;
-				containerSize = vectorValue.getSize();
-				containerTypeText = vectorValue.getDataType().toString();
-			} else if (containerValue instanceof ConstantValue.Memory) {
-				ConstantValue.Memory memoryType = (ConstantValue.Memory) containerValue;
-				containerSize = memoryType.getFirstSize();
-				containerTypeText = memoryType.getDataType().toString();
-			} else {
-				return error(expression, "cannot index-select from an expression of type " +
-					containerValue.getDataTypeFamily().getDisplayString());
-			}
-			int intIndexValue = handleIndexValue(containerSize, containerTypeText, indexSelection.getIndex());
-			return containerValue.selectIndex(intIndexValue); // TODO this can return null!
+			return evaluateIndexSelection((Expression_IndexSelection) expression);
 
 		} else if (expression instanceof Expression_RangeSelection) {
 
-			Expression_RangeSelection rangeSelection = (Expression_RangeSelection) expression;
-			ConstantValue containerValue = evaluate(rangeSelection.getContainer());
-			int containerSize;
-			String containerTypeText;
-			if (containerValue instanceof ConstantValue.Unknown) {
-				containerSize = -1;
-				containerTypeText = "(unknown)";
-			} else if (containerValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vectorValue = (ConstantValue.Vector) containerValue;
-				containerSize = vectorValue.getSize();
-				containerTypeText = vectorValue.getDataType().toString();
-			} else {
-				return error(expression, "cannot range-select from an expression of type " +
-					containerValue.getDataTypeFamily().toString());
-			}
-			int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
-			int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
-			return containerValue.selectRange(intFromIndexValue, intToIndexValue); // TODO this can return null!
+			return evaluateRangeSelection((Expression_RangeSelection) expression);
 
 		} else if (expression instanceof UnaryOperation) {
 
-			// TODO
-			return error(expression, "not yet implemented");
+			return evaluateUnaryOperation((UnaryOperation) expression);
 
 		} else if (expression instanceof BinaryOperation) {
 
-			// TODO
-			return error(expression, "not yet implemented");
+			return evaluateBinaryOperation((BinaryOperation) expression);
 
 		} else if (expression instanceof Expression_Mux) {
 
-			// I'm not sure yet whether to allow type errors in the not-taken branch. The use-cases
-			// (soft-commenting-out; generating only constants during code generation; ...) aren't clear to me.
-			// For now, let's be strict about it so no ugly code creeps in.
-			Expression_Mux mux = (Expression_Mux) expression;
-			ConstantValue conditionValue = evaluate(mux.getCondition());
-			ConstantValue thenValue = evaluate(mux.getThenBranch());
-			ConstantValue elseValue = evaluate(mux.getElseBranch());
-			if (conditionValue instanceof ConstantValue.Unknown) {
-				// if the condition has errors, don't also complain that it's not a boolean
-				return conditionValue;
-			}
-			Boolean booleanCondition = conditionValue.convertToBoolean();
-			if (booleanCondition == null) {
-				return error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
-			}
-			return booleanCondition ? thenValue : elseValue;
+			return evaluateMux((Expression_Mux) expression);
 
 		} else if (expression instanceof Expression_FunctionCall) {
-			Expression_FunctionCall functionCall = (Expression_FunctionCall)expression;
-			String functionName = functionCall.getFunctionName().getText();
-			StandardFunction standardFunction = StandardFunction.getFromNameInCode(functionName);
-			if (standardFunction == null) {
-				return error(functionCall.getFunctionName(), "unknown function");
-			}
 
-			// TODO
-			return error(expression, "not yet implemented");
+			return evaluateFunctionCall((Expression_FunctionCall) expression);
 
 		} else if (expression instanceof Expression_Parenthesized) {
 
 			return evaluate(((Expression_Parenthesized) expression).getExpression());
 
 		} else {
+
 			return nonConstant(expression);
+
 		}
 	}
 
@@ -218,6 +152,21 @@ public final class ConstantExpressionEvaluator {
 	@NotNull
 	private ConstantValue nonConstant(@NotNull PsiElement element) {
 		return error(element, "expression must be constant");
+	}
+
+	@NotNull
+	private ConstantValue evaluateLiteral(@NotNull Expression_Literal literalExpression) {
+		Literal literal = literalExpression.getLiteral();
+		if (literal instanceof Literal_Vector) {
+			return parseVector(((Literal_Vector) literal).getValue());
+		} else if (literal instanceof Literal_Integer) {
+			String text = ((Literal_Integer) literal).getValue().getText();
+			return new ConstantValue.Integer(new BigInteger(text));
+		} else if (literal instanceof Literal_Text) {
+			return parseText(((Literal_Text) literal).getValue());
+		} else {
+			return nonConstant(literal);
+		}
 	}
 
 	@NotNull
@@ -243,7 +192,7 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	@NotNull
-	private ConstantValue parseText(LeafPsiElement textElement) {
+	private ConstantValue parseText(@NotNull LeafPsiElement textElement) {
 		String rawText = textElement.getText();
 		if (rawText.charAt(0) != '"' || rawText.charAt(rawText.length() - 1) != '"') {
 			return error(textElement, "missing quotation marks");
@@ -265,6 +214,52 @@ public final class ConstantExpressionEvaluator {
 			return error(textElement, "unterminated escape sequence");
 		}
 		return new ConstantValue.Text(builder.toString());
+	}
+
+	@NotNull
+	private ConstantValue evaluateIndexSelection(@NotNull Expression_IndexSelection indexSelection) {
+		ConstantValue containerValue = evaluate(indexSelection.getContainer());
+		int containerSize;
+		if (containerValue instanceof ConstantValue.Unknown) {
+			containerSize = -1;
+		} else if (containerValue instanceof ConstantValue.Vector) {
+			containerSize = ((ConstantValue.Vector) containerValue).getSize();
+		} else if (containerValue instanceof ConstantValue.Memory) {
+			containerSize = ((ConstantValue.Memory) containerValue).getFirstSize();
+		} else {
+			error(indexSelection, "cannot index-select from an expression of type " + containerValue.getDataTypeFamily().getDisplayString());
+			containerSize = -1;
+		}
+		int intIndexValue = handleIndexValue(containerSize, containerValue.getDataType().toString(), indexSelection.getIndex());
+		if (containerSize < 0 || intIndexValue < 0) {
+			return ConstantValue.Unknown.INSTANCE;
+		} else {
+			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
+			return containerValue.selectIndex(intIndexValue);
+		}
+	}
+
+	@NotNull
+	private ConstantValue evaluateRangeSelection(@NotNull Expression_RangeSelection rangeSelection) {
+		ConstantValue containerValue = evaluate(rangeSelection.getContainer());
+		int containerSize;
+		if (containerValue instanceof ConstantValue.Unknown) {
+			containerSize = -1;
+		} else if (containerValue instanceof ConstantValue.Vector) {
+			containerSize = ((ConstantValue.Vector) containerValue).getSize();
+		} else {
+			error(rangeSelection, "cannot range-select from an expression of type " + containerValue.getDataTypeFamily().toString());
+			containerSize = -1;
+		}
+		String containerTypeText = containerValue.getDataType().toString();
+		int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
+		int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
+		if (containerSize < 0 || intFromIndexValue < 0 || intToIndexValue < 0) {
+			return ConstantValue.Unknown.INSTANCE;
+		} else {
+			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
+			return containerValue.selectRange(intFromIndexValue, intToIndexValue);
+		}
 	}
 
 	private int handleIndexValue(int containerSize, @NotNull String containerType, @NotNull Expression indexExpression) {
@@ -292,6 +287,74 @@ public final class ConstantExpressionEvaluator {
 			return -1;
 		}
 		return intValue;
+	}
+
+	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
+		ConstantValue operandValue = evaluate(expression.getOperand());
+		if (operandValue instanceof ConstantValue.Unknown) {
+			return operandValue;
+		}
+		// TODO
+		return ConstantValue.Unknown.INSTANCE;
+	}
+
+	private ConstantValue evaluateBinaryOperation(BinaryOperation expression) {
+		ConstantValue leftOperandValue = evaluate(expression.getLeftOperand());
+		ConstantValue rightOperandValue = evaluate(expression.getRightOperand());
+		if (leftOperandValue instanceof ConstantValue.Unknown) {
+			return leftOperandValue;
+		}
+		if (rightOperandValue instanceof ConstantValue.Unknown) {
+			return rightOperandValue;
+		}
+		// TODO
+		return ConstantValue.Unknown.INSTANCE;
+	}
+
+	@NotNull
+	private ConstantValue evaluateMux(@NotNull Expression_Mux mux) {
+		// I'm not sure yet whether to allow type errors in the not-taken branch. The use-cases
+		// (soft-commenting-out; generating only constants during code generation; ...) aren't clear to me.
+		// For now, let's be strict about it so no ugly code creeps in.
+		ConstantValue conditionValue = evaluate(mux.getCondition());
+		ConstantValue thenValue = evaluate(mux.getThenBranch());
+		ConstantValue elseValue = evaluate(mux.getElseBranch());
+		if (conditionValue instanceof ConstantValue.Unknown) {
+			// if the condition has errors, don't also complain that it's not a boolean
+			return conditionValue;
+		}
+		Boolean booleanCondition = conditionValue.convertToBoolean();
+		if (booleanCondition == null) {
+			return error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
+		}
+		return booleanCondition ? thenValue : elseValue;
+	}
+
+	@NotNull
+	private ConstantValue evaluateFunctionCall(@NotNull Expression_FunctionCall functionCall) {
+		String functionName = functionCall.getFunctionName().getText();
+		StandardFunction standardFunction = StandardFunction.getFromNameInCode(functionName);
+		boolean error = false;
+		if (standardFunction == null) {
+			error(functionCall.getFunctionName(), "unknown function");
+			error = true;
+		}
+		List<ConstantValue> arguments = new ArrayList<>();
+		for (Expression argumentExpression : functionCall.getArguments().getAll()) {
+			ConstantValue argument = evaluate(argumentExpression);
+			arguments.add(argument);
+			if (argument instanceof ConstantValue.Unknown) {
+				error = true;
+			}
+		}
+		if (error) {
+			return ConstantValue.Unknown.INSTANCE;
+		}
+		try {
+			return standardFunction.applyToConstantValues(arguments.toArray(new ConstantValue[arguments.size()]));
+		} catch (FunctionParameterException e) {
+			return error(functionCall, e.getMessage());
+		}
 	}
 
 }
