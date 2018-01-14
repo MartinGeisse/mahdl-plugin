@@ -15,6 +15,7 @@ import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.codegen.VerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.mutable.MutableObject;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,15 +29,16 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 		super("generate verilog");
 	}
 
-	protected String getConsoleTitle(AnActionEvent event) {
+	@NotNull
+	protected String getConsoleTitle(@NotNull AnActionEvent event) {
 		return "Generate Verilog";
 	}
 
-	protected void onConsoleOpened(AnActionEvent event, ConsoleViewImpl console) {
+	protected void onConsoleOpened(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console) {
 		console.print("Generating Verilog...", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
 
-	protected void execute(AnActionEvent event, ConsoleViewImpl console, MahdlSourceFile sourceFile) throws Exception {
+	protected void execute(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console, @NotNull MahdlSourceFile sourceFile) throws Exception {
 
 		// we need a project module to place output files in. Should this use ModuleRootManager?
 		Module projectModule = event.getDataContext().getData(LangDataKeys.MODULE);

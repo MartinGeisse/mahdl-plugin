@@ -4,11 +4,14 @@
  */
 package name.martingeisse.mahdl.plugin.input.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface UnaryOperation {
 
+	@NotNull
 	Expression getOperand();
 
 }

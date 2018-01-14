@@ -11,6 +11,7 @@ import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.Port;
 import name.martingeisse.mahdl.plugin.processor.definition.Signal;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -25,7 +26,7 @@ public final class InconsistentAssignmentDetector {
 	private final Set<String> previouslyAssignedSignals = new HashSet<>();
 	private final Set<String> newlyAssignedSignals = new HashSet<>();
 
-	public InconsistentAssignmentDetector(ErrorHandler errorHandler) {
+	public InconsistentAssignmentDetector(@NotNull ErrorHandler errorHandler) {
 		this.errorHandler = errorHandler;
 	}
 
@@ -34,7 +35,7 @@ public final class InconsistentAssignmentDetector {
 		newlyAssignedSignals.clear();
 	}
 
-	public void checkMissingAssignments(Collection<Named> definitions) {
+	public void checkMissingAssignments(@NotNull Collection<Named> definitions) {
 		for (Named definition : definitions) {
 			if (definition instanceof Port) {
 				Port port = (Port) definition;
@@ -70,11 +71,11 @@ public final class InconsistentAssignmentDetector {
 		}
 	}
 
-	public void handleAssignment(Statement_Assignment assignment) {
+	public void handleAssignment(@NotNull Statement_Assignment assignment) {
 		handleAssignedTo(assignment.getLeftSide());
 	}
 
-	public void handleAssignedTo(Expression destination) {
+	public void handleAssignedTo(@NotNull Expression destination) {
 		if (destination instanceof Expression_Identifier) {
 			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
 			handleAssignedToSignalLike(signalNameElement.getText(), signalNameElement);
@@ -97,15 +98,15 @@ public final class InconsistentAssignmentDetector {
 		}
 	}
 
-	public void handleAssignedToSignalLike(String signalLikeName, PsiElement errorSource) {
+	public void handleAssignedToSignalLike(@NotNull String signalLikeName, @NotNull PsiElement errorSource) {
 		handleAssignedToInternal(signalLikeName, errorSource);
 	}
 
-	public void handleAssignedToInstancePort(String instanceName, String portName, PsiElement errorSource) {
+	public void handleAssignedToInstancePort(@NotNull String instanceName, @NotNull String portName, @NotNull PsiElement errorSource) {
 		handleAssignedToInternal(instanceName + '.' + portName, errorSource);
 	}
 
-	private void handleAssignedToInternal(String signalName, PsiElement errorSource) {
+	private void handleAssignedToInternal(@NotNull String signalName, @NotNull PsiElement errorSource) {
 		if (previouslyAssignedSignals.contains(signalName)) {
 			errorHandler.onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
 		}

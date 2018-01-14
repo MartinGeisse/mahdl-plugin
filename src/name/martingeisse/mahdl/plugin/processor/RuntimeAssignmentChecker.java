@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -24,7 +25,7 @@ public final class RuntimeAssignmentChecker {
 	private final ExpressionTypeChecker expressionTypeChecker;
 	private final Map<String, Named> definitions;
 
-	public RuntimeAssignmentChecker(ErrorHandler errorHandler, ExpressionTypeChecker expressionTypeChecker, Map<String, Named> definitions) {
+	public RuntimeAssignmentChecker(@NotNull ErrorHandler errorHandler, @NotNull ExpressionTypeChecker expressionTypeChecker, @NotNull Map<String, Named> definitions) {
 		this.errorHandler = errorHandler;
 		this.expressionTypeChecker = expressionTypeChecker;
 		this.definitions = definitions;
@@ -33,7 +34,7 @@ public final class RuntimeAssignmentChecker {
 	/**
 	 * Ensures that the specified left side is assignable and that the right side produces a compatible type.
 	 */
-	public void checkRuntimeAssignment(Expression leftSide, Expression rightSide, boolean allowContinuous, boolean allowClocked) {
+	public void checkRuntimeAssignment(@NotNull Expression leftSide, @NotNull Expression rightSide, boolean allowContinuous, boolean allowClocked) {
 		// TODO convert constants
 		checkLValue(leftSide, allowContinuous, allowClocked);
 		ProcessedDataType leftSideType = expressionTypeChecker.check(leftSide);
@@ -45,7 +46,7 @@ public final class RuntimeAssignmentChecker {
 	/**
 	 * Ensures that the right side produces a type compatible with the left side's type.
 	 */
-	private void checkRuntimeAssignmentType(PsiElement errorSource, ProcessedDataType leftSideType, ProcessedDataType rightSideType) {
+	private void checkRuntimeAssignmentType(@NotNull PsiElement errorSource, @NotNull ProcessedDataType leftSideType, @NotNull ProcessedDataType rightSideType) {
 		// TODO convert constants
 		ProcessedDataType.Family variableTypeFamily = leftSideType.getFamily();
 		ProcessedDataType.Family valueTypeFamily = rightSideType.getFamily();
@@ -69,7 +70,7 @@ public final class RuntimeAssignmentChecker {
 	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
 	 * is allowed to be a continuous destination and/or or a clocked destination.
 	 */
-	private void checkLValue(Expression expression, boolean allowContinuous, boolean allowClocked) {
+	private void checkLValue(@NotNull Expression expression, boolean allowContinuous, boolean allowClocked) {
 		if (expression instanceof Expression_Identifier) {
 			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
 			String identifierText = identifierElement.getText();

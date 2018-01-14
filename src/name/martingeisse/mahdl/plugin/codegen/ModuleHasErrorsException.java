@@ -5,13 +5,14 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
 public class ModuleHasErrorsException extends UserMessageException {
 
-	public ModuleHasErrorsException(String message) {
+	public ModuleHasErrorsException(@NotNull String message) {
 		super("module has errors: " + message);
 	}
 

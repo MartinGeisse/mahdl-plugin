@@ -8,6 +8,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 
@@ -21,12 +22,13 @@ public final class DataTypeProcessorImpl implements DataTypeProcessor {
 	private final ErrorHandler errorHandler;
 	private final ConstantExpressionEvaluator constantExpressionEvaluator;
 
-	public DataTypeProcessorImpl(ErrorHandler errorHandler, ConstantExpressionEvaluator constantExpressionEvaluator) {
+	public DataTypeProcessorImpl(@NotNull ErrorHandler errorHandler, @NotNull ConstantExpressionEvaluator constantExpressionEvaluator) {
 		this.errorHandler = errorHandler;
 		this.constantExpressionEvaluator = constantExpressionEvaluator;
 	}
 
-	public ProcessedDataType processDataType(DataType dataType) {
+	@NotNull
+	public ProcessedDataType processDataType(@NotNull DataType dataType) {
 		if (dataType instanceof DataType_Bit) {
 			return ProcessedDataType.Bit.INSTANCE;
 		} else if (dataType instanceof DataType_Vector) {
@@ -48,7 +50,7 @@ public final class DataTypeProcessorImpl implements DataTypeProcessor {
 		}
 	}
 
-	private int processConstantSizeExpression(Expression expression) {
+	private int processConstantSizeExpression(@NotNull Expression expression) {
 		ConstantValue value = constantExpressionEvaluator.evaluate(expression);
 		if (value.getDataTypeFamily() == ProcessedDataType.Family.UNKNOWN) {
 			return -1;
@@ -69,6 +71,5 @@ public final class DataTypeProcessorImpl implements DataTypeProcessor {
 		}
 		return intValue;
 	}
-
 
 }

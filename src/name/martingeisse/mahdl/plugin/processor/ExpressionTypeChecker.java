@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,17 +25,19 @@ public final class ExpressionTypeChecker {
 	private final Map<String, Named> definitions;
 	private final Map<Expression, ConstantValue> convertedConstantExpressionValues;
 
-	public ExpressionTypeChecker(ErrorHandler errorHandler, Map<String, Named> definitions) {
+	public ExpressionTypeChecker(@NotNull ErrorHandler errorHandler, @NotNull Map<String, Named> definitions) {
 		this.errorHandler = errorHandler;
 		this.definitions = definitions;
 		this.convertedConstantExpressionValues = new HashMap<>();
 	}
 
+	@NotNull
 	public Map<Expression, ConstantValue> getConvertedConstantExpressionValues() {
 		return convertedConstantExpressionValues;
 	}
 
-	public ProcessedDataType check(Expression expression) {
+	@NotNull
+	public ProcessedDataType check(@NotNull Expression expression) {
 		// TODO
 		if (expression instanceof Expression_Literal) {
 

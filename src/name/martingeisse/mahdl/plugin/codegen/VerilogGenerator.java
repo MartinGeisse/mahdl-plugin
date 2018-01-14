@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ModuleProcessor;
 import org.apache.velocity.VelocityContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -22,7 +23,7 @@ public class VerilogGenerator {
 	private final Module toplevelModule;
 	private final Writer out;
 
-	public VerilogGenerator(Module toplevelModule, Writer out) {
+	public VerilogGenerator(@NotNull Module toplevelModule, @NotNull Writer out) {
 		this.toplevelModule = toplevelModule;
 		this.out = out;
 	}
@@ -31,7 +32,7 @@ public class VerilogGenerator {
 		generateModule(toplevelModule);
 	}
 
-	private void generateModule(Module module) throws IOException, ModuleHasErrorsException, ModuleCannotGenerateCodeException {
+	private void generateModule(@NotNull Module module) throws IOException, ModuleHasErrorsException, ModuleCannotGenerateCodeException {
 
 		ModuleProcessor moduleProcessor = new ModuleProcessor(module, (errorSource, message) -> {
 			throw new ModuleHasErrorsException(message);
@@ -69,7 +70,8 @@ public class VerilogGenerator {
 		MahdlVelocityEngine.engine.getTemplate("verilog-module.vm").merge(context, out);
 	}
 
-	private String vectorTypeRangeToString(DataType_Vector dataType) {
+	@NotNull
+	private String vectorTypeRangeToString(@NotNull DataType_Vector dataType) {
 		Expression sizeExpression = dataType.getSize();
 		// TODO evaluate!
 		if (sizeExpression instanceof Expression_Literal) {
@@ -82,7 +84,8 @@ public class VerilogGenerator {
 		return "[(" + expressionToString(sizeExpression) + ")-1:0]";
 	}
 
-	private String expressionToString(Expression expression) {
+	@NotNull
+	private String expressionToString(@NotNull Expression expression) {
 		return "TODO"; // TODO
 	}
 

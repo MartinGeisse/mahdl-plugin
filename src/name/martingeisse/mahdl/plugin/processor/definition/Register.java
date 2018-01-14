@@ -8,13 +8,18 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.Expression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
 public final class Register extends SignalLike {
 
-	public Register(PsiElement nameElement, DataType dataTypeElement, ProcessedDataType processedDataType, Expression initializer) {
+	public Register(@NotNull PsiElement nameElement,
+					@NotNull DataType dataTypeElement,
+					@NotNull ProcessedDataType processedDataType,
+					@Nullable Expression initializer) {
 		super(nameElement, dataTypeElement, processedDataType, initializer);
 	}
 	

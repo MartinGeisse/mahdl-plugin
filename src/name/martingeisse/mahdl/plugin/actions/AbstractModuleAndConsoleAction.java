@@ -51,14 +51,20 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 	}
 
 	@Override
-	public void update(AnActionEvent event) {
+	public void update(@Nullable AnActionEvent event) {
+		if (event == null) {
+			return;
+		}
 		PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
 		boolean enabled = psiFile != null && psiFile.getLanguage() == MahdlLanguage.INSTANCE;
 		event.getPresentation().setEnabledAndVisible(enabled);
 	}
 
 	@Override
-	public void actionPerformed(AnActionEvent event) {
+	public void actionPerformed(@Nullable AnActionEvent event) {
+		if (event == null) {
+			return;
+		}
 
 		// we need a project to show a console
 		Project project = getEventProject(event);
@@ -90,14 +96,16 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 
 	}
 
-	protected abstract String getConsoleTitle(AnActionEvent event);
+	@NotNull
+	protected abstract String getConsoleTitle(@NotNull AnActionEvent event);
 
-	protected void onConsoleOpened(AnActionEvent event, ConsoleViewImpl console) {
+	protected void onConsoleOpened(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console) {
 	}
 
-	protected abstract void execute(AnActionEvent event, ConsoleViewImpl console, MahdlSourceFile sourceFile) throws Exception;
+	protected abstract void execute(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console, @NotNull MahdlSourceFile sourceFile) throws Exception;
 
-	private static RunContentDescriptor createConsole(@NotNull Project project, String title) {
+	@NotNull
+	private static RunContentDescriptor createConsole(@NotNull Project project, @NotNull String title) {
 
 		ConsoleView consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
@@ -123,7 +131,7 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 
 	}
 
-	protected static void printError(ConsoleViewImpl console, Consumer<PrintWriter> printable) {
+	protected static void printError(@NotNull ConsoleViewImpl console, @NotNull Consumer<PrintWriter> printable) {
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(stringWriter);
 		printable.accept(printWriter);

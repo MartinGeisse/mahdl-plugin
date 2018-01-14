@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -13,14 +14,16 @@ public abstract class Named {
 
 	private final PsiElement nameElement;
 
-	public Named(PsiElement nameElement) {
+	public Named(@NotNull PsiElement nameElement) {
 		this.nameElement = nameElement;
 	}
 
+	@NotNull
 	public final PsiElement getNameElement() {
 		return nameElement;
 	}
 
+	@NotNull
 	public final String getName() {
 		return nameElement.getText();
 	}

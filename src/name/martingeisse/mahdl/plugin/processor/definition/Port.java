@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.PortDirection;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -16,11 +17,15 @@ public final class Port extends SignalLike {
 
 	private final PortDirection directionElement;
 
-	public Port(PsiElement nameElement, PortDirection directionElement, DataType dataTypeElement, ProcessedDataType processedDataType) {
+	public Port(@NotNull PsiElement nameElement,
+				@NotNull PortDirection directionElement,
+				@NotNull DataType dataTypeElement,
+				@NotNull ProcessedDataType processedDataType) {
 		super(nameElement, dataTypeElement, processedDataType, null);
 		this.directionElement = directionElement;
 	}
 
+	@NotNull
 	public PortDirection getDirectionElement() {
 		return directionElement;
 	}

@@ -5,13 +5,14 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
 public class ModuleCannotGenerateCodeException extends UserMessageException {
 
-	public ModuleCannotGenerateCodeException(String message) {
+	public ModuleCannotGenerateCodeException(@NotNull String message) {
 		super(message);
 	}
 

@@ -4,13 +4,17 @@
  */
 package name.martingeisse.mahdl.plugin.input.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  *
  */
 public interface BinaryOperation {
 
+	@NotNull
 	Expression getLeftOperand();
 
+	@NotNull
 	Expression getRightOperand();
 
 }

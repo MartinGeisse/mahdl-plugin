@@ -7,6 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.type;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -23,8 +24,11 @@ public abstract class ProcessedDataType {
 
 	}
 
+	@NotNull
 	public abstract Family getFamily();
 
+	// TODO if this produces UNKNOWN, there should be an error!
+	@NotNull
 	public abstract ConstantValue convertConstantValueImplicitly(ConstantValue inputValue);
 
 	public static final class Unknown extends ProcessedDataType {
@@ -41,16 +45,19 @@ public abstract class ProcessedDataType {
 			return Unknown.class.hashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "unknown";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.UNKNOWN;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			return ConstantValue.Unknown.INSTANCE;
 		}
@@ -71,16 +78,19 @@ public abstract class ProcessedDataType {
 			return Bit.class.hashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "bit";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.BIT;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			return inputValue instanceof ConstantValue.Bit ? inputValue : ConstantValue.Unknown.INSTANCE;
 		}
@@ -114,16 +124,19 @@ public abstract class ProcessedDataType {
 			return new HashCodeBuilder().append(Vector.class).append(size).toHashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "vector[" + size + "]";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.VECTOR;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			if (inputValue instanceof ConstantValue.Vector) {
 				ConstantValue.Vector vector = (ConstantValue.Vector) inputValue;
@@ -179,16 +192,19 @@ public abstract class ProcessedDataType {
 			return new HashCodeBuilder().append(Memory.class).append(firstSize).append(secondSize).toHashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "memory[" + firstSize + "][" + secondSize + "]";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.MEMORY;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			if (inputValue instanceof ConstantValue.Memory) {
 				ConstantValue.Memory memory = (ConstantValue.Memory) inputValue;
@@ -215,16 +231,19 @@ public abstract class ProcessedDataType {
 			return Integer.class.hashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "integer";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.INTEGER;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			if (inputValue instanceof ConstantValue.Integer) {
 				return inputValue;
@@ -249,16 +268,19 @@ public abstract class ProcessedDataType {
 			return Text.class.hashCode();
 		}
 
+		@NotNull
 		public String toString() {
 			return "text";
 		}
 
 		@Override
+		@NotNull
 		public Family getFamily() {
 			return Family.TEXT;
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
 			if (inputValue instanceof ConstantValue.Text) {
 				return inputValue;

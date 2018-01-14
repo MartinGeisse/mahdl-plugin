@@ -13,6 +13,8 @@ import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,19 +46,22 @@ public final class ModuleProcessor {
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
 	private RuntimeAssignmentChecker runtimeAssignmentChecker;
 
-	public ModuleProcessor(Module module, ErrorHandler errorHandler) {
+	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
 		this.errorHandler = errorHandler;
 	}
 
+	@NotNull
 	public Module getModule() {
 		return module;
 	}
 
+	@NotNull
 	public Map<String, ConstantValue> getConstants() {
 		return constantExpressionEvaluator.getDefinedConstants();
 	}
 
+	@NotNull
 	public Map<String, Named> getDefinitions() {
 		return definitions;
 	}
@@ -120,7 +125,7 @@ public final class ModuleProcessor {
 
 	}
 
-	private void processDefinition(Named item) {
+	private void processDefinition(@NotNull Named item) {
 		// constants have been handled by the constant evaluator already
 		if (!(item instanceof Constant)) {
 			if (item instanceof SignalLike) {
@@ -201,7 +206,7 @@ public final class ModuleProcessor {
 		}
 	}
 
-	private void processDoBlock(ImplementationItem_DoBlock doBlock) {
+	private void processDoBlock(@NotNull ImplementationItem_DoBlock doBlock) {
 		DoBlockTrigger trigger = doBlock.getTrigger();
 		if (trigger instanceof DoBlockTrigger_Clocked) {
 			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
@@ -213,7 +218,7 @@ public final class ModuleProcessor {
 		processStatement(doBlock.getStatement());
 	}
 
-	private void processStatement(Statement statement) {
+	private void processStatement(@NotNull Statement statement) {
 		if (statement instanceof Statement_Assignment) {
 			Statement_Assignment assignment = (Statement_Assignment) statement;
 			inconsistentAssignmentDetector.handleAssignment(assignment);
@@ -242,7 +247,7 @@ public final class ModuleProcessor {
 		}
 	}
 
-	private void processIfStatement(Expression condition, Statement thenBranch, Statement elseBranch) {
+	private void processIfStatement(@NotNull Expression condition, @NotNull Statement thenBranch, @Nullable Statement elseBranch) {
 		ProcessedDataType conditionType = expressionTypeChecker.check(condition);
 		if (conditionType.getFamily() != ProcessedDataType.Family.BIT) {
 			errorHandler.onError(condition, "cannot use an expression of type " + conditionType + " as condition");
@@ -253,11 +258,11 @@ public final class ModuleProcessor {
 		}
 	}
 
-	private ConstantValue tryEvaluateConstantExpression(Expression expression) {
+	private ConstantValue tryEvaluateConstantExpression(@NotNull Expression expression) {
 		try {
 			return exceptionThrowingConstantExpressionEvaluator.evaluate(expression);
 		} catch (ConstantEvaluationException e) {
-			return null;
+			return ConstantValue.Unknown.INSTANCE;
 		}
 	}
 

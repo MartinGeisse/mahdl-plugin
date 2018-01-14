@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.functions;
 
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -15,7 +16,7 @@ public enum StandardFunction {
 	ASCII("ascii") {
 		@Override
 		@NotNull
-		public ConstantValue applyToConstantValues(ConstantValue... values) throws FunctionParameterException {
+		public ConstantValue applyToConstantValues(@NotNull ConstantValue... values) throws FunctionParameterException {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 	},
@@ -23,7 +24,7 @@ public enum StandardFunction {
 	ASCIIZ("asciiz") {
 		@Override
 		@NotNull
-		public ConstantValue applyToConstantValues(ConstantValue... values) throws FunctionParameterException {
+		public ConstantValue applyToConstantValues(@NotNull ConstantValue... values) throws FunctionParameterException {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 	},
@@ -31,7 +32,7 @@ public enum StandardFunction {
 	LOAD_BINARY_FILE("loadBinaryFile") {
 		@Override
 		@NotNull
-		public ConstantValue applyToConstantValues(ConstantValue... values) throws FunctionParameterException {
+		public ConstantValue applyToConstantValues(@NotNull ConstantValue... values) throws FunctionParameterException {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 	},
@@ -40,18 +41,20 @@ public enum StandardFunction {
 
 	private final String nameInCode;
 
-	StandardFunction(String nameInCode) {
+	StandardFunction(@NotNull String nameInCode) {
 		this.nameInCode = nameInCode;
 	}
 
+	@NotNull
 	public String getNameInCode() {
 		return nameInCode;
 	}
 
 	@NotNull
-	public abstract ConstantValue applyToConstantValues(ConstantValue... values) throws FunctionParameterException;
+	public abstract ConstantValue applyToConstantValues(@NotNull ConstantValue... values) throws FunctionParameterException;
 
-	public static StandardFunction getFromNameInCode(String nameInCode) {
+	@Nullable
+	public static StandardFunction getFromNameInCode(@NotNull String nameInCode) {
 		for (StandardFunction standardFunction : values()) {
 			if (standardFunction.nameInCode.equals(nameInCode)) {
 				return standardFunction;

@@ -6,6 +6,8 @@ package name.martingeisse.mahdl.plugin.processor.constant;
 
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.BitSet;
@@ -18,12 +20,22 @@ public abstract class ConstantValue {
 	private ConstantValue() {
 	}
 
+	@NotNull
 	public abstract ProcessedDataType.Family getDataTypeFamily();
+
+	@NotNull
 	public abstract ProcessedDataType getDataType();
 
+	@Nullable
 	public abstract Boolean convertToBoolean();
+
+	@Nullable
 	public abstract BigInteger convertToInteger();
+
+	@Nullable
 	public abstract ConstantValue selectIndex(int index);
+
+	@Nullable
 	public abstract ConstantValue selectRange(int from, int to);
 
 	public static final class Unknown extends ConstantValue {
@@ -31,31 +43,37 @@ public abstract class ConstantValue {
 		public static final Unknown INSTANCE = new Unknown();
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.UNKNOWN;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return ProcessedDataType.Unknown.INSTANCE;
 		}
 
 		@Override
+		@Nullable
 		public Boolean convertToBoolean() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectIndex(int index) {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}
@@ -85,31 +103,37 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.BIT;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return ProcessedDataType.Bit.INSTANCE;
 		}
 
 		@Override
+		@NotNull
 		public Boolean convertToBoolean() {
 			return set;
 		}
 
 		@Override
+		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectIndex(int index) {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}
@@ -122,7 +146,7 @@ public abstract class ConstantValue {
 		private final int size;
 		private final BitSet bits;
 
-		public Vector(int size, BitSet bits) {
+		public Vector(int size, @NotNull BitSet bits) {
 			this.size = size;
 			this.bits = bits;
 		}
@@ -131,6 +155,7 @@ public abstract class ConstantValue {
 			return size;
 		}
 
+		@NotNull
 		public BitSet getBits() {
 			return (BitSet)bits.clone();
 		}
@@ -150,21 +175,25 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.VECTOR;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return new ProcessedDataType.Vector(size);
 		}
 
 		@Override
+		@Nullable
 		public Boolean convertToBoolean() {
 			return null;
 		}
 
 		@Override
+		@NotNull
 		public BigInteger convertToInteger() {
 			final int length = bits.length();
 			int index = 0;
@@ -181,6 +210,7 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue selectIndex(int index) {
 			if (index < 0 || index >= size) {
 				return null;
@@ -190,6 +220,7 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ConstantValue selectRange(int from, int to) {
 			if (to < 0 || from < to || from >= size) {
 				return null;
@@ -204,7 +235,7 @@ public abstract class ConstantValue {
 		private final int firstSize, secondSize;
 		private final BitSet bits;
 
-		public Memory(int firstSize, int secondSize, BitSet bits) {
+		public Memory(int firstSize, int secondSize, @NotNull BitSet bits) {
 			this.firstSize = firstSize;
 			this.secondSize = secondSize;
 			this.bits = bits;
@@ -218,6 +249,7 @@ public abstract class ConstantValue {
 			return secondSize;
 		}
 
+		@NotNull
 		public BitSet getBits() {
 			return (BitSet)bits.clone();
 		}
@@ -237,26 +269,31 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.MEMORY;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return new ProcessedDataType.Memory(firstSize, secondSize);
 		}
 
 		@Override
+		@Nullable
 		public Boolean convertToBoolean() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectIndex(int index) {
 			if (index < 0 || index >= firstSize) {
 				return null;
@@ -265,6 +302,7 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}
@@ -275,10 +313,11 @@ public abstract class ConstantValue {
 
 		private final BigInteger value;
 
-		public Integer(BigInteger value) {
+		public Integer(@NotNull BigInteger value) {
 			this.value = value;
 		}
 
+		@NotNull
 		public BigInteger getValue() {
 			return value;
 		}
@@ -294,31 +333,37 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.INTEGER;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return ProcessedDataType.Integer.INSTANCE;
 		}
 
 		@Override
+		@Nullable
 		public Boolean convertToBoolean() {
 			return null;
 		}
 
 		@Override
+		@NotNull
 		public BigInteger convertToInteger() {
 			return value;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectIndex(int index) {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}
@@ -329,10 +374,11 @@ public abstract class ConstantValue {
 
 		private final String value;
 
-		public Text(String value) {
+		public Text(@NotNull String value) {
 			this.value = value;
 		}
 
+		@NotNull
 		public String getValue() {
 			return value;
 		}
@@ -348,31 +394,37 @@ public abstract class ConstantValue {
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
 			return ProcessedDataType.Family.TEXT;
 		}
 
 		@Override
+		@NotNull
 		public ProcessedDataType getDataType() {
 			return ProcessedDataType.Text.INSTANCE;
 		}
 
 		@Override
+		@Nullable
 		public Boolean convertToBoolean() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectIndex(int index) {
 			return null;
 		}
 
 		@Override
+		@Nullable
 		public ConstantValue selectRange(int from, int to) {
 			return null;
 		}

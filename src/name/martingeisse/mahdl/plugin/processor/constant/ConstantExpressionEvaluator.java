@@ -33,7 +33,7 @@ public final class ConstantExpressionEvaluator {
 	private final Module module;
 	private final Map<String, ConstantValue> definedConstants = new HashMap<>();
 
-	public ConstantExpressionEvaluator(ErrorHandler errorHandler, Module module) {
+	public ConstantExpressionEvaluator(@NotNull ErrorHandler errorHandler, @NotNull Module module) {
 		this.errorHandler = errorHandler;
 		this.module = module;
 	}
@@ -210,18 +210,18 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	@NotNull
-	private ConstantValue error(PsiElement element, String message) {
+	private ConstantValue error(@NotNull PsiElement element, @NotNull String message) {
 		errorHandler.onError(element, message);
 		return ConstantValue.Unknown.INSTANCE;
 	}
 
 	@NotNull
-	private ConstantValue nonConstant(PsiElement element) {
+	private ConstantValue nonConstant(@NotNull PsiElement element) {
 		return error(element, "expression must be constant");
 	}
 
 	@NotNull
-	private ConstantValue parseVector(LeafPsiElement textElement) {
+	private ConstantValue parseVector(@NotNull LeafPsiElement textElement) {
 		String text = textElement.getText();
 		Matcher matcher = VECTOR_PATTERN.matcher(text);
 		if (!matcher.matches()) {
@@ -267,7 +267,7 @@ public final class ConstantExpressionEvaluator {
 		return new ConstantValue.Text(builder.toString());
 	}
 
-	private int handleIndexValue(int containerSize, String containerType, Expression indexExpression) {
+	private int handleIndexValue(int containerSize, @NotNull String containerType, @NotNull Expression indexExpression) {
 		ConstantValue indexValue = evaluate(indexExpression);
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {

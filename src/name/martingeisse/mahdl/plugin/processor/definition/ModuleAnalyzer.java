@@ -11,6 +11,8 @@ import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,24 +27,24 @@ public final class ModuleAnalyzer {
 	private final Module module;
 	private final Map<String, Named> definitions;
 
-	public ModuleAnalyzer(ErrorHandler errorHandler, DataTypeProcessor dataTypeProcessor, Module module) {
+	public ModuleAnalyzer(@NotNull ErrorHandler errorHandler, @NotNull DataTypeProcessor dataTypeProcessor, @NotNull Module module) {
 		this.errorHandler = errorHandler;
 		this.dataTypeProcessor = dataTypeProcessor;
 		this.module = module;
 		this.definitions = new HashMap<>();
 	}
 
+	@NotNull
 	public Map<String, Named> getDefinitions() {
 		return definitions;
 	}
-
 
 	/**
 	 * Registers all constants. This must be done before the actual analysis, and after the constants have been
 	 * evaluated, because all constants -- even those defined later -- are needed in evaluated form for this analyzer
 	 * to work.
 	 */
-	public final void registerConstants(Map<String, ConstantValue> constantValues) {
+	public final void registerConstants(@NotNull Map<String, ConstantValue> constantValues) {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
 				ImplementationItem_SignalLikeDefinitionGroup typedImplementationItem = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
@@ -124,15 +126,16 @@ public final class ModuleAnalyzer {
 
 	}
 
-	private void add(Named element) {
+	private void add(@NotNull Named element) {
 		if (definitions.put(element.getName(), element) != null) {
 			errorHandler.onError(element.getNameElement(), "redefinition of '" + element.getName() + "'");
 		}
 	}
 
-	private SignalLike convertSignalLike(ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
-												LeafPsiElement nameElement,
-												Expression initializer) {
+	@Nullable
+	private SignalLike convertSignalLike(@NotNull ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
+										 @NotNull LeafPsiElement nameElement,
+										 @NotNull Expression initializer) {
 		SignalLikeKind kind = signalLikeDefinitionGroup.getKind();
 		DataType dataType = signalLikeDefinitionGroup.getDataType();
 		ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
