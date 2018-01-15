@@ -13,36 +13,63 @@ expressions involving integers, we'll want them to have the same effect whether
 we use them on integers or equivalent vectors. We achieve this by the
 following basic Rules:
 
-* **Any operation is defined for two vectors by interpreting these two vectors
-as unsigned integers, then applying the operator on those intergers. The result
-is converted to a vector by taking the N lowest-order bits, where N is determined
-in an operator-specific way.**
-* **An integer is defined to be equivalent to a *signed infinite vector*, that is,
-a vector of infinite size whose high-order bits, starting at some index, all have
-the same value. This value is the sign bit. The integer value of such a vector can
-be obtained by taking its low-order bits and at least one sign bit, and interpreting
-it as a two's complement value.**
-* **Using the first rule to define operations, but with the interpretation of
-signed infinite vectors taken from the second rule, it is irrelevant whether
-we compute an operation on the numeric value of an integer or on its signed
-infinite vector. We can use whatever way is more convenient. Note that we
-need the second rule's interpretation since "unsigned" isn't well-defined
-for SIVs.**
-* **Note also that a finite vector can be turned into a SIV of the same numeric
-value by taking the finite vector as the low-order part and setting the sign
-bit to 0.**
-* **Based on these definitions and observations, any operation on two vector
-or integer values is defined by turning both values into the corresponding 
+* **Operators are defined for two integer operands based on their integer values.
+This definition does not rely on an understanding of vectors.**
+* **Operators are defined for two operands, each of which is either an integer or
+a vector, by turning vectors into integers, then applying the integer meaning
+of the operand. The vector is interpreted as an unsigned representation of all
+nonzero lowest-order bits of the integer. If either operand is a vector, the
+result is a vector whose size is determined by the operands.**
 
-TODO: I intended to define operations by turning values into vectors and reporting
-an error if this causes overflow. This doesn'T work with numeric values or
-SIVs. ???
-TODO: why define SIVs at all? Can't we just define that operations always act
-on numeric values? I.e. define that all operators turn vectors to integers as
-unsigned, act on integers, then turn the result into a vector using the operand
-sizes. This may cause warnings in some cases, e.g.: result = myVector < -3
-because this is never true, but SIVs don'T help the slightest in resolving that.
-Even with SIVs, we still interpret finite vectors as unsigned.
+Observations:
+
+* The unsigned interpretation makes some expressions pointless, such as
+
+      result1 = (myVector < 0);
+      constant integer foo = -5;
+      result2 = (myVector == foo);
+
+  This expression is never true. It is nevertheless allowed by the language, but
+  the compiler should produce a warning here.
+
+* The compiler should also emit a warning if a constant value is truncated. More
+formally, it should emit a warning if the result of an operator whose one operand
+is a constant sub-expression is the same as if the constant sub-expression produced
+another value which consists only of a low-order subrange of bits of the original
+value. TODO this definition does not work for negative numbers! Simple example
+
+      signal vector[8] foo = 256;
+      
+  since this is equivalent to 
+
+      signal vector[8] foo = 0;
+
+
+TODO all this is based on the integer meaning of operators. Alternative: onvert
+both operands to vectors first, and fire a warning if that conversion overflows.
+Problem: without knowing the signedness of the target vector it is not clear when
+the conversion overflows, but we don't need to know that in detail either.
+
+TODO however the TODO about negative numbers may mean it's actually more useful
+to convert to vectors first -- at least for warnings!
+
+What about the usefulness of converting to vector first in terms of the operation?
+- +/-/* doesn't matter due to truncation
+- //% don't know, but not that important
+- comparison: negative numbers cause bugs and those are detected either way
+	NO! Here's a problem: For comparison operators (which work unsigned) we don't
+	want to convert negative numbers to a vector first.This gives a wrong result.
+	For +/-, OTOH, we DO want to do that. So conversion has to depend on the operator.
+	This is more complex than working on the integer value.
+	
+	Problem case:
+	
+		constant integer myConstant = ...; // value: -3
+		myResult = myVector < myConstant; // unsigned comparison to e.g. 253. BAD!
+	
+- equal / not equal: undefined whether these are bugs, depends on the interpretation of the vector
+- shift / concat: can't convert to same size
+---
 
 
 For bitwise operators, the operation on integers is again defined based on the
