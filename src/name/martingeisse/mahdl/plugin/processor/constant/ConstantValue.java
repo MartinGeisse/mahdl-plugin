@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.constant;
 
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ public abstract class ConstantValue {
 	@Nullable
 	public abstract Boolean convertToBoolean();
 
+	// note: treats vectors as unsigned
 	@Nullable
 	public abstract BigInteger convertToInteger();
 
@@ -210,18 +212,7 @@ public abstract class ConstantValue {
 		@Override
 		@NotNull
 		public BigInteger convertToInteger() {
-			final int length = bits.length();
-			int index = 0;
-			BigInteger significance = BigInteger.ONE;
-			BigInteger result = BigInteger.ZERO;
-			while (index < length) {
-				if (bits.get(index)) {
-					result = result.add(significance);
-					index++;
-					significance = significance.shiftLeft(1);
-				}
-			}
-			return result;
+			return IntegerBitUtil.convertToUnsignedInteger(bits);
 		}
 
 		@NotNull

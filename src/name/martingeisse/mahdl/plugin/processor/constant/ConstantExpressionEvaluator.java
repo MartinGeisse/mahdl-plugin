@@ -10,7 +10,6 @@ import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.definition.Constant;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
@@ -352,7 +351,7 @@ public final class ConstantExpressionEvaluator {
 
 		// Concatenation can handle various types. All other operators can only handle vectors and integers.
 		if (expression instanceof Expression_BinaryConcat) {
-			return evaluateConcatenation((Expression_BinaryConcat)expression, leftOperandValue, rightOperandValue);
+			return evaluateConcatenation((Expression_BinaryConcat) expression, leftOperandValue, rightOperandValue);
 		}
 		if (!(leftOperandValue instanceof ConstantValue.Vector) && !(leftOperandValue instanceof ConstantValue.Integer)) {
 			return error(expression, leftOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as left operand here");
@@ -361,34 +360,37 @@ public final class ConstantExpressionEvaluator {
 			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
 		}
 
-		// next, check if both operands are integers. If so, we perform integer operations...
+		// Shifting can handle cases where the left and right operand are vectors of different size, or integers.
+		// Shifting is defined on an integer basis, with vectors interpreted as unsigned integers. This corresponds
+		// to shifting the bits of a left-hand vector, with zeroes shifted in from either side. It also means that
+		// the right side cannot be negative if it is a vector; for integers it is possible and shifts the negated
+		// amount to the other direction. At run-time, we can't have integers and thus no negative shift amounts.
+		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
+			return evaluateShift(expression, leftOperandValue, rightOperandValue);
+		}
+
+		// Next, check if both operands are integers. If so, we perform integer operations.
 		if (leftOperandValue instanceof ConstantValue.Integer && rightOperandValue instanceof ConstantValue.Integer) {
 			return BinaryIntegerOperatorUtil.evaluate(expression, leftOperandValue.convertToInteger(), rightOperandValue.convertToInteger());
 		}
 
-		// ... otherwise we perform vector operations, and the two operands must have the same vector size.
+		// Otherwise we perform vector operations, and the two operands must have the same vector size.
 		// An integer is converted to a vector of the size imposed by the other operand.
-		// TODO signed/unsigned shift operators
-		// TODO: allows different operand types: shift
-		// shifting can handle cases where the left and right operand are vectors of different size. Shifting a
-		// left-hand integer performs the corresponding numeric shift. The right-hand operand is always treated as an
-		// integer; if it is a vector, it is considered unsigned.
-
 		int size;
 		BitSet leftBits, rightBits;
 		if (leftOperandValue instanceof ConstantValue.Integer) {
-			ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+			ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 			size = rightVector.getSize();
 			rightBits = rightVector.getBits();
 			leftBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) leftOperandValue).getValue(), size);
 		} else if (rightOperandValue instanceof ConstantValue.Integer) {
-			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
+			ConstantValue.Vector leftVector = (ConstantValue.Vector) leftOperandValue;
 			size = leftVector.getSize();
 			leftBits = leftVector.getBits();
 			rightBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) rightOperandValue).getValue(), size);
 		} else {
-			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
-			ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+			ConstantValue.Vector leftVector = (ConstantValue.Vector) leftOperandValue;
+			ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 			size = leftVector.getSize();
 			if (rightVector.getSize() != size) {
 				return error(expression, "cannot apply this operator to vectors of different size (" +
@@ -410,10 +412,10 @@ public final class ConstantExpressionEvaluator {
 
 		// bit / vector concatenation
 		if (leftOperandValue instanceof ConstantValue.Bit) {
-			ConstantValue.Bit leftBit = (ConstantValue.Bit)leftOperandValue;
+			ConstantValue.Bit leftBit = (ConstantValue.Bit) leftOperandValue;
 
 			if (rightOperandValue instanceof ConstantValue.Bit) {
-				ConstantValue.Bit rightBit = (ConstantValue.Bit)rightOperandValue;
+				ConstantValue.Bit rightBit = (ConstantValue.Bit) rightOperandValue;
 
 				BitSet bits = new BitSet();
 				bits.set(1, leftBit.isSet());
@@ -421,19 +423,19 @@ public final class ConstantExpressionEvaluator {
 				return new ConstantValue.Vector(2, bits);
 
 			} else if (rightOperandValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+				ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 
-				BitSet bits = (BitSet)rightVector.getBits().clone();
+				BitSet bits = (BitSet) rightVector.getBits().clone();
 				bits.set(rightVector.getSize(), leftBit.isSet());
 				return new ConstantValue.Vector(rightVector.getSize() + 1, bits);
 
 			}
 
 		} else if (leftOperandValue instanceof ConstantValue.Vector) {
-			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
+			ConstantValue.Vector leftVector = (ConstantValue.Vector) leftOperandValue;
 
 			if (rightOperandValue instanceof ConstantValue.Bit) {
-				ConstantValue.Bit rightBit = (ConstantValue.Bit)rightOperandValue;
+				ConstantValue.Bit rightBit = (ConstantValue.Bit) rightOperandValue;
 
 				BitSet bits = new BitSet();
 				if (rightBit.isSet()) {
@@ -445,9 +447,9 @@ public final class ConstantExpressionEvaluator {
 				return new ConstantValue.Vector(leftVector.getSize() + 1, bits);
 
 			} else if (rightOperandValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+				ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 
-				BitSet bits = (BitSet)rightVector.getBits().clone();
+				BitSet bits = (BitSet) rightVector.getBits().clone();
 				for (int i = 0; i < leftVector.getSize(); i++) {
 					bits.set(rightVector.getSize() + i, leftVector.getBits().get(i));
 				}
@@ -460,6 +462,35 @@ public final class ConstantExpressionEvaluator {
 		return error(expression, "concatenation operator cannot be used on typed " +
 			leftOperandValue.getDataTypeFamily().getDisplayString() + " and " +
 			rightOperandValue.getDataTypeFamily().getDisplayString());
+	}
+
+	private ConstantValue evaluateShift(BinaryOperation expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
+		BigInteger leftInteger = leftOperandValue.convertToInteger();
+		BigInteger rightInteger = rightOperandValue.convertToInteger();
+		if (leftInteger == null || rightInteger == null) {
+			return error(expression, "cannot use shift operator on types " + leftOperandValue.getDataTypeFamily() +
+				" and " + rightOperandValue.getDataTypeFamily());
+		}
+		int rightInt;
+		try {
+			rightInt = rightInteger.intValueExact();
+		} catch (ArithmeticException e) {
+			return error(expression, "right operand of this shift operator is too large: " + rightInteger);
+		}
+		BigInteger resultInteger;
+		if (expression instanceof Expression_BinaryShiftLeft) {
+			resultInteger = leftInteger.shiftLeft(rightInt);
+		} else if (expression instanceof Expression_BinaryShiftRight) {
+			resultInteger = leftInteger.shiftRight(rightInt);
+		} else {
+			return error(expression, "unknown shift operation");
+		}
+		if (leftOperandValue instanceof ConstantValue.Vector) {
+			int size = ((ConstantValue.Vector) leftOperandValue).getSize();
+			return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(resultInteger, size));
+		} else {
+			return new ConstantValue.Integer(resultInteger);
+		}
 	}
 
 	@NotNull
