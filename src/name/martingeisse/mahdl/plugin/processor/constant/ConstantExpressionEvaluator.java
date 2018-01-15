@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.definition.Constant;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
@@ -360,17 +361,105 @@ public final class ConstantExpressionEvaluator {
 			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
 		}
 
-		// shifting can handle cases where the left and right operand are vectors of different size
-		// TODO unintuitive!
+		// next, check if both operands are integers. If so, we perform integer operations...
+		if (leftOperandValue instanceof ConstantValue.Integer && rightOperandValue instanceof ConstantValue.Integer) {
+			return BinaryIntegerOperatorUtil.evaluate(expression, leftOperandValue.convertToInteger(), rightOperandValue.convertToInteger());
+		}
+
+		// ... otherwise we perform vector operations, and the two operands must have the same vector size.
+		// An integer is converted to a vector of the size imposed by the other operand.
+		// TODO signed/unsigned shift operators
 		// TODO: allows different operand types: shift
+		// shifting can handle cases where the left and right operand are vectors of different size. Shifting a
+		// left-hand integer performs the corresponding numeric shift. The right-hand operand is always treated as an
+		// integer; if it is a vector, it is considered unsigned.
 
+		int size;
+		BitSet leftBits, rightBits;
+		if (leftOperandValue instanceof ConstantValue.Integer) {
+			ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+			size = rightVector.getSize();
+			rightBits = rightVector.getBits();
+			leftBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) leftOperandValue).getValue(), size);
+		} else if (rightOperandValue instanceof ConstantValue.Integer) {
+			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
+			size = leftVector.getSize();
+			leftBits = leftVector.getBits();
+			rightBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) rightOperandValue).getValue(), size);
+		} else {
+			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
+			ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+			size = leftVector.getSize();
+			if (rightVector.getSize() != size) {
+				return error(expression, "cannot apply this operator to vectors of different size (" +
+					size + " and " + rightVector.getSize() + ")");
+			}
+			leftBits = leftVector.getBits();
+			rightBits = rightVector.getBits();
+		}
+		return BinaryVectorOperatorUtil.evaluate(expression, size, leftBits, rightBits);
 
-		// TODO
-		return ConstantValue.Unknown.INSTANCE;
 	}
 
 	private ConstantValue evaluateConcatenation(Expression_BinaryConcat expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
-		// TODO
+
+		// string concatenation
+		if (leftOperandValue instanceof ConstantValue.Text || rightOperandValue instanceof ConstantValue.Text) {
+			return new ConstantValue.Text(leftOperandValue.convertToString() + rightOperandValue.convertToString());
+		}
+
+		// bit / vector concatenation
+		if (leftOperandValue instanceof ConstantValue.Bit) {
+			ConstantValue.Bit leftBit = (ConstantValue.Bit)leftOperandValue;
+
+			if (rightOperandValue instanceof ConstantValue.Bit) {
+				ConstantValue.Bit rightBit = (ConstantValue.Bit)rightOperandValue;
+
+				BitSet bits = new BitSet();
+				bits.set(1, leftBit.isSet());
+				bits.set(0, rightBit.isSet());
+				return new ConstantValue.Vector(2, bits);
+
+			} else if (rightOperandValue instanceof ConstantValue.Vector) {
+				ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+
+				BitSet bits = (BitSet)rightVector.getBits().clone();
+				bits.set(rightVector.getSize(), leftBit.isSet());
+				return new ConstantValue.Vector(rightVector.getSize() + 1, bits);
+
+			}
+
+		} else if (leftOperandValue instanceof ConstantValue.Vector) {
+			ConstantValue.Vector leftVector = (ConstantValue.Vector)leftOperandValue;
+
+			if (rightOperandValue instanceof ConstantValue.Bit) {
+				ConstantValue.Bit rightBit = (ConstantValue.Bit)rightOperandValue;
+
+				BitSet bits = new BitSet();
+				if (rightBit.isSet()) {
+					bits.set(0);
+				}
+				for (int i = 0; i < leftVector.getSize(); i++) {
+					bits.set(1 + i, leftVector.getBits().get(i));
+				}
+				return new ConstantValue.Vector(leftVector.getSize() + 1, bits);
+
+			} else if (rightOperandValue instanceof ConstantValue.Vector) {
+				ConstantValue.Vector rightVector = (ConstantValue.Vector)rightOperandValue;
+
+				BitSet bits = (BitSet)rightVector.getBits().clone();
+				for (int i = 0; i < leftVector.getSize(); i++) {
+					bits.set(rightVector.getSize() + i, leftVector.getBits().get(i));
+				}
+				return new ConstantValue.Vector(leftVector.getSize() + rightVector.getSize(), bits);
+
+			}
+
+		}
+
+		return error(expression, "concatenation operator cannot be used on typed " +
+			leftOperandValue.getDataTypeFamily().getDisplayString() + " and " +
+			rightOperandValue.getDataTypeFamily().getDisplayString());
 	}
 
 	@NotNull

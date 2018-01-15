@@ -33,6 +33,9 @@ public abstract class ConstantValue {
 	public abstract BigInteger convertToInteger();
 
 	@NotNull
+	public abstract String convertToString();
+
+	@NotNull
 	public abstract ConstantValue selectIndex(int index);
 
 	@NotNull
@@ -64,6 +67,12 @@ public abstract class ConstantValue {
 		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
+		}
+
+		@NotNull
+		@Override
+		public String convertToString() {
+			return "(unknown)";
 		}
 
 		@Override
@@ -124,6 +133,12 @@ public abstract class ConstantValue {
 		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
+		}
+
+		@NotNull
+		@Override
+		public String convertToString() {
+			return set ? "1" : "0";
 		}
 
 		@Override
@@ -209,6 +224,22 @@ public abstract class ConstantValue {
 			return result;
 		}
 
+		@NotNull
+		@Override
+		public String convertToString() {
+			StringBuilder builder = new StringBuilder().append(size).append('h');
+			int paddedLength = bits.length();
+			if (paddedLength % 4 != 0) {
+				paddedLength = paddedLength + 4 - paddedLength % 4;
+			}
+			for (int index = paddedLength - 1; index >= 0; index -= 4) {
+				int digitValue = (bits.get(index) ? 8 : 0) + (bits.get(index - 1) ? 4 : 0) +
+					(bits.get(index - 2) ? 2 : 0) + (bits.get(index - 3) ? 1 : 0);
+				builder.append(digitValue < 10 ? ((char)('0' + digitValue)) : ((char)('a' + digitValue - 10)));
+			}
+			return builder.toString();
+		}
+
 		@Override
 		@NotNull
 		public ConstantValue selectIndex(int index) {
@@ -292,6 +323,12 @@ public abstract class ConstantValue {
 			return null;
 		}
 
+		@NotNull
+		@Override
+		public String convertToString() {
+			return "(memory)";
+		}
+
 		@Override
 		@NotNull
 		public ConstantValue selectIndex(int index) {
@@ -356,6 +393,12 @@ public abstract class ConstantValue {
 			return value;
 		}
 
+		@NotNull
+		@Override
+		public String convertToString() {
+			return value.toString();
+		}
+
 		@Override
 		@NotNull
 		public ConstantValue selectIndex(int index) {
@@ -415,6 +458,12 @@ public abstract class ConstantValue {
 		@Nullable
 		public BigInteger convertToInteger() {
 			return null;
+		}
+
+		@NotNull
+		@Override
+		public String convertToString() {
+			return value;
 		}
 
 		@Override
