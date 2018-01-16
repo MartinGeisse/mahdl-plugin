@@ -12,6 +12,7 @@ import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.Port;
 import name.martingeisse.mahdl.plugin.processor.definition.Signal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -75,7 +76,7 @@ public final class InconsistentAssignmentDetector {
 		handleAssignedTo(assignment.getLeftSide());
 	}
 
-	public void handleAssignedTo(@NotNull Expression destination) {
+	public void handleAssignedTo(@Nullable Expression destination) {
 		if (destination instanceof Expression_Identifier) {
 			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
 			handleAssignedToSignalLike(signalNameElement.getText(), signalNameElement);

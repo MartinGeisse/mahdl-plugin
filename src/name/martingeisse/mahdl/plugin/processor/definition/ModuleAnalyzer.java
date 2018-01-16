@@ -135,7 +135,7 @@ public final class ModuleAnalyzer {
 	@Nullable
 	private SignalLike convertSignalLike(@NotNull ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
 										 @NotNull LeafPsiElement nameElement,
-										 @NotNull Expression initializer) {
+										 @Nullable Expression initializer) {
 		SignalLikeKind kind = signalLikeDefinitionGroup.getKind();
 		DataType dataType = signalLikeDefinitionGroup.getDataType();
 		ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);

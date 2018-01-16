@@ -103,7 +103,7 @@ public final class ModuleProcessor {
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
 
 		// this object checks run-time assignments and detects type errors and assignment to non-L-values
-		runtimeAssignmentChecker = new RuntimeAssignmentChecker(errorHandler, definitions);
+		runtimeAssignmentChecker = new RuntimeAssignmentChecker(errorHandler, expressionTypeChecker, definitions);
 
 		// process named definitions
 		for (Named item : definitions.values()) {
