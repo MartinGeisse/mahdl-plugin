@@ -27,7 +27,6 @@ public abstract class ProcessedDataType {
 	@NotNull
 	public abstract Family getFamily();
 
-	// TODO if this produces UNKNOWN, there should be an error!
 	@NotNull
 	public abstract ConstantValue convertConstantValueImplicitly(ConstantValue inputValue);
 

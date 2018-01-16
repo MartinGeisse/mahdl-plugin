@@ -68,8 +68,12 @@ public final class ConstantExpressionEvaluator {
 						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
 
 							SignalLikeDefinition_WithInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
-							ConstantValue value = evaluate(typedDeclaredSignalLike.getInitializer());
-							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), processedDataType.convertConstantValueImplicitly(value));
+							ConstantValue rawValue = evaluate(typedDeclaredSignalLike.getInitializer());
+							ConstantValue convertedValue = processedDataType.convertConstantValueImplicitly(rawValue);
+							if ((convertedValue instanceof ConstantValue.Unknown) && !(rawValue instanceof ConstantValue.Unknown)) {
+								errorHandler.onError(typedDeclaredSignalLike.getInitializer(), "cannot convert value of type " + rawValue.getDataType() + " to type " + processedDataType);
+							}
+							definedConstants.put(typedDeclaredSignalLike.getIdentifier().getText(), convertedValue);
 
 						} else {
 
