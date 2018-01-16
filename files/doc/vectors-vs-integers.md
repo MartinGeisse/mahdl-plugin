@@ -1,17 +1,24 @@
 
 # Vectors and Integers
 
+Observe that most operators are well-defined for integer operands, producing
+an integer result. This is even the case for the bitwise operators AND, OR and
+XOR, using the definitions of those operators from BigInteger. We want the effect
+of those operators on vectors to be compatible with the effect on integers.
+
 MaHDL allows to use both vectors and integers in a module definition. At
 run-time, only vectors are used. When used in run-time expressions, integers
 therefore only provide a convenient way to specify vectors, and all
-run-time operators are defined for vectors only. 
+run-time operators are defined for vectors only. In constant expressions, on
+the other hand, vectors and integers both have meaning on their own.
+**TODO this is wrong. The descision below is to NOT define everything to be a vector,
+but to deal with integers!**
 
-On the other hand, many operators such as "plus" or "less-than" are defined in
-terms of integers. These operators are defined for vectors based on their
-definitions in terms of integers. Since those operators can be used on constant
-expressions involving integers, we'll want them to have the same effect whether
-we use them on integers or equivalent vectors. We achieve this by the
-following basic Rules:
+We achieve these goals with the following rules:
+
+* **A vector is defined to be equivalent to its unsigned interpretation as an
+integer. There are no signed vectors, and there are no operators that treat
+vectors as signed. **
 
 * **Operators are defined for two integer operands based on their integer values.
 This definition does not rely on an understanding of vectors.**
@@ -143,12 +150,3 @@ work differently for them, and produce different warnings.
     The arithmetic rules say: 7 + -2 = -11
 -> VHDL has distinct bit vector, signed vector and unsigned vector. Mixing them
     is not allowed --> also uses explicit conversion.
-
-HOWEVER, we also have to acknowledge that MaHDL is an
-"implementation HDL" that has mostly synthesizable constructs
-and little support for behavioral modeling. This is okay -- it just means
-that for real hardware modeling, higher-level languages are needed. These
-can use MaHDL as a synthesis step. A good MaHDL generation language would
-actually be nice to implement code generators easily. I still expect
-an implementation to contain various hand-written MaHDL modules, together with
-a few generated ones.
