@@ -360,47 +360,49 @@ public final class ConstantExpressionEvaluator {
 			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
 		}
 
-		// Shifting can handle cases where the left and right operand are vectors of different size, or integers.
-		// Shifting is defined on an integer basis, with vectors interpreted as unsigned integers. This corresponds
-		// to shifting the bits of a left-hand vector, with zeroes shifted in from either side. It also means that
-		// the right side cannot be negative if it is a vector; for integers it is possible and shifts the negated
-		// amount to the other direction. At run-time, we can't have integers and thus no negative shift amounts.
-		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
-			return evaluateShift(expression, leftOperandValue, rightOperandValue);
-		}
-
-		// Next, check if both operands are integers. If so, we perform integer operations.
-		if (leftOperandValue instanceof ConstantValue.Integer && rightOperandValue instanceof ConstantValue.Integer) {
-			return BinaryIntegerOperatorUtil.evaluate(expression, leftOperandValue.convertToInteger(), rightOperandValue.convertToInteger());
-		}
-
-		// Otherwise we perform vector operations, and the two operands must have the same vector size.
-		// An integer is converted to a vector of the size imposed by the other operand.
-		int size;
-		BitSet leftBits, rightBits;
-		if (leftOperandValue instanceof ConstantValue.Integer) {
-			ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
-			size = rightVector.getSize();
-			rightBits = rightVector.getBits();
-			leftBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) leftOperandValue).getValue(), size);
-		} else if (rightOperandValue instanceof ConstantValue.Integer) {
-			ConstantValue.Vector leftVector = (ConstantValue.Vector) leftOperandValue;
-			size = leftVector.getSize();
-			leftBits = leftVector.getBits();
-			rightBits = IntegerBitUtil.convertToBitSet(((ConstantValue.Integer) rightOperandValue).getValue(), size);
-		} else {
-			ConstantValue.Vector leftVector = (ConstantValue.Vector) leftOperandValue;
-			ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
-			size = leftVector.getSize();
-			if (rightVector.getSize() != size) {
-				return error(expression, "cannot apply this operator to vectors of different size (" +
-					size + " and " + rightVector.getSize() + ")");
+		// perform the corresponding integer operation
+		BigInteger leftInteger = leftOperandValue.convertToInteger();
+		BigInteger rightInteger = rightOperandValue.convertToInteger();
+		ConstantValue integerResultValue;
+		BigInteger resultInteger;
+		try {
+			integerResultValue = BinaryOperatorUtil.evaluateIntegerVectorOperator(expression, leftInteger, rightInteger);
+			resultInteger = integerResultValue.convertToInteger();
+			if (resultInteger == null) {
+				return error(expression, "got result value of wrong type for shift operator: " + integerResultValue.getDataTypeFamily());
 			}
-			leftBits = leftVector.getBits();
-			rightBits = rightVector.getBits();
+		} catch (BinaryOperatorUtil.OperatorException e) {
+			return error(expression, e.getMessage());
 		}
-		return BinaryVectorOperatorUtil.evaluate(expression, size, leftBits, rightBits);
 
+		// shifting can handle vectors of different size
+		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
+			if (leftOperandValue instanceof ConstantValue.Vector) {
+				int size = ((ConstantValue.Vector) leftOperandValue).getSize();
+				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(resultInteger, size));
+			} else {
+				return integerResultValue;
+			}
+		}
+
+		// all other operators want the operands to be of the same size
+		int resultSize;
+		if (leftOperandValue instanceof ConstantValue.Vector) {
+			resultSize = ((ConstantValue.Vector) leftOperandValue).getSize();
+			if (rightOperandValue instanceof ConstantValue.Vector) {
+				int rightSize = ((ConstantValue.Vector) rightOperandValue).getSize();
+				if (rightSize != resultSize) {
+					return error(expression, "vectors of different sizes (" + resultSize + " and " + rightSize + ") cannot be used with this operator");
+				}
+			}
+		} else {
+			if (rightOperandValue instanceof ConstantValue.Vector) {
+				resultSize = ((ConstantValue.Vector) rightOperandValue).getSize();
+			} else {
+				return integerResultValue;
+			}
+		}
+		return new ConstantValue.Vector(resultSize, IntegerBitUtil.convertToBitSet(resultInteger, resultSize));
 	}
 
 	private ConstantValue evaluateConcatenation(Expression_BinaryConcat expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
@@ -462,35 +464,6 @@ public final class ConstantExpressionEvaluator {
 		return error(expression, "concatenation operator cannot be used on typed " +
 			leftOperandValue.getDataTypeFamily().getDisplayString() + " and " +
 			rightOperandValue.getDataTypeFamily().getDisplayString());
-	}
-
-	private ConstantValue evaluateShift(BinaryOperation expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
-		BigInteger leftInteger = leftOperandValue.convertToInteger();
-		BigInteger rightInteger = rightOperandValue.convertToInteger();
-		if (leftInteger == null || rightInteger == null) {
-			return error(expression, "cannot use shift operator on types " + leftOperandValue.getDataTypeFamily() +
-				" and " + rightOperandValue.getDataTypeFamily());
-		}
-		int rightInt;
-		try {
-			rightInt = rightInteger.intValueExact();
-		} catch (ArithmeticException e) {
-			return error(expression, "right operand of this shift operator is too large: " + rightInteger);
-		}
-		BigInteger resultInteger;
-		if (expression instanceof Expression_BinaryShiftLeft) {
-			resultInteger = leftInteger.shiftLeft(rightInt);
-		} else if (expression instanceof Expression_BinaryShiftRight) {
-			resultInteger = leftInteger.shiftRight(rightInt);
-		} else {
-			return error(expression, "unknown shift operation");
-		}
-		if (leftOperandValue instanceof ConstantValue.Vector) {
-			int size = ((ConstantValue.Vector) leftOperandValue).getSize();
-			return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(resultInteger, size));
-		} else {
-			return new ConstantValue.Integer(resultInteger);
-		}
 	}
 
 	@NotNull
