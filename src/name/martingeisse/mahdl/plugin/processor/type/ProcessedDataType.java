@@ -152,7 +152,7 @@ public abstract class ProcessedDataType {
 					// no automatic truncating
 					return ConstantValue.Unknown.INSTANCE;
 				}
-				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integer.getValue(), size));
+				return new ConstantValue.Vector(size, integer.getValue());
 			} else {
 				return ConstantValue.Unknown.INSTANCE;
 			}

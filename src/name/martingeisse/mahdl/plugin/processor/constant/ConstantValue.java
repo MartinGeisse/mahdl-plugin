@@ -163,15 +163,30 @@ public abstract class ConstantValue {
 		private final int size;
 		private final BitSet bits;
 
+		public Vector(int size, BigInteger integerValue) {
+			this(size, IntegerBitUtil.convertToBitSet(integerValue, size), false);
+		}
+
 		public Vector(int size, @NotNull BitSet bits) {
+			this(size, bits, true);
+		}
+
+		private Vector(int size, @NotNull BitSet bits, boolean cloneBits) {
+			if (bits.length() > size) {
+				throw new IllegalArgumentException("bit set length " + bits.length() + " is greater than the vector size " + size);
+			}
 			this.size = size;
-			this.bits = bits;
+			this.bits = cloneBits ? (BitSet)bits.clone() : bits;
 		}
 
 		public int getSize() {
 			return size;
 		}
 
+		/**
+		 * Returns a new BitSet containing the bits from this vector. The returned BitSet is NOT backed by this
+		 * vector and may be modified by the caller.
+		 */
 		@NotNull
 		public BitSet getBits() {
 			return (BitSet)bits.clone();
@@ -247,7 +262,7 @@ public abstract class ConstantValue {
 			if (to < 0 || from < to || from >= size) {
 				return Unknown.INSTANCE;
 			}
-			return new Vector(from - to + 1, bits.get(to, from));
+			return new Vector(from - to + 1, bits.get(to, from), false);
 		}
 
 	}
@@ -326,7 +341,7 @@ public abstract class ConstantValue {
 			if (index < 0 || index >= firstSize) {
 				return Unknown.INSTANCE;
 			}
-			return new Vector(secondSize, bits.get(index * secondSize, (index + 1) * secondSize - 1));
+			return new Vector(secondSize, bits.get(index * secondSize, (index + 1) * secondSize - 1), false);
 		}
 
 		@Override

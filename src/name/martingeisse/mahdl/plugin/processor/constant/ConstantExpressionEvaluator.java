@@ -12,7 +12,6 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
-import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
@@ -189,7 +188,7 @@ public final class ConstantExpressionEvaluator {
 		if (integerValue.bitLength() > size) {
 			return error(textElement, "vector literal contains a value larger than its sepcified size");
 		}
-		return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integerValue, size));
+		return new ConstantValue.Vector(size, integerValue);
 	}
 
 	@NotNull
@@ -291,6 +290,8 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
+
+		// determine operand value
 		if (expression.getOperand() == null) {
 			return ConstantValue.Unknown.INSTANCE;
 		}
@@ -298,44 +299,40 @@ public final class ConstantExpressionEvaluator {
 		if (operandValue instanceof ConstantValue.Unknown) {
 			return operandValue;
 		}
-		if (expression instanceof Expression_UnaryNot) {
-			if (operandValue instanceof ConstantValue.Bit) {
-				boolean bitOperandValue = ((ConstantValue.Bit) operandValue).isSet();
-				return new ConstantValue.Bit(!bitOperandValue);
-			} else if (operandValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vector = (ConstantValue.Vector) operandValue;
-				BitSet invertedBits = (BitSet) vector.getBits().clone();
-				invertedBits.flip(0, vector.getSize() - 1);
-				return new ConstantValue.Vector(vector.getSize(), invertedBits);
-			} else if (operandValue instanceof ConstantValue.Integer) {
-				// if -n == ~n + 1, then ~n == -n - 1
-				BigInteger integerOperandValue = ((ConstantValue.Integer) operandValue).getValue();
-				BigInteger invertedIntegerValue = integerOperandValue.negate().subtract(BigInteger.ONE);
-				return new ConstantValue.Integer(invertedIntegerValue);
-			} else {
-				return error(expression, "cannot bitwise-negate a value of type " + operandValue.getDataType());
-			}
-		} else if (expression instanceof Expression_UnaryPlus) {
-			if (operandValue instanceof ConstantValue.Vector || operandValue instanceof ConstantValue.Integer) {
-				return operandValue;
-			} else {
-				return error(expression, "cannot apply a unary plus to a value of type " + operandValue.getDataType());
-			}
-		} else if (expression instanceof Expression_UnaryMinus) {
-			if (operandValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vector = (ConstantValue.Vector) operandValue;
-				int size = vector.getSize();
-				BigInteger integerValue = IntegerBitUtil.convertToInteger(vector.getBits(), size);
-				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(integerValue.negate(), size));
-			} else if (operandValue instanceof ConstantValue.Integer) {
-				BigInteger integerOperandValue = ((ConstantValue.Integer) operandValue).getValue();
-				return new ConstantValue.Integer(integerOperandValue.negate());
-			} else {
-				return error(expression, "cannot apply a unary minus to a value of type " + operandValue.getDataType());
-			}
-		} else {
-			return error(expression, "unknown unary operator");
+
+		// Only unary NOT can handle bit values. All other operators require a vector or integer.
+		if (expression instanceof Expression_UnaryNot && operandValue instanceof ConstantValue.Bit) {
+			boolean bitOperandValue = ((ConstantValue.Bit) operandValue).isSet();
+			return new ConstantValue.Bit(!bitOperandValue);
 		}
+		if (!(operandValue instanceof ConstantValue.Vector) && !(operandValue instanceof ConstantValue.Integer)) {
+			return error(expression, operandValue.getDataTypeFamily().getDisplayString() + " type not allowed as operand here");
+		}
+
+		// shortcut for unary plus, which doesn't actually do anything
+		if (expression instanceof Expression_UnaryPlus) {
+			return operandValue;
+		}
+
+		// perform the corresponding integer operation
+		BigInteger integerOperand = operandValue.convertToInteger();
+		BigInteger integerResult;
+		if (expression instanceof Expression_UnaryNot) {
+			integerResult = integerOperand.not();
+		} else if (expression instanceof Expression_UnaryMinus) {
+			integerResult = integerOperand.negate();
+		} else {
+			return error(expression, "unknown operator");
+		}
+
+		// if the operand was a vector, turn the result into a vector of the same size, otherwise return as integer
+		if (operandValue instanceof ConstantValue.Vector) {
+			int size = ((ConstantValue.Vector) operandValue).getSize();
+			return new ConstantValue.Vector(size, integerResult);
+		} else {
+			return new ConstantValue.Integer(integerResult);
+		}
+
 	}
 
 	private ConstantValue evaluateBinaryOperation(BinaryOperation expression) {
@@ -373,7 +370,7 @@ public final class ConstantExpressionEvaluator {
 			integerResultValue = BinaryOperatorUtil.evaluateIntegerVectorOperator(expression, leftInteger, rightInteger);
 			resultInteger = integerResultValue.convertToInteger();
 			if (resultInteger == null) {
-				return error(expression, "got result value of wrong type for shift operator: " + integerResultValue.getDataTypeFamily());
+				return error(expression, "got result value of wrong type for binary operator: " + integerResultValue.getDataTypeFamily());
 			}
 		} catch (BinaryOperatorUtil.OperatorException e) {
 			return error(expression, e.getMessage());
@@ -383,7 +380,7 @@ public final class ConstantExpressionEvaluator {
 		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
 			if (leftOperandValue instanceof ConstantValue.Vector) {
 				int size = ((ConstantValue.Vector) leftOperandValue).getSize();
-				return new ConstantValue.Vector(size, IntegerBitUtil.convertToBitSet(resultInteger, size));
+				return new ConstantValue.Vector(size, resultInteger);
 			} else {
 				return integerResultValue;
 			}
@@ -406,7 +403,7 @@ public final class ConstantExpressionEvaluator {
 				return integerResultValue;
 			}
 		}
-		return new ConstantValue.Vector(resultSize, IntegerBitUtil.convertToBitSet(resultInteger, resultSize));
+		return new ConstantValue.Vector(resultSize, resultInteger);
 	}
 
 	private ConstantValue evaluateConcatenation(Expression_BinaryConcat expression, ConstantValue leftOperandValue, ConstantValue rightOperandValue) {
@@ -423,17 +420,17 @@ public final class ConstantExpressionEvaluator {
 			if (rightOperandValue instanceof ConstantValue.Bit) {
 				ConstantValue.Bit rightBit = (ConstantValue.Bit) rightOperandValue;
 
-				BitSet bits = new BitSet();
-				bits.set(1, leftBit.isSet());
-				bits.set(0, rightBit.isSet());
-				return new ConstantValue.Vector(2, bits);
+				BitSet resultBits = new BitSet();
+				resultBits.set(1, leftBit.isSet());
+				resultBits.set(0, rightBit.isSet());
+				return new ConstantValue.Vector(2, resultBits);
 
 			} else if (rightOperandValue instanceof ConstantValue.Vector) {
 				ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 
-				BitSet bits = (BitSet) rightVector.getBits().clone();
-				bits.set(rightVector.getSize(), leftBit.isSet());
-				return new ConstantValue.Vector(rightVector.getSize() + 1, bits);
+				BitSet resultBits = rightVector.getBits();
+				resultBits.set(rightVector.getSize(), leftBit.isSet());
+				return new ConstantValue.Vector(rightVector.getSize() + 1, resultBits);
 
 			}
 
@@ -443,23 +440,25 @@ public final class ConstantExpressionEvaluator {
 			if (rightOperandValue instanceof ConstantValue.Bit) {
 				ConstantValue.Bit rightBit = (ConstantValue.Bit) rightOperandValue;
 
-				BitSet bits = new BitSet();
+				BitSet resultBits = new BitSet();
 				if (rightBit.isSet()) {
-					bits.set(0);
+					resultBits.set(0);
 				}
+				BitSet leftBits = leftVector.getBits();
 				for (int i = 0; i < leftVector.getSize(); i++) {
-					bits.set(1 + i, leftVector.getBits().get(i));
+					resultBits.set(1 + i, leftBits.get(i));
 				}
-				return new ConstantValue.Vector(leftVector.getSize() + 1, bits);
+				return new ConstantValue.Vector(leftVector.getSize() + 1, resultBits);
 
 			} else if (rightOperandValue instanceof ConstantValue.Vector) {
 				ConstantValue.Vector rightVector = (ConstantValue.Vector) rightOperandValue;
 
-				BitSet bits = (BitSet) rightVector.getBits().clone();
+				BitSet resultBits = rightVector.getBits();
+				BitSet leftBits = leftVector.getBits();
 				for (int i = 0; i < leftVector.getSize(); i++) {
-					bits.set(rightVector.getSize() + i, leftVector.getBits().get(i));
+					resultBits.set(rightVector.getSize() + i, leftBits.get(i));
 				}
-				return new ConstantValue.Vector(leftVector.getSize() + rightVector.getSize(), bits);
+				return new ConstantValue.Vector(leftVector.getSize() + rightVector.getSize(), resultBits);
 
 			}
 
