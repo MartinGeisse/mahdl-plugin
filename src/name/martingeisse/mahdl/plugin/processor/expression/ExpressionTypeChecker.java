@@ -2,9 +2,8 @@
  * Copyright (c) 2018 Martin Geisse
  * This file is distributed under the terms of the MIT license.
  */
-package name.martingeisse.mahdl.plugin.processor;
+package name.martingeisse.mahdl.plugin.processor.expression;
 
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
@@ -37,7 +36,7 @@ public final class ExpressionTypeChecker {
 	}
 
 	@NotNull
-	public ProcessedDataType check(@NotNull Expression expression) {
+	public ProcessedDataType checkExpression(@NotNull Expression expression) {
 		// TODO
 		if (expression instanceof Expression_Literal) {
 
@@ -73,6 +72,11 @@ public final class ExpressionTypeChecker {
 //		}
 
 		return null;
+	}
+
+	@NotNull
+	public ProcessedDataType checkImplicitConversion(@NotNull Expression expression, @NotNull DataType targetType) {
+
 	}
 
 }

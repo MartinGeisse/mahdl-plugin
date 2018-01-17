@@ -11,6 +11,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,6 @@ public final class ModuleProcessor {
 
 	private ConstantExpressionEvaluator constantExpressionEvaluator;
 	private DataTypeProcessorImpl dataTypeProcessor;
-	private ConstantExpressionEvaluator exceptionThrowingConstantExpressionEvaluator;
 	private ModuleAnalyzer moduleAnalyzer;
 	private Map<String, Named> definitions;
 	private ExpressionTypeChecker expressionTypeChecker;
@@ -86,9 +86,6 @@ public final class ModuleProcessor {
 		constantExpressionEvaluator = new ConstantExpressionEvaluator(errorHandler, module);
 		dataTypeProcessor = new DataTypeProcessorImpl(errorHandler, constantExpressionEvaluator);
 		constantExpressionEvaluator.processConstantDefinitions(dataTypeProcessor);
-		exceptionThrowingConstantExpressionEvaluator = new ConstantExpressionEvaluator((errorSource, message) -> {
-			throw new ConstantEvaluationException();
-		}, module);
 
 		// collect definitions
 		moduleAnalyzer = new ModuleAnalyzer(errorHandler, dataTypeProcessor, module);
@@ -258,15 +255,5 @@ public final class ModuleProcessor {
 		}
 	}
 
-	private ConstantValue tryEvaluateConstantExpression(@NotNull Expression expression) {
-		try {
-			return exceptionThrowingConstantExpressionEvaluator.evaluate(expression);
-		} catch (ConstantEvaluationException e) {
-			return ConstantValue.Unknown.INSTANCE;
-		}
-	}
-
-	private static class ConstantEvaluationException extends RuntimeException {
-	}
 
 }

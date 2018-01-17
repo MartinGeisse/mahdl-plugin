@@ -7,7 +7,10 @@ package name.martingeisse.mahdl.plugin.processor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,11 +26,16 @@ public final class RuntimeAssignmentChecker {
 
 	private final ErrorHandler errorHandler;
 	private final ExpressionTypeChecker expressionTypeChecker;
+	private final ConstantExpressionEvaluator constantExpressionEvaluator;
 	private final Map<String, Named> definitions;
 
-	public RuntimeAssignmentChecker(@NotNull ErrorHandler errorHandler, @NotNull ExpressionTypeChecker expressionTypeChecker, @NotNull Map<String, Named> definitions) {
+	public RuntimeAssignmentChecker(@NotNull ErrorHandler errorHandler,
+									@NotNull ExpressionTypeChecker expressionTypeChecker,
+									@NotNull ConstantExpressionEvaluator constantExpressionEvaluator,
+									@NotNull Map<String, Named> definitions) {
 		this.errorHandler = errorHandler;
 		this.expressionTypeChecker = expressionTypeChecker;
+		this.constantExpressionEvaluator = constantExpressionEvaluator;
 		this.definitions = definitions;
 	}
 
@@ -35,33 +43,36 @@ public final class RuntimeAssignmentChecker {
 	 * Ensures that the specified left side is assignable and that the right side produces a compatible type.
 	 */
 	public void checkRuntimeAssignment(@NotNull Expression leftSide, @NotNull Expression rightSide, boolean allowContinuous, boolean allowClocked) {
-		// TODO convert constants
 		checkLValue(leftSide, allowContinuous, allowClocked);
 		ProcessedDataType leftSideType = expressionTypeChecker.check(leftSide);
 		ProcessedDataType rightSideType = expressionTypeChecker.check(rightSide);
 		checkRuntimeAssignmentType(rightSide, leftSideType, rightSideType);
-
 	}
 
 	/**
 	 * Ensures that the right side produces a type compatible with the left side's type.
 	 */
 	private void checkRuntimeAssignmentType(@NotNull PsiElement errorSource, @NotNull ProcessedDataType leftSideType, @NotNull ProcessedDataType rightSideType) {
-		// TODO convert constants
-		ProcessedDataType.Family variableTypeFamily = leftSideType.getFamily();
-		ProcessedDataType.Family valueTypeFamily = rightSideType.getFamily();
-		if (variableTypeFamily == ProcessedDataType.Family.UNKNOWN || valueTypeFamily == ProcessedDataType.Family.UNKNOWN) {
-			// if either type is unknown, an error has already been reported, and we don't want any followup errors
+		ProcessedDataType.Family leftTypeFamily = leftSideType.getFamily();
+		ProcessedDataType.Family rightTypeFamily = rightSideType.getFamily();
+
+		// if either type is unknown, an error has already been reported, and we don't want any followup errors
+		if (leftTypeFamily == ProcessedDataType.Family.UNKNOWN || rightTypeFamily == ProcessedDataType.Family.UNKNOWN) {
 			return;
 		}
-		if (variableTypeFamily != ProcessedDataType.Family.BIT && variableTypeFamily != ProcessedDataType.Family.VECTOR) {
-			// integer and text should not exist at run-time, and a whole memory cannot be assigned to at once
+
+		// integer and text should not exist at run-time, and a whole memory cannot be assigned to at once
+		if (leftTypeFamily != ProcessedDataType.Family.BIT && leftTypeFamily != ProcessedDataType.Family.VECTOR) {
 			errorHandler.onError(errorSource, "cannot run-time assign to type " + leftSideType);
 			return;
 		}
+
+		// Otherwise, either the types must be equal, or the right-hand side must be a constant that can be converted
+		// to the type of the left-hand side. Run-time conversion is not done since all combinations of non-equal
+		// run-time types (bit and vectors of some size) cannot be automatically converted, truncated or expanded.
 		if (!rightSideType.equals(leftSideType)) {
-			// otherwise, the types must be equal. They're bit or vector of some size, and we don't have any implicit
-			// conversion, truncating or expanding.
+			ConstantValue constantValue = constantExpressionEvaluator.evaluate()
+			// TODO convert constants
 			errorHandler.onError(errorSource, "cannot convert from type " + rightSideType + " to type " + leftSideType + " at run-time");
 		}
 	}
