@@ -361,6 +361,8 @@ public final class ConstantExpressionEvaluator {
 			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
 		}
 
+		TODO: treat TAIVOs specially first, and convert TSIVOs to the operand size.
+
 		// perform the corresponding integer operation
 		BigInteger leftInteger = leftOperandValue.convertToInteger();
 		BigInteger rightInteger = rightOperandValue.convertToInteger();
