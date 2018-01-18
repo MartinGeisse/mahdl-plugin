@@ -23,7 +23,12 @@ import java.util.Map;
  * find errors. There is no reliable way to evaluate an expression which is not known to be constant and which may
  * contain type errors, while still generating good error messages. Instead, make this type checker handle the
  * constant compile-time type system too, and have it check all expressions first, including constant ones. Then,
- * if the type check is okay, attempt to find constant sub-expressions. (TODO: find by try-eval or by is-constant?)
+ * if the type check is okay, attempt to find constant sub-expressions. (TODO: find by try-eval or by is-constant?
+ * This can be answered by asking: What if an expression is constant but produces an error during folding, e.g. a
+ * conversion error or an overflow. Should it still be folded or should the error be deferred to run-time? If such
+ * errors should be deferred to run-time, just try to fold and handle each error by not folding. If such errors should
+ * be compile-time errors, then we must first run a separate step to know if we should fold, and then handle errors
+ * by reporting them.)
  */
 public final class ExpressionTypeChecker {
 
