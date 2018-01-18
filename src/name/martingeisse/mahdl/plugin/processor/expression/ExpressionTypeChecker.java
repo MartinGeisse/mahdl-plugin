@@ -28,7 +28,9 @@ import java.util.Map;
  * conversion error or an overflow. Should it still be folded or should the error be deferred to run-time? If such
  * errors should be deferred to run-time, just try to fold and handle each error by not folding. If such errors should
  * be compile-time errors, then we must first run a separate step to know if we should fold, and then handle errors
- * by reporting them.)
+ * by reporting them. -- They should be compile-time errors for usability and per the language spec, so we need a
+ * separate step to identify sub-expressions to fold. Basic idea: anything that does not contain a reference to a
+ * non-constant signal-like)
  */
 public final class ExpressionTypeChecker {
 
