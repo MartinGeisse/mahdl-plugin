@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -16,7 +17,13 @@ import java.util.Map;
 
 /**
  * Checks expressions for type safety and returns their types. If an expression or sub-expression is constant, then
- * type safety rules are slightly relaxed
+ * type safety rules are slightly relaxed.
+ *
+ * TODO do not use the {@link ConstantExpressionEvaluator} to try to evaluate a constant sub-expression and possibly
+ * find errors. There is no reliable way to evaluate an expression which is not known to be constant and which may
+ * contain type errors, while still generating good error messages. Instead, make this type checker handle the
+ * constant compile-time type system too, and have it check all expressions first, including constant ones. Then,
+ * if the type check is okay, attempt to find constant sub-expressions. (TODO: find by try-eval or by is-constant?)
  */
 public final class ExpressionTypeChecker {
 
