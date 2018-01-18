@@ -10,8 +10,10 @@ import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
@@ -87,60 +89,25 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	/**
-	 * Checks whether the specified expression is constant and can therefore be evaluated by this evaluator.
-	 *
-	 * If parts of the PSI are missing, but the expression is otherwise constant, we report it as constant. The
-	 * attempt to fold it at compile-time will then produce an error for the missing parts.
+	 * Checks whether the specified expression is considered constant and should therefore be evaluated by this
+	 * evaluator for constant folding. This method, as well as folding itself, should not be performed on an
+	 * expression unless the {@link ExpressionTypeChecker} has first confirmed its type-safety. On the other hand,
+	 * folding MUST be performed before run-time if this method returns true, so certain errors such as
+	 * integer-to-vector conversion overflow is guaranteed to be reported at compile-time.
 	 */
 	public final boolean isConstant(@NotNull Expression expression) {
-		if (expression instanceof Expression_Literal) {
-			return true;
-		} else if (expression instanceof Expression_Identifier) {
-
-			// TODO for error reporting, we need to distinguish "unknown" vs. "not constant"
-			String name = ((Expression_Identifier) expression).getIdentifier().getText();
-			ConstantValue value = definedConstants.get(name);
-			return (value != null);
-
-		} else if (expression instanceof Expression_InstancePort) {
-			return false;
-		} else if (expression instanceof Expression_IndexSelection) {
-			Expression_IndexSelection indexSelection = (Expression_IndexSelection)expression;
-			isConstantOrNull(indexSelection.getContainer(), indexSelection.getIndex());
-		} else if (expression instanceof Expression_RangeSelection) {
-			Expression_RangeSelection rangeSelection = (Expression_RangeSelection)expression;
-			return isConstantOrNull(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getTo());
-		} else if (expression instanceof UnaryOperation) {
-			UnaryOperation unaryOperation = (UnaryOperation)expression;
-			return isConstantOrNull(unaryOperation.getOperand());
-		} else if (expression instanceof BinaryOperation) {
-			BinaryOperation binaryOperation = (BinaryOperation)expression;
-			return isConstantOrNull(binaryOperation.getLeftOperand(), binaryOperation.getRightOperand());
-		} else if (expression instanceof Expression_Mux) {
-			Expression_Mux mux = (Expression_Mux)expression;
-			return isConstantOrNull(mux.getCondition(), mux.getThenBranch(), mux.getElseBranch());
-		} else if (expression instanceof Expression_FunctionCall) {
-			Expression_FunctionCall call = (Expression_FunctionCall)expression;
-			for (Expression argument : call.getArguments().getAll()) {
-				if (!isConstantOrNull(argument)) {
-					return false;
+		MutableBoolean resultHolder = new MutableBoolean(true);
+		PsiUtil.foreachPsiNode(expression, node -> {
+			if (node instanceof Expression_Identifier) {
+				String name = ((Expression_Identifier) expression).getIdentifier().getText();
+				if (definedConstants.get(name) == null) {
+					// if it's not a constant, it must be a non-constant signal-like because type safety has already
+					// been established.
+					resultHolder.setFalse();
 				}
 			}
-			return true;
-		} else if (expression instanceof Expression_Parenthesized) {
-			return isConstantOrNull(((Expression_Parenthesized) expression).getExpression());
-		} else {
-			return true;
-		}
-	}
-
-	private boolean isConstantOrNull(Expression... expressions) {
-		for (Expression expression : expressions) {
-			if (expression != null && !isConstant(expression)) {
-				return false;
-			}
-		}
-		return true;
+		});
+		return resultHolder.getValue();
 	}
 
 	/**

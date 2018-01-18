@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.util.Consumer;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
@@ -54,6 +55,15 @@ public final class PsiUtil {
 				return null;
 			}
 			element = element.getParent();
+		}
+	}
+
+	public static void foreachPsiNode(@NotNull PsiElement root, @NotNull Consumer<PsiElement> consumer) {
+		if (root instanceof ASTWrapperPsiElement) {
+			InternalPsiUtil.foreachChild((ASTWrapperPsiElement)root, child -> {
+				consumer.consume(child);
+				foreachPsiNode(child, consumer);
+			});
 		}
 	}
 
