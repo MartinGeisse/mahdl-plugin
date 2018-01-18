@@ -373,6 +373,9 @@ public final class ConstantExpressionEvaluator {
 
 		// perform the corresponding integer operation
 		BigInteger integerOperand = operandValue.convertToInteger();
+		if (integerOperand == null) {
+			return error(expression, "could not convert operand to integer");
+		}
 		BigInteger integerResult;
 		if (expression instanceof Expression_UnaryNot) {
 			integerResult = integerOperand.not();
