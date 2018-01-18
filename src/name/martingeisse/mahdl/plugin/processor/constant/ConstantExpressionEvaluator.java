@@ -350,7 +350,23 @@ public final class ConstantExpressionEvaluator {
 			return rightOperandValue;
 		}
 
-		// Concatenation can handle various types. All other operators can only handle vectors and integers.
+		// Only logical operators can handle bit values, and only if both operands are bits.
+		if ((leftOperandValue instanceof ConstantValue.Bit) != (rightOperandValue instanceof ConstantValue.Bit)) {
+			return error(expression, "this operator cannot be used for " + leftOperandValue.getDataTypeFamily() +
+				" and " + rightOperandValue.getDataTypeFamily() + " operands");
+		}
+		if (leftOperandValue instanceof ConstantValue.Bit) {
+			boolean leftBoolean = ((ConstantValue.Bit) leftOperandValue).isSet();
+			boolean rightBoolean = ((ConstantValue.Bit) rightOperandValue).isSet();
+			try {
+				return new ConstantValue.Bit(BinaryOperatorUtil.evaluateLogicalOperator(expression, leftBoolean, rightBoolean));
+			} catch (BinaryOperatorUtil.OperatorException e) {
+				return error(expression, e.getMessage());
+			}
+		}
+
+		// Concatenation can handle various types. Logical operators can handle bit values. All other operators can
+		// only handle vectors and integers.
 		if (expression instanceof Expression_BinaryConcat) {
 			return evaluateConcatenation((Expression_BinaryConcat) expression, leftOperandValue, rightOperandValue);
 		}
@@ -361,7 +377,11 @@ public final class ConstantExpressionEvaluator {
 			return error(expression, rightOperandValue.getDataTypeFamily().getDisplayString() + " type not allowed as right operand here");
 		}
 
-		TODO: treat TAIVOs specially first, and convert TSIVOs to the operand size.
+		//
+		// Note about the type rules for TAIVOs (shift operators): For an expression that is known to be constant,
+		// the special rules for TAIVOs disappear. So we don't have to watch out for them here -- either the expression
+		// is constant, or we bail out anyway.
+		//
 
 		// perform the corresponding integer operation
 		BigInteger leftInteger = leftOperandValue.convertToInteger();
@@ -473,21 +493,49 @@ public final class ConstantExpressionEvaluator {
 
 	@NotNull
 	private ConstantValue evaluateMux(@NotNull Expression_Mux mux) {
+
+		//
 		// I'm not sure yet whether to allow type errors in the not-taken branch. The use-cases
 		// (soft-commenting-out; generating only constants during code generation; ...) aren't clear to me.
 		// For now, let's be strict about it so no ugly code creeps in.
+		//
+
 		ConstantValue conditionValue = evaluate(mux.getCondition());
 		ConstantValue thenValue = evaluate(mux.getThenBranch());
 		ConstantValue elseValue = evaluate(mux.getElseBranch());
+		boolean error = false;
+
+		// handle condition
+		boolean conditionBoolean;
 		if (conditionValue instanceof ConstantValue.Unknown) {
-			// if the condition has errors, don't also complain that it's not a boolean
-			return conditionValue;
+			error = true;
+			conditionBoolean = false;
+		} else {
+			Boolean conditionBooleanOrNull = conditionValue.convertToBoolean();
+			if (conditionBooleanOrNull == null) {
+				error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
+				error = true;
+				conditionBoolean = false;
+			} else {
+				conditionBoolean = conditionBooleanOrNull;
+			}
 		}
-		Boolean booleanCondition = conditionValue.convertToBoolean();
-		if (booleanCondition == null) {
-			return error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
+
+		// handle branches
+		if (!thenValue.getDataType().equals(elseValue.getDataType())) {
+			if (thenValue instanceof ConstantValue.Integer && elseValue instanceof ConstantValue.Vector) {
+				int size  = ((ConstantValue.Vector) elseValue).getSize();
+				thenValue = new ConstantValue.Vector(size, ((ConstantValue.Integer) thenValue).getValue());
+			} else if (thenValue instanceof ConstantValue.Vector && elseValue instanceof ConstantValue.Integer) {
+				int size = ((ConstantValue.Vector) thenValue).getSize();
+				elseValue = new ConstantValue.Vector(size, ((ConstantValue.Integer) elseValue).getValue());
+			} else {
+				error(mux, "incompatible types in then/else branches: " + thenValue.getDataType() + " vs. " + elseValue.getDataType());
+				error = true;
+			}
 		}
-		return booleanCondition ? thenValue : elseValue;
+
+		return error ? ConstantValue.Unknown.INSTANCE : conditionBoolean ? thenValue : elseValue;
 	}
 
 	@NotNull

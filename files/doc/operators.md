@@ -43,7 +43,7 @@ converted to the same vector type as the operands.
 Using a TSIVO on two vectors of different size is a compile-time error.
 
 The double conversion step for mixed integer/vector operands is intentional:
-* Converting an integer operand to a vector ensures that the behavior of an expression stays the ame, no matter
+* Converting an integer operand to a vector ensures that the behavior of an expression stays the same, no matter
 whether it is constant-folded at compile time or evaluated at runtime. If the conversion causes an overflow, the
 rules dictate that a compile-time error is reported.
 * Converting the result is needed since the result cannot be an integer at run-time. Conversion to the operand size
@@ -59,20 +59,24 @@ operands.
 
 Currently, the shift-left and shift-right operators are the only TAIVOs. These act on their operands in the following
 way:
-* if the left operand is an integer, the right operand must be an integer too. It cannot be a vector in that case.
+* if the left operand is an integer, the right operand must be constant, making the whole expression constant.
 * the shifted value is taken from the integer meaning of the left operand, without any further conversion.
 * the shift amount is the integer meaning of the right operand, without any further conversion. A negative shift
 amount shifts to the opposite direction.
 
-Observations:
-* If the left-hand operand is an integer, the whole shift expression is constant and is equivalent to the integer
-meaning of "shifting".
+Observations and rationale:
+* If the left-hand operand is an integer, then we don't have an "obvious" vector size to impose on it as we have for
+TSIVOs, nor do we have an obvious result vector size. Without a vector size, we cannot implement a run-time shift, so
+we demand that the whole expression is constant and perform the shift purely on the integer meaning of the operands,
+without any further conversion, at compile-time.
 * If the left-hand operand is a vector, it cannot be negative. An "arithmetic" (sign-extending) right-shift is
 therefore not supported directly. All shifted-in bits are 0.
 * There is no "wrap-around" for the shift amount like some languages do, e.g. Java. That is, if the left-hand operand
 is a vector and the right-hand operand is equal to the size of the left-hand operand, the result is a zero vector,
 because the operator shifts by (left-operand-size) digits which is *not* equivalent to shifting by zero digits.
-
+* Although a ngative right-hand operand inverts the shift direction, arbitrary inversion cannot happen at run-time since
+a right-hand integer must be constant (either always or never inverts the shift direction, and is a "constant shift"
+anyway), and a right-hand vector cannot be negative.
 
 ## Other Operators
 

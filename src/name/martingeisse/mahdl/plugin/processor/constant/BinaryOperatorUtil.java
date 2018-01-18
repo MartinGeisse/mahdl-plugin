@@ -70,6 +70,22 @@ class BinaryOperatorUtil {
 		}
 	}
 
+	static boolean evaluateLogicalOperator(BinaryOperation expression, boolean leftOperand, boolean rightOperand) throws OperatorException {
+		if (expression instanceof Expression_BinaryAnd) {
+			return leftOperand & rightOperand;
+		} else if (expression instanceof Expression_BinaryOr) {
+			return leftOperand | rightOperand;
+		} else if (expression instanceof Expression_BinaryXor) {
+			return leftOperand ^ rightOperand;
+		} else if (expression instanceof Expression_BinaryEqual) {
+			return leftOperand == rightOperand;
+		} else if (expression instanceof Expression_BinaryNotEqual) {
+			return leftOperand != rightOperand;
+		} else {
+			throw new OperatorException("unknown operator");
+		}
+	}
+
 	public static class OperatorException extends Exception {
 		public OperatorException(String message) {
 			super(message);
