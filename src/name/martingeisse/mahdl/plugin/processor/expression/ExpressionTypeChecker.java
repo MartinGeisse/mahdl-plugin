@@ -9,7 +9,9 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
+import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
@@ -71,10 +73,33 @@ public final class ExpressionTypeChecker {
 			if (definition == null) {
 				return error(expression, "cannot resolve symbol '" + name + "'");
 			}
+			if (definition instanceof SignalLike) {
+				return ((SignalLike) definition).getProcessedDataType();
+			} else {
+				return error(expression, "symbol '" + name + "' does not refer to a signal-like");
+			}
 		} else if (expression instanceof Expression_InstancePort) {
+			// TODO Expression_InstancePort should be a PSI reference!
+			Expression_InstancePort instancePortReference = (Expression_InstancePort)expression;
+//			{
+//				String instanceName = instancePortReference.getInstanceName().getIdentifier().getText();
+//				Named instance = definitions.get(instanceName);
+//				if (instance == null) {
+//					return error(expression, "cannot resolve symbol '" + instanceName + "'");
+//				} else if (!(instance instanceof ModuleInstance)) {
+//					return error(expression, "symbol '" + instanceName + "' does not refer to a module instance");
+//				} else {
+//					ModuleInstance moduleInstance = (ModuleInstance)instance;
+//					QualifiedModuleName moduleName = moduleInstance.getModuleInstanceElement().getModuleName();
+//
+//				}
+//
+//			}
+
 			// TODO
 
 		} else if (expression instanceof Expression_IndexSelection) {
+
 			Expression_IndexSelection indexSelection = (Expression_IndexSelection)expression;
 			ProcessedDataType containerType = checkExpression(indexSelection.getContainer());
 			ProcessedDataType indexType = checkExpression(indexSelection.getIndex());
@@ -87,32 +112,65 @@ public final class ExpressionTypeChecker {
 				return error(indexSelection.getContainer(),
 					"index selection is only allowed for vector and memory types, found " + containerType);
 			}
-
+			if (indexType instanceof ProcessedDataType.Integer) {
+				return ProcessedDataType.Bit.INSTANCE;
+			} else if (indexType instanceof ProcessedDataType.Vector) {
+				ProcessedDataType.Vector indexVectorType = (ProcessedDataType.Vector)indexType;
+				if (containerSize >> indexVectorType.getSize() == 0) {
+					return error(expression, "container of size " + containerSize +
+						" is too small for an index vector of size " +  indexVectorType.getSize() +
+						" since an out-of-bounds condition is possible");
+				} else {
+					return ProcessedDataType.Bit.INSTANCE;
+				}
+			} else {
+				return error(indexSelection.getIndex(), "cannot use a value of type " + indexType + " as index");
+			}
 
 		} else if (expression instanceof Expression_RangeSelection) {
 
+			// TODO problem: the result size may not be constant!
+
 		} else if (expression instanceof UnaryOperation) {
+
+			// TODO handle null PSI nodes in a helper function
+			// TODO handle unknown type (error in sub-expression) without followup error
+			ProcessedDataType operandType = checkExpression(((UnaryOperation) expression).getOperand());
+			if (operandType instanceof ProcessedDataType.Integer || operandType instanceof ProcessedDataType.Vector) {
+				return operandType;
+			} else {
+				return error(expression, "cannot use this operator on type " + operandType);
+			}
 
 		} else if (expression instanceof BinaryOperation) {
 
+			BinaryOperation binaryOperation = (BinaryOperation)expression;
+			ProcessedDataType leftOperandType = checkExpression(binaryOperation.getLeftOperand());
+			ProcessedDataType rightOperandType = checkExpression(binaryOperation.getRightOperand());
+			// TODO
+
 		} else if (expression instanceof Expression_Mux) {
+
+			boolean error = false;
+			Expression_Mux mux = (Expression_Mux)expression;
+			ProcessedDataType conditionType = checkExpression(mux.getCondition());
+			if (!(conditionType instanceof ProcessedDataType.Bit)) {
+				error(mux.getCondition(), conditionType.getFamily() + " type cannot be used as mux condition");
+				error = true;
+			}
+			ProcessedDataType thenBranchType = checkExpression(mux.getThenBranch());
+			ProcessedDataType elseBranchType = checkExpression(mux.getElseBranch());
+			// TODO
 
 		} else if (expression instanceof Expression_FunctionCall) {
 
+			// TODO
+
 		} else if (expression instanceof Expression_Parenthesized) {
 
-		}
+			return checkExpression(((Expression_Parenthesized) expression).getExpression());
 
-//		if (expression instanceof Expression_Identifier) {
-//			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
-//			String identifierText = identifierElement.getText();
-//			Named definition = definitions.get(identifierText);
-//			if (definition == null) {
-//				errorHandler.onError(identifierElement, "cannot resolve symbol " + identifierText);
-//			} else {
-//
-//			}
-//		}
+		}
 
 		return null;
 	}
