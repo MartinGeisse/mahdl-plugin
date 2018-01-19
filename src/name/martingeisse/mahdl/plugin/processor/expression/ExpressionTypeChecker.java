@@ -4,21 +4,28 @@
  */
 package name.martingeisse.mahdl.plugin.processor.expression;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Checks expressions for type safety and returns their types. If an expression or sub-expression is constant, then
- * type safety rules are slightly relaxed.
+ * Checks expressions for type safety and returns their types.
  *
+ * This type checker obviously takes type specifiers of constants, signals etc. into account, and relies on
+ * constant evaluation in those type specifiers to be finished to know the types. It will, however, never evaluate
+ * a constant to check for type safety of the expression the constant appears in! That is, it only checks types, not
+ * values. This excludes, for example, overflow in constant conversion and out-of-range errors for index selection
+ * with a constant index.
+ *
+ * <p>
  * TODO do not use the {@link ConstantExpressionEvaluator} to try to evaluate a constant sub-expression and possibly
  * find errors. There is no reliable way to evaluate an expression which is not known to be constant and which may
  * contain type errors, while still generating good error messages. Instead, make this type checker handle the
@@ -31,34 +38,56 @@ import java.util.Map;
  * by reporting them. -- They should be compile-time errors for usability and per the language spec, so we need a
  * separate step to identify sub-expressions to fold. Basic idea: anything that does not contain a reference to a
  * non-constant signal-like)
+ *
+ * TODO we need similar conversion rules as for TSIVOs for index selection and range selection too! idea:
+ * the left-hand type must be a vector/memory anyway, so we have a size. demand that the right-hand type is
+ * either an integer, then it is constant and must be within range. Or it is a vector, then it's not always constant
+ * but demand that leftSize >= 2^rightSize, so it's always in range. The user has to extend the left-hand side if
+ * it is too short, and by that define what the result is for out-of-range.
  */
 public final class ExpressionTypeChecker {
 
 	private final ErrorHandler errorHandler;
 	private final Map<String, Named> definitions;
-	private final Map<Expression, ConstantValue> convertedConstantExpressionValues;
 
 	public ExpressionTypeChecker(@NotNull ErrorHandler errorHandler, @NotNull Map<String, Named> definitions) {
 		this.errorHandler = errorHandler;
 		this.definitions = definitions;
-		this.convertedConstantExpressionValues = new HashMap<>();
-	}
-
-	@NotNull
-	public Map<Expression, ConstantValue> getConvertedConstantExpressionValues() {
-		return convertedConstantExpressionValues;
 	}
 
 	@NotNull
 	public ProcessedDataType checkExpression(@NotNull Expression expression) {
 		// TODO
 		if (expression instanceof Expression_Literal) {
-
+			try {
+				ConstantValue literalValue = LiteralParser.parseLiteral((Expression_Literal) expression);
+				return literalValue.getDataType();
+			} catch (LiteralParser.ParseException e) {
+				return error(expression, e.getMessage());
+			}
 		} else if (expression instanceof Expression_Identifier) {
-
+			String name = ((Expression_Identifier) expression).getIdentifier().getText();
+			Named definition = definitions.get(name);
+			if (definition == null) {
+				return error(expression, "cannot resolve symbol '" + name + "'");
+			}
 		} else if (expression instanceof Expression_InstancePort) {
+			// TODO
 
 		} else if (expression instanceof Expression_IndexSelection) {
+			Expression_IndexSelection indexSelection = (Expression_IndexSelection)expression;
+			ProcessedDataType containerType = checkExpression(indexSelection.getContainer());
+			ProcessedDataType indexType = checkExpression(indexSelection.getIndex());
+			int containerSize;
+			if (containerType instanceof ProcessedDataType.Vector) {
+				containerSize = ((ProcessedDataType.Vector) containerType).getSize();
+			} else if (containerType instanceof ProcessedDataType.Memory) {
+				containerSize = ((ProcessedDataType.Memory) containerType).getFirstSize();
+			} else {
+				return error(indexSelection.getContainer(),
+					"index selection is only allowed for vector and memory types, found " + containerType);
+			}
+
 
 		} else if (expression instanceof Expression_RangeSelection) {
 
@@ -91,6 +120,12 @@ public final class ExpressionTypeChecker {
 	@NotNull
 	public ProcessedDataType checkImplicitConversion(@NotNull Expression expression, @NotNull DataType targetType) {
 
+	}
+
+	@NotNull
+	private ProcessedDataType error(@NotNull PsiElement element, @NotNull String message) {
+		errorHandler.onError(element, message);
+		return ProcessedDataType.Unknown.INSTANCE;
 	}
 
 }

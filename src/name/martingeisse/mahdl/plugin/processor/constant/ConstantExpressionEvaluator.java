@@ -13,6 +13,7 @@ import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,11 +23,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
+ * TODO don't repeat type checks which the {@link ExpressionTypeChecker} should do. Instead, type-check all expressions
+ * including constants first, then rely on type safety and only report a generic error if something goes wrong.
  */
 public final class ConstantExpressionEvaluator {
 
-	private static final Pattern VECTOR_PATTERN = Pattern.compile("([0-9]+)([bodh])([0-9]+)");
 
 	private static final BigInteger MAX_INDEX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
@@ -86,28 +87,6 @@ public final class ConstantExpressionEvaluator {
 			}
 		}
 
-	}
-
-	/**
-	 * Checks whether the specified expression is considered constant and should therefore be evaluated by this
-	 * evaluator for constant folding. This method, as well as folding itself, should not be performed on an
-	 * expression unless the {@link ExpressionTypeChecker} has first confirmed its type-safety. On the other hand,
-	 * folding MUST be performed before run-time if this method returns true, so certain errors such as
-	 * integer-to-vector conversion overflow is guaranteed to be reported at compile-time.
-	 */
-	public final boolean isConstant(@NotNull Expression expression) {
-		MutableBoolean resultHolder = new MutableBoolean(true);
-		PsiUtil.foreachPsiNode(expression, node -> {
-			if (node instanceof Expression_Identifier) {
-				String name = ((Expression_Identifier) expression).getIdentifier().getText();
-				if (definedConstants.get(name) == null) {
-					// if it's not a constant, it must be a non-constant signal-like because type safety has already
-					// been established.
-					resultHolder.setFalse();
-				}
-			}
-		});
-		return resultHolder.getValue();
 	}
 
 	/**
@@ -180,64 +159,11 @@ public final class ConstantExpressionEvaluator {
 
 	@NotNull
 	private ConstantValue evaluateLiteral(@NotNull Expression_Literal literalExpression) {
-		Literal literal = literalExpression.getLiteral();
-		if (literal instanceof Literal_Vector) {
-			return parseVector(((Literal_Vector) literal).getValue());
-		} else if (literal instanceof Literal_Integer) {
-			String text = ((Literal_Integer) literal).getValue().getText();
-			return new ConstantValue.Integer(new BigInteger(text));
-		} else if (literal instanceof Literal_Text) {
-			return parseText(((Literal_Text) literal).getValue());
-		} else {
-			return nonConstant(literal);
+		try {
+			return LiteralParser.parseLiteral(literalExpression);
+		} catch (LiteralParser.ParseException e) {
+			return error(literalExpression, e.getMessage());
 		}
-	}
-
-	@NotNull
-	private ConstantValue parseVector(@NotNull LeafPsiElement textElement) {
-		String text = textElement.getText();
-		Matcher matcher = VECTOR_PATTERN.matcher(text);
-		if (!matcher.matches()) {
-			return error(textElement, "malformed vector");
-		}
-		int size = Integer.parseInt(matcher.group(1));
-		char radixCode = matcher.group(2).charAt(0);
-		String digits = matcher.group(3);
-
-		int radix = radixCode == 'b' ? 2 : radixCode == 'o' ? 8 : radixCode == 'd' ? 10 : radixCode == 'h' ? 16 : 0;
-		if (radix == 0) {
-			return error(textElement, "unknown radix '" + radixCode);
-		}
-		final BigInteger integerValue = new BigInteger(digits, radix);
-		if (integerValue.bitLength() > size) {
-			return error(textElement, "vector literal contains a value larger than its sepcified size");
-		}
-		return new ConstantValue.Vector(size, integerValue);
-	}
-
-	@NotNull
-	private ConstantValue parseText(@NotNull LeafPsiElement textElement) {
-		String rawText = textElement.getText();
-		if (rawText.charAt(0) != '"' || rawText.charAt(rawText.length() - 1) != '"') {
-			return error(textElement, "missing quotation marks");
-		}
-		StringBuilder builder = new StringBuilder();
-		boolean escape = false;
-		for (int i = 1; i < rawText.length() - 1; i++) {
-			char c = rawText.charAt(i);
-			if (escape) {
-				// escapes are not supported (yet), and it's not clear whether we need them
-				return error(textElement, "text escape sequences are not supported yet");
-			} else if (c == '\\') {
-				escape = true;
-			} else {
-				builder.append(c);
-			}
-		}
-		if (escape) {
-			return error(textElement, "unterminated escape sequence");
-		}
-		return new ConstantValue.Text(builder.toString());
 	}
 
 	@NotNull
@@ -590,6 +516,29 @@ public final class ConstantExpressionEvaluator {
 		} catch (FunctionParameterException e) {
 			return error(functionCall, e.getMessage());
 		}
+	}
+
+	/**
+	 * Checks whether the specified expression is considered constant and should therefore be evaluated by this
+	 * evaluator for constant folding. This method, as well as folding itself, should not be performed on an
+	 * expression unless the {@link ExpressionTypeChecker} has first confirmed its type-safety. On the other hand,
+	 * folding MUST be performed before run-time if this method returns true, because the expression could contain
+	 * integers (which cannot be evaluated at run-time) and so certain errors such as integer-to-vector conversion
+	 * overflow is guaranteed to be reported at compile-time.
+	 */
+	public final boolean isConstant(@NotNull Expression expression) {
+		MutableBoolean resultHolder = new MutableBoolean(true);
+		PsiUtil.foreachPsiNode(expression, node -> {
+			if (node instanceof Expression_Identifier) {
+				String name = ((Expression_Identifier) expression).getIdentifier().getText();
+				if (definedConstants.get(name) == null) {
+					// if it's not a constant, it must be a non-constant signal-like because type safety has already
+					// been established.
+					resultHolder.setFalse();
+				}
+			}
+		});
+		return resultHolder.getValue();
 	}
 
 }
