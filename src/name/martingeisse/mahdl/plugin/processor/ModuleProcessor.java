@@ -156,8 +156,8 @@ public final class ModuleProcessor {
 					// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
 					// the vector size, but at runtime this is forbidden because integers are.
 					// TODO use tryEvaluateConstantExpression() for that
-					ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
-					checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
+//					ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
+//					checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
 				}
 			} else if (item instanceof ModuleInstance) {
 				ModuleInstance moduleInstance = (ModuleInstance) item;
@@ -190,12 +190,12 @@ public final class ModuleProcessor {
 						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
 						ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
 						Expression expression = portConnection.getExpression();
-						ProcessedDataType expressionType = expressionTypeChecker.check(expression);
+						ProcessedDataType expressionType = expressionTypeChecker.checkExpression(expression);
 						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
-							checkRuntimeAssignment(expression, portType, expressionType);
+//							checkRuntimeAssignment(expression, portType, expressionType);
 						} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-							checkRuntimeAssignment(expression, expressionType, portType);
-							checkLValue(expression, true, false);
+//							checkRuntimeAssignment(expression, expressionType, portType);
+//							checkLValue(expression, true, false);
 						}
 					}
 				}
@@ -207,7 +207,7 @@ public final class ModuleProcessor {
 		DoBlockTrigger trigger = doBlock.getTrigger();
 		if (trigger instanceof DoBlockTrigger_Clocked) {
 			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
-			ProcessedDataType clockExpressionType = expressionTypeChecker.check(clockExpression);
+			ProcessedDataType clockExpressionType = expressionTypeChecker.checkExpression(clockExpression);
 			if (clockExpressionType.getFamily() != ProcessedDataType.Family.BIT) {
 				errorHandler.onError(clockExpression, "cannot use an expression of type " + clockExpressionType + " as clock");
 			}
@@ -219,11 +219,11 @@ public final class ModuleProcessor {
 		if (statement instanceof Statement_Assignment) {
 			Statement_Assignment assignment = (Statement_Assignment) statement;
 			inconsistentAssignmentDetector.handleAssignment(assignment);
-			ProcessedDataType leftType = expressionTypeChecker.check(assignment.getLeftSide());
-			ProcessedDataType rightType = expressionTypeChecker.check(assignment.getRightSide());
-			checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
+			ProcessedDataType leftType = expressionTypeChecker.checkExpression(assignment.getLeftSide());
+			ProcessedDataType rightType = expressionTypeChecker.checkExpression(assignment.getRightSide());
+//			checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
 			// TODO assign to signal / register in comb / clocked context
-			checkLValue(assignment.getLeftSide(), true, true);
+//			checkLValue(assignment.getLeftSide(), true, true);
 		} else if (statement instanceof Statement_Block) {
 			Statement_Block block = (Statement_Block) statement;
 			for (Statement subStatement : block.getBody().getAll()) {
@@ -245,7 +245,7 @@ public final class ModuleProcessor {
 	}
 
 	private void processIfStatement(@NotNull Expression condition, @NotNull Statement thenBranch, @Nullable Statement elseBranch) {
-		ProcessedDataType conditionType = expressionTypeChecker.check(condition);
+		ProcessedDataType conditionType = expressionTypeChecker.checkExpression(condition);
 		if (conditionType.getFamily() != ProcessedDataType.Family.BIT) {
 			errorHandler.onError(condition, "cannot use an expression of type " + conditionType + " as condition");
 		}

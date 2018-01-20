@@ -160,7 +160,12 @@ public final class ExpressionTypeChecker {
 			}
 			ProcessedDataType thenBranchType = checkExpression(mux.getThenBranch());
 			ProcessedDataType elseBranchType = checkExpression(mux.getElseBranch());
-			// TODO
+			if (thenBranchType.equals(elseBranchType)) {
+				return thenBranchType;
+			} else {
+				// TODO
+			}
+
 
 		} else if (expression instanceof Expression_FunctionCall) {
 
@@ -177,7 +182,8 @@ public final class ExpressionTypeChecker {
 
 	@NotNull
 	public ProcessedDataType checkImplicitConversion(@NotNull Expression expression, @NotNull DataType targetType) {
-
+		// TODO
+		return null;
 	}
 
 	@NotNull

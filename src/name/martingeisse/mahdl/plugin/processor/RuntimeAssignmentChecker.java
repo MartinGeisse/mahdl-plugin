@@ -7,7 +7,6 @@ package name.martingeisse.mahdl.plugin.processor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
@@ -21,21 +20,20 @@ import java.util.Map;
  * side denotes an L-value. It is not concerned with detecting multiple or missing assignments.
  *
  * This class uses the {@link ExpressionTypeChecker} to perform the actual type safety check.
+ *
+ * TODO
  */
 public final class RuntimeAssignmentChecker {
 
 	private final ErrorHandler errorHandler;
 	private final ExpressionTypeChecker expressionTypeChecker;
-	private final ConstantExpressionEvaluator constantExpressionEvaluator;
 	private final Map<String, Named> definitions;
 
 	public RuntimeAssignmentChecker(@NotNull ErrorHandler errorHandler,
 									@NotNull ExpressionTypeChecker expressionTypeChecker,
-									@NotNull ConstantExpressionEvaluator constantExpressionEvaluator,
 									@NotNull Map<String, Named> definitions) {
 		this.errorHandler = errorHandler;
 		this.expressionTypeChecker = expressionTypeChecker;
-		this.constantExpressionEvaluator = constantExpressionEvaluator;
 		this.definitions = definitions;
 	}
 
@@ -43,10 +41,10 @@ public final class RuntimeAssignmentChecker {
 	 * Ensures that the specified left side is assignable and that the right side produces a compatible type.
 	 */
 	public void checkRuntimeAssignment(@NotNull Expression leftSide, @NotNull Expression rightSide, boolean allowContinuous, boolean allowClocked) {
-		checkLValue(leftSide, allowContinuous, allowClocked);
-		ProcessedDataType leftSideType = expressionTypeChecker.check(leftSide);
-		ProcessedDataType rightSideType = expressionTypeChecker.check(rightSide);
-		checkRuntimeAssignmentType(rightSide, leftSideType, rightSideType);
+//		checkLValue(leftSide, allowContinuous, allowClocked);
+//		ProcessedDataType leftSideType = expressionTypeChecker.check(leftSide);
+//		ProcessedDataType rightSideType = expressionTypeChecker.check(rightSide);
+//		checkRuntimeAssignmentType(rightSide, leftSideType, rightSideType);
 	}
 
 	/**
@@ -71,9 +69,9 @@ public final class RuntimeAssignmentChecker {
 		// to the type of the left-hand side. Run-time conversion is not done since all combinations of non-equal
 		// run-time types (bit and vectors of some size) cannot be automatically converted, truncated or expanded.
 		if (!rightSideType.equals(leftSideType)) {
-			ConstantValue constantValue = constantExpressionEvaluator.evaluate()
-			// TODO convert constants
-			errorHandler.onError(errorSource, "cannot convert from type " + rightSideType + " to type " + leftSideType + " at run-time");
+//			ConstantValue constantValue = constantExpressionEvaluator.evaluate()
+//			// TODO convert constants
+//			errorHandler.onError(errorSource, "cannot convert from type " + rightSideType + " to type " + leftSideType + " at run-time");
 		}
 	}
 
