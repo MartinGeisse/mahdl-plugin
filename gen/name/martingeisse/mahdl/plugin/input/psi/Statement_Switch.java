@@ -27,11 +27,11 @@ public final class Statement_Switch extends Statement  {
         super(node);
     }
 
-        public Expression getExpression() {
+        public Expression getSelector() {
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
-        public ListNode<CaseItem> getItems() {
-            return (ListNode<CaseItem>)InternalPsiUtil.getChild(this, 5);
+        public ListNode<StatementCaseItem> getItems() {
+            return (ListNode<StatementCaseItem>)InternalPsiUtil.getChild(this, 5);
         }
     
 			

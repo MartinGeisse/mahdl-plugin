@@ -16,7 +16,7 @@
 	OP_EQUAL, OP_NOT_EQUAL, OP_GREATER_THAN, OP_GREATER_THAN_OR_EQUAL, OP_LESS_THAN, OP_LESS_THAN_OR_EQUAL,
 
 	// other operators
-	OP_MUX, OP_CONCAT,
+	OP_CONDITIONAL, OP_CONCAT,
 
 	// keywords
 	KW_MODULE, KW_INTERFACE, KW_IN, KW_OUT,
@@ -39,7 +39,7 @@
 // Note: unary prefix operators actually need only one "representative" operator in this table. Everything else is rule
 // precedences. We use OP_NOT for that.
 %precedence {
-	%right OP_MUX;
+	%right OP_CONDITIONAL;
 	%left OP_OR;
 	%left OP_XOR;
 	%left OP_AND;
@@ -104,7 +104,7 @@ signalLikeKind ::= {
 
 signalLikeDefinition ::= {
 	withoutInitializer ::= IDENTIFIER:identifier;
-	withInitializer ::= IDENTIFIER:identifier EQUALS expression:initializer;
+	withInitializer ::= IDENTIFIER:identifier EQUALS extendedExpression:initializer;
 }
 
 
@@ -114,7 +114,7 @@ signalLikeDefinition ::= {
 
 qualifiedModuleName ::= (IDENTIFIER, DOT)+:segments;
 
-portConnection ::= instancePortName:portName COLON expression:expression SEMICOLON;
+portConnection ::= instancePortName:portName COLON extendedExpression:expression SEMICOLON;
 
 instancePortName ::= IDENTIFIER:identifier;
 
@@ -129,18 +129,18 @@ doBlockTrigger ::= {
 }
 
 statement ::= {
-	assignment ::= expression:leftSide EQUALS expression:rightSide SEMICOLON;
+	assignment ::= expression:leftSide EQUALS extendedExpression:rightSide SEMICOLON;
 	ifThen ::= KW_IF OPENING_PARENTHESIS expression:condition CLOSING_PARENTHESIS statement:thenBranch %resolve {
 		%shift KW_ELSE;
 	};
 	ifThenElse ::= KW_IF OPENING_PARENTHESIS expression:condition CLOSING_PARENTHESIS statement:thenBranch KW_ELSE statement:elseBranch;
-	switch ::= KW_SWITCH OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS OPENING_CURLY_BRACE caseItem+:items CLOSING_CURLY_BRACE;
+	switch ::= KW_SWITCH OPENING_PARENTHESIS expression:selector CLOSING_PARENTHESIS OPENING_CURLY_BRACE statementCaseItem+:items CLOSING_CURLY_BRACE;
 	block ::= OPENING_CURLY_BRACE statement*:body CLOSING_CURLY_BRACE;
 	break ::= KW_BREAK SEMICOLON;
 }
 
-caseItem ::= {
-	value ::= KW_CASE expression:value COLON statement*:statements;
+statementCaseItem ::= {
+	value ::= KW_CASE expression:selectorValue COLON statement*:statements;
 	default ::= KW_DEFAULT COLON statement*:statements;
 }
 
@@ -148,6 +148,19 @@ caseItem ::= {
 //
 // expressions
 //
+
+// we need this because if we allow switch-expressions in the left-hand side of an assignment then the grammar becomes
+// ambiguous. We use that chance to allow switch expressions only in very specific places since anything else would
+// make the code unreadable anyway and opends up the possibility of new grammar problems in the future.
+extendedExpression ::= {
+	normal ::= expression:expression;
+	switch ::= KW_SWITCH OPENING_PARENTHESIS expression:selector CLOSING_PARENTHESIS OPENING_CURLY_BRACE expressionCaseItem+:items CLOSING_CURLY_BRACE;
+}
+
+expressionCaseItem ::= {
+	value ::= KW_CASE expression:selectorValue COLON extendedExpression:resultValue;
+	default ::= KW_DEFAULT COLON extendedExpression:resultValue;
+}
 
 expression ::= {
 
@@ -186,17 +199,18 @@ expression ::= {
 
 	binaryConcat ::= expression:leftOperand OP_CONCAT expression:rightOperand %precedence OP_CONCAT;
 
-	mux ::= expression:condition OP_MUX expression:thenBranch COLON expression:elseBranch %precedence OP_MUX;
+	conditional ::= expression:condition OP_CONDITIONAL expression:thenBranch COLON expression:elseBranch %precedence OP_CONDITIONAL;
 
 }
-
-instanceReferenceName ::= IDENTIFIER:identifier;
 
 literal ::= {
 	integer ::= INTEGER_LITERAL:value;
 	vector ::= VECTOR_LITERAL:value;
 	text ::= TEXT_LITERAL:value;
 }
+
+instanceReferenceName ::= IDENTIFIER:identifier;
+
 
 //
 // common

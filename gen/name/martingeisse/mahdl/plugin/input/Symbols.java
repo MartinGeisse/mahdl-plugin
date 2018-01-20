@@ -41,6 +41,7 @@ public class Symbols {
 	public static final MahdlElementType OPENING_SQUARE_BRACKET = new MahdlElementType("OPENING_SQUARE_BRACKET");
 	public static final MahdlElementType OP_AND = new MahdlElementType("OP_AND");
 	public static final MahdlElementType OP_CONCAT = new MahdlElementType("OP_CONCAT");
+	public static final MahdlElementType OP_CONDITIONAL = new MahdlElementType("OP_CONDITIONAL");
 	public static final MahdlElementType OP_DIVIDED_BY = new MahdlElementType("OP_DIVIDED_BY");
 	public static final MahdlElementType OP_EQUAL = new MahdlElementType("OP_EQUAL");
 	public static final MahdlElementType OP_GREATER_THAN = new MahdlElementType("OP_GREATER_THAN");
@@ -48,7 +49,6 @@ public class Symbols {
 	public static final MahdlElementType OP_LESS_THAN = new MahdlElementType("OP_LESS_THAN");
 	public static final MahdlElementType OP_LESS_THAN_OR_EQUAL = new MahdlElementType("OP_LESS_THAN_OR_EQUAL");
 	public static final MahdlElementType OP_MINUS = new MahdlElementType("OP_MINUS");
-	public static final MahdlElementType OP_MUX = new MahdlElementType("OP_MUX");
 	public static final MahdlElementType OP_NOT = new MahdlElementType("OP_NOT");
 	public static final MahdlElementType OP_NOT_EQUAL = new MahdlElementType("OP_NOT_EQUAL");
 	public static final MahdlElementType OP_OR = new MahdlElementType("OP_OR");
@@ -67,8 +67,6 @@ public class Symbols {
 	// nonterminals
 	//
 
-	public static final MahdlElementType caseItem_Default = new MahdlElementType("caseItem_Default");
-	public static final MahdlElementType caseItem_Value = new MahdlElementType("caseItem_Value");
 	public static final MahdlElementType dataType_Bit = new MahdlElementType("dataType_Bit");
 	public static final MahdlElementType dataType_Integer = new MahdlElementType("dataType_Integer");
 	public static final MahdlElementType dataType_Memory = new MahdlElementType("dataType_Memory");
@@ -76,6 +74,8 @@ public class Symbols {
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
 	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
+	public static final MahdlElementType expressionCaseItem_Default = new MahdlElementType("expressionCaseItem_Default");
+	public static final MahdlElementType expressionCaseItem_Value = new MahdlElementType("expressionCaseItem_Value");
 	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
 	public static final MahdlElementType expression_BinaryConcat = new MahdlElementType("expression_BinaryConcat");
 	public static final MahdlElementType expression_BinaryDividedBy = new MahdlElementType("expression_BinaryDividedBy");
@@ -93,12 +93,12 @@ public class Symbols {
 	public static final MahdlElementType expression_BinaryShiftRight = new MahdlElementType("expression_BinaryShiftRight");
 	public static final MahdlElementType expression_BinaryTimes = new MahdlElementType("expression_BinaryTimes");
 	public static final MahdlElementType expression_BinaryXor = new MahdlElementType("expression_BinaryXor");
+	public static final MahdlElementType expression_Conditional = new MahdlElementType("expression_Conditional");
 	public static final MahdlElementType expression_FunctionCall = new MahdlElementType("expression_FunctionCall");
 	public static final MahdlElementType expression_Identifier = new MahdlElementType("expression_Identifier");
 	public static final MahdlElementType expression_IndexSelection = new MahdlElementType("expression_IndexSelection");
 	public static final MahdlElementType expression_InstancePort = new MahdlElementType("expression_InstancePort");
 	public static final MahdlElementType expression_Literal = new MahdlElementType("expression_Literal");
-	public static final MahdlElementType expression_Mux = new MahdlElementType("expression_Mux");
 	public static final MahdlElementType expression_Parenthesized = new MahdlElementType("expression_Parenthesized");
 	public static final MahdlElementType expression_RangeSelectionDownwards = new MahdlElementType("expression_RangeSelectionDownwards");
 	public static final MahdlElementType expression_RangeSelectionFixed = new MahdlElementType("expression_RangeSelectionFixed");
@@ -106,6 +106,8 @@ public class Symbols {
 	public static final MahdlElementType expression_UnaryMinus = new MahdlElementType("expression_UnaryMinus");
 	public static final MahdlElementType expression_UnaryNot = new MahdlElementType("expression_UnaryNot");
 	public static final MahdlElementType expression_UnaryPlus = new MahdlElementType("expression_UnaryPlus");
+	public static final MahdlElementType extendedExpression_Normal = new MahdlElementType("extendedExpression_Normal");
+	public static final MahdlElementType extendedExpression_Switch = new MahdlElementType("extendedExpression_Switch");
 	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
 	public static final MahdlElementType implementationItem_Error = new MahdlElementType("implementationItem_Error");
 	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
@@ -127,17 +129,20 @@ public class Symbols {
 	public static final MahdlElementType signalLikeKind_Constant = new MahdlElementType("signalLikeKind_Constant");
 	public static final MahdlElementType signalLikeKind_Register = new MahdlElementType("signalLikeKind_Register");
 	public static final MahdlElementType signalLikeKind_Signal = new MahdlElementType("signalLikeKind_Signal");
+	public static final MahdlElementType statementCaseItem_Default = new MahdlElementType("statementCaseItem_Default");
+	public static final MahdlElementType statementCaseItem_Value = new MahdlElementType("statementCaseItem_Value");
 	public static final MahdlElementType statement_Assignment = new MahdlElementType("statement_Assignment");
 	public static final MahdlElementType statement_Block = new MahdlElementType("statement_Block");
 	public static final MahdlElementType statement_Break = new MahdlElementType("statement_Break");
 	public static final MahdlElementType statement_IfThen = new MahdlElementType("statement_IfThen");
 	public static final MahdlElementType statement_IfThenElse = new MahdlElementType("statement_IfThenElse");
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");
-	public static final MahdlElementType synthetic_List_CaseItem = new MahdlElementType("synthetic_List_CaseItem");
+	public static final MahdlElementType synthetic_List_ExpressionCaseItem = new MahdlElementType("synthetic_List_ExpressionCaseItem");
 	public static final MahdlElementType synthetic_List_ImplementationItem = new MahdlElementType("synthetic_List_ImplementationItem");
 	public static final MahdlElementType synthetic_List_PortConnection = new MahdlElementType("synthetic_List_PortConnection");
 	public static final MahdlElementType synthetic_List_PortDefinitionGroup = new MahdlElementType("synthetic_List_PortDefinitionGroup");
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
+	public static final MahdlElementType synthetic_List_StatementCaseItem = new MahdlElementType("synthetic_List_StatementCaseItem");
 	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA");
 	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT");
 	public static final MahdlElementType synthetic_SeparatedList_PortDefinition_COMMA = new MahdlElementType("synthetic_SeparatedList_PortDefinition_COMMA");

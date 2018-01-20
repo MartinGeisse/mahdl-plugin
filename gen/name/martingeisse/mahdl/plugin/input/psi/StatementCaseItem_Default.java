@@ -21,17 +21,14 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class PortConnection extends ASTWrapperPsiElement  {
+public final class StatementCaseItem_Default extends StatementCaseItem  {
 
-    public PortConnection(@NotNull ASTNode node) {
+    public StatementCaseItem_Default(@NotNull ASTNode node) {
         super(node);
     }
 
-        public InstancePortName getPortName() {
-            return (InstancePortName)InternalPsiUtil.getChild(this, 0);
-        }
-        public ExtendedExpression getExpression() {
-            return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
+        public ListNode<Statement> getStatements() {
+            return (ListNode<Statement>)InternalPsiUtil.getChild(this, 2);
         }
     
 			

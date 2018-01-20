@@ -21,17 +21,20 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class PortConnection extends ASTWrapperPsiElement  {
+public final class Expression_Conditional extends Expression  {
 
-    public PortConnection(@NotNull ASTNode node) {
+    public Expression_Conditional(@NotNull ASTNode node) {
         super(node);
     }
 
-        public InstancePortName getPortName() {
-            return (InstancePortName)InternalPsiUtil.getChild(this, 0);
+        public Expression getCondition() {
+            return (Expression)InternalPsiUtil.getChild(this, 0);
         }
-        public ExtendedExpression getExpression() {
-            return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
+        public Expression getThenBranch() {
+            return (Expression)InternalPsiUtil.getChild(this, 2);
+        }
+        public Expression getElseBranch() {
+            return (Expression)InternalPsiUtil.getChild(this, 4);
         }
     
 			

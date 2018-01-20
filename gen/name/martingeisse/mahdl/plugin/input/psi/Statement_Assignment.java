@@ -30,8 +30,8 @@ public final class Statement_Assignment extends Statement  {
         public Expression getLeftSide() {
             return (Expression)InternalPsiUtil.getChild(this, 0);
         }
-        public Expression getRightSide() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
+        public ExtendedExpression getRightSide() {
+            return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
         }
     
 			

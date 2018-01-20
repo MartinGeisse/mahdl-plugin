@@ -25,9 +25,6 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_List_Statement) {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
             }
-                    if (type == Symbols.synthetic_List_CaseItem) {
-                return new ListNode<CaseItem>(node, TokenSet.create(Symbols.caseItem_Value, Symbols.caseItem_Default), CaseItem.class);
-            }
                     if (type == Symbols.literal_Integer) {
                 return new Literal_Integer(node);
             }
@@ -39,6 +36,9 @@ public class PsiFactory {
             }
                     if (type == Symbols.synthetic_SeparatedList_IDENTIFIER_DOT) {
                 return new ListNode<LeafPsiElement>(node, TokenSet.create(Symbols.IDENTIFIER), LeafPsiElement.class);
+            }
+                    if (type == Symbols.synthetic_List_StatementCaseItem) {
+                return new ListNode<StatementCaseItem>(node, TokenSet.create(Symbols.statementCaseItem_Value, Symbols.statementCaseItem_Default), StatementCaseItem.class);
             }
                     if (type == Symbols.implementationItem_SignalLikeDefinitionGroup) {
                 return new ImplementationItem_SignalLikeDefinitionGroup(node);
@@ -86,16 +86,16 @@ public class PsiFactory {
                 return new PortDefinition(node);
             }
                     if (type == Symbols.synthetic_SeparatedList_Expression_COMMA) {
-                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelectionFixed, Symbols.expression_RangeSelectionUpwards, Symbols.expression_RangeSelectionDownwards, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
+                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelectionFixed, Symbols.expression_RangeSelectionUpwards, Symbols.expression_RangeSelectionDownwards, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Conditional), Expression.class);
+            }
+                    if (type == Symbols.expressionCaseItem_Value) {
+                return new ExpressionCaseItem_Value(node);
+            }
+                    if (type == Symbols.expressionCaseItem_Default) {
+                return new ExpressionCaseItem_Default(node);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
                 return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock, Symbols.implementationItem_Error), ImplementationItem.class);
-            }
-                    if (type == Symbols.caseItem_Value) {
-                return new CaseItem_Value(node);
-            }
-                    if (type == Symbols.caseItem_Default) {
-                return new CaseItem_Default(node);
             }
                     if (type == Symbols.expression_Literal) {
                 return new Expression_Literal(node);
@@ -184,8 +184,8 @@ public class PsiFactory {
                     if (type == Symbols.expression_BinaryConcat) {
                 return new Expression_BinaryConcat(node);
             }
-                    if (type == Symbols.expression_Mux) {
-                return new Expression_Mux(node);
+                    if (type == Symbols.expression_Conditional) {
+                return new Expression_Conditional(node);
             }
                     if (type == Symbols.doBlockTrigger_Combinatorial) {
                 return new DoBlockTrigger_Combinatorial(node);
@@ -238,6 +238,12 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_SeparatedList_SignalLikeDefinition_COMMA) {
                 return new ListNode<SignalLikeDefinition>(node, TokenSet.create(Symbols.signalLikeDefinition_WithoutInitializer, Symbols.signalLikeDefinition_WithInitializer), SignalLikeDefinition.class);
             }
+                    if (type == Symbols.statementCaseItem_Value) {
+                return new StatementCaseItem_Value(node);
+            }
+                    if (type == Symbols.statementCaseItem_Default) {
+                return new StatementCaseItem_Default(node);
+            }
                     if (type == Symbols.instanceReferenceName) {
                 return new InstanceReferenceName(node);
             }
@@ -246,6 +252,15 @@ public class PsiFactory {
             }
                     if (type == Symbols.synthetic_List_PortConnection) {
                 return new ListNode<PortConnection>(node, TokenSet.create(Symbols.portConnection), PortConnection.class);
+            }
+                    if (type == Symbols.extendedExpression_Normal) {
+                return new ExtendedExpression_Normal(node);
+            }
+                    if (type == Symbols.extendedExpression_Switch) {
+                return new ExtendedExpression_Switch(node);
+            }
+                    if (type == Symbols.synthetic_List_ExpressionCaseItem) {
+                return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
             }
         		if (type == Symbols.__PARSED_FRAGMENT) {
 			return new ASTWrapperPsiElement(node);

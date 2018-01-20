@@ -30,8 +30,8 @@ public final class SignalLikeDefinition_WithInitializer extends SignalLikeDefini
         public LeafPsiElement getIdentifier() {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
-        public Expression getInitializer() {
-            return (Expression)InternalPsiUtil.getChild(this, 2);
+        public ExtendedExpression getInitializer() {
+            return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
         }
     
 		
