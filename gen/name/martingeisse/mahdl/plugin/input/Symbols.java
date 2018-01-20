@@ -100,7 +100,9 @@ public class Symbols {
 	public static final MahdlElementType expression_Literal = new MahdlElementType("expression_Literal");
 	public static final MahdlElementType expression_Mux = new MahdlElementType("expression_Mux");
 	public static final MahdlElementType expression_Parenthesized = new MahdlElementType("expression_Parenthesized");
-	public static final MahdlElementType expression_RangeSelection = new MahdlElementType("expression_RangeSelection");
+	public static final MahdlElementType expression_RangeSelectionDownwards = new MahdlElementType("expression_RangeSelectionDownwards");
+	public static final MahdlElementType expression_RangeSelectionFixed = new MahdlElementType("expression_RangeSelectionFixed");
+	public static final MahdlElementType expression_RangeSelectionUpwards = new MahdlElementType("expression_RangeSelectionUpwards");
 	public static final MahdlElementType expression_UnaryMinus = new MahdlElementType("expression_UnaryMinus");
 	public static final MahdlElementType expression_UnaryNot = new MahdlElementType("expression_UnaryNot");
 	public static final MahdlElementType expression_UnaryPlus = new MahdlElementType("expression_UnaryPlus");

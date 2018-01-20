@@ -86,7 +86,7 @@ public class PsiFactory {
                 return new PortDefinition(node);
             }
                     if (type == Symbols.synthetic_SeparatedList_Expression_COMMA) {
-                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelection, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
+                return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelectionFixed, Symbols.expression_RangeSelectionUpwards, Symbols.expression_RangeSelectionDownwards, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Mux), Expression.class);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
                 return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock, Symbols.implementationItem_Error), ImplementationItem.class);
@@ -109,8 +109,14 @@ public class PsiFactory {
                     if (type == Symbols.expression_IndexSelection) {
                 return new Expression_IndexSelection(node);
             }
-                    if (type == Symbols.expression_RangeSelection) {
-                return new Expression_RangeSelection(node);
+                    if (type == Symbols.expression_RangeSelectionFixed) {
+                return new Expression_RangeSelectionFixed(node);
+            }
+                    if (type == Symbols.expression_RangeSelectionUpwards) {
+                return new Expression_RangeSelectionUpwards(node);
+            }
+                    if (type == Symbols.expression_RangeSelectionDownwards) {
+                return new Expression_RangeSelectionDownwards(node);
             }
                     if (type == Symbols.expression_Parenthesized) {
                 return new Expression_Parenthesized(node);
