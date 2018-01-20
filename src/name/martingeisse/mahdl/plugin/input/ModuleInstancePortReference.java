@@ -43,6 +43,9 @@ public class ModuleInstancePortReference implements PsiReference {
 	@Nullable
 	private PsiElement resolveModule() {
 		PsiElement parent = instancePortName.getParent();
+		// TODO this reference type is not only used in instance port expressions but also in the port connection
+		// list of an instance definition! Make this distinction here or use two distinct subclasses with the same
+		// base class!
 		if (!(parent instanceof Expression_InstancePort)) {
 			// port name element is lost in a PSI soup and not even part of a real port reference
 			return null;
