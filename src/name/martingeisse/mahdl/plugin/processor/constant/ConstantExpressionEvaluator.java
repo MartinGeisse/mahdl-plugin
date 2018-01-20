@@ -126,9 +126,17 @@ public final class ConstantExpressionEvaluator {
 
 			return evaluateIndexSelection((Expression_IndexSelection) expression);
 
-		} else if (expression instanceof Expression_RangeSelection) {
+		} else if (expression instanceof Expression_RangeSelectionFixed) {
 
-			return evaluateRangeSelection((Expression_RangeSelection) expression);
+			return evaluateRangeSelectionFixed((Expression_RangeSelectionFixed) expression);
+
+		} else if (expression instanceof Expression_RangeSelectionUpwards) {
+
+			return evaluateRangeSelectionUpwards((Expression_RangeSelectionUpwards) expression);
+
+		} else if (expression instanceof Expression_RangeSelectionDownwards) {
+
+			return evaluateRangeSelectionDownwards((Expression_RangeSelectionDownwards) expression);
 
 		} else if (expression instanceof UnaryOperation) {
 
@@ -180,17 +188,7 @@ public final class ConstantExpressionEvaluator {
 	@NotNull
 	private ConstantValue evaluateIndexSelection(@NotNull Expression_IndexSelection indexSelection) {
 		ConstantValue containerValue = evaluate(indexSelection.getContainer());
-		int containerSize;
-		if (containerValue instanceof ConstantValue.Unknown) {
-			containerSize = -1;
-		} else if (containerValue instanceof ConstantValue.Vector) {
-			containerSize = ((ConstantValue.Vector) containerValue).getSize();
-		} else if (containerValue instanceof ConstantValue.Memory) {
-			containerSize = ((ConstantValue.Memory) containerValue).getFirstSize();
-		} else {
-			error(indexSelection, "cannot index-select from an expression of type " + containerValue.getDataTypeFamily().getDisplayString());
-			containerSize = -1;
-		}
+		int containerSize = handleContainerValue(indexSelection.getContainer(), containerValue, true, "index-select");
 		int intIndexValue = handleIndexValue(containerSize, containerValue.getDataType().toString(), indexSelection.getIndex());
 		if (containerSize < 0 || intIndexValue < 0) {
 			return ConstantValue.Unknown.INSTANCE;
@@ -201,25 +199,46 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	@NotNull
-	private ConstantValue evaluateRangeSelection(@NotNull Expression_RangeSelection rangeSelection) {
-		ConstantValue containerValue = evaluate(rangeSelection.getContainer());
-		int containerSize;
-		if (containerValue instanceof ConstantValue.Unknown) {
-			containerSize = -1;
-		} else if (containerValue instanceof ConstantValue.Vector) {
-			containerSize = ((ConstantValue.Vector) containerValue).getSize();
-		} else {
-			error(rangeSelection, "cannot range-select from an expression of type " + containerValue.getDataTypeFamily().toString());
-			containerSize = -1;
-		}
+	private ConstantValue evaluateRangeSelectionFixed(@NotNull Expression_RangeSelectionFixed rangeSelection) {
+		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getTo(), 0);
+	}
+
+	@NotNull
+	private ConstantValue evaluateRangeSelectionUpwards(@NotNull Expression_RangeSelectionUpwards rangeSelection) {
+		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getWidth(), 1);
+	}
+
+	@NotNull
+	private ConstantValue evaluateRangeSelectionDownwards(@NotNull Expression_RangeSelectionDownwards rangeSelection) {
+		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getWidth(), -1);
+	}
+
+	private ConstantValue evaluateRangeSelectionHelper(Expression container, Expression from, Expression other, int direction) {
+		ConstantValue containerValue = evaluate(container);
+		int containerSize = handleContainerValue(container, containerValue, false, "range-select");
 		String containerTypeText = containerValue.getDataType().toString();
-		int intFromIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getFrom());
-		int intToIndexValue = handleIndexValue(containerSize, containerTypeText, rangeSelection.getTo());
-		if (containerSize < 0 || intFromIndexValue < 0 || intToIndexValue < 0) {
+		int intFrom = handleIndexValue(containerSize, containerTypeText, from);
+		int intTo = (direction == 0) ? handleIndexValue(containerSize, containerTypeText, other) :
+			handleWidthValue(other, containerSize, containerTypeText, intFrom, direction);
+		if (containerSize < 0 || intFrom < 0 || intTo < 0) {
 			return ConstantValue.Unknown.INSTANCE;
 		} else {
 			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
-			return containerValue.selectRange(intFromIndexValue, intToIndexValue);
+			return containerValue.selectRange(intFrom, intTo);
+		}
+	}
+
+	private int handleContainerValue(@NotNull Expression errorSource, ConstantValue containerValue, boolean allowMemory, String operatorVerb) {
+		if (containerValue instanceof ConstantValue.Unknown) {
+			return -1;
+		} else if (containerValue instanceof ConstantValue.Vector) {
+			return ((ConstantValue.Vector) containerValue).getSize();
+		} else if (allowMemory && containerValue instanceof ConstantValue.Memory) {
+			return ((ConstantValue.Memory) containerValue).getFirstSize();
+		} else {
+			error(errorSource, "cannot " + operatorVerb + " from an expression of type " +
+				containerValue.getDataTypeFamily().getDisplayString());
+			return -1;
 		}
 	}
 
@@ -248,6 +267,35 @@ public final class ConstantExpressionEvaluator {
 			return -1;
 		}
 		return intValue;
+	}
+
+	private int handleWidthValue(@NotNull Expression widthExpression, int containerSize, @NotNull String containerType,
+								 int startIndex, int direction) {
+		ConstantValue widthValue = evaluate(widthExpression);
+		BigInteger numericWidthValue = widthValue.convertToInteger();
+		if (numericWidthValue == null) {
+			error(widthExpression, "value of type  " + widthValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
+			return -1;
+		} else if (numericWidthValue.compareTo(BigInteger.ZERO) < 0) {
+			error(widthExpression, "width is negative: " + numericWidthValue);
+			return -1;
+		} else if (numericWidthValue.compareTo(MAX_INDEX_VALUE) > 0) {
+			error(widthExpression, "width too large: " + numericWidthValue);
+			return -1;
+		} else if (containerSize < 0) {
+			// could not determine container type
+			return -1;
+		}
+		int width = numericWidthValue.intValue();
+		int endIndex = startIndex + direction * (width - 1);
+		if (endIndex < 0) {
+			error(widthExpression, "resulting index " + endIndex + " is negative");
+			return -1;
+		} else if (endIndex >= containerSize) {
+			error(widthExpression, "resulting index " + endIndex + " is out of bounds for type " + containerType);
+			return -1;
+		}
+		return width;
 	}
 
 	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
@@ -536,13 +584,13 @@ public final class ConstantExpressionEvaluator {
 	 * folding MUST be performed before run-time if this method returns true, because the expression could contain
 	 * integers (which cannot be evaluated at run-time) and so certain errors such as integer-to-vector conversion
 	 * overflow is guaranteed to be reported at compile-time.
-	 *
+	 * <p>
 	 * Note also that some kinds of folding cannot be performed by this evaluator alone since they must not appear
 	 * in formally constant expressions. These are not required to be performed by the language spec. An example
 	 * would be:
-	 *
-	 *     signal vector[16] result = constantSelectorThatIsTrue ? someConstant : someSignal
-	 *
+	 * <p>
+	 * signal vector[16] result = constantSelectorThatIsTrue ? someConstant : someSignal
+	 * <p>
 	 * Being used for a signal, this expression is not required to be constant, so using a signal on the right-hand
 	 * side is allowed. This expression is not formally constant since it contains a signal reference. Therefore, this
 	 * constant evaluator will reject it.
