@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.processor.constant;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -19,15 +18,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * TODO don't repeat type checks which the {@link ExpressionTypeChecker} should do. Instead, type-check all expressions
  * including constants first, then rely on type safety and only report a generic error if something goes wrong.
  */
 public final class ConstantExpressionEvaluator {
-
 
 	private static final BigInteger MAX_INDEX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
@@ -93,6 +89,21 @@ public final class ConstantExpressionEvaluator {
 	 * Returns a ConstantValue.Unknown for non-constant expressions or errors and also reports those to the error reporter.
 	 */
 	@NotNull
+	public final ConstantValue evaluate(@NotNull ExtendedExpression expression) {
+		if (expression instanceof ExtendedExpression_Normal) {
+			return evaluate(((ExtendedExpression_Normal) expression).getExpression());
+		} else if (expression instanceof ExtendedExpression_Switch) {
+			// we don't support constant switch expressions for now because of the complex type handling
+			return error(expression, "constant switch expressions are currently not supported");
+		} else {
+			return nonConstant(expression);
+		}
+	}
+
+	/**
+	 * Returns a ConstantValue.Unknown for non-constant expressions or errors and also reports those to the error reporter.
+	 */
+	@NotNull
 	public final ConstantValue evaluate(@NotNull Expression expression) {
 		if (expression instanceof Expression_Literal) {
 
@@ -127,9 +138,9 @@ public final class ConstantExpressionEvaluator {
 
 			return evaluateBinaryOperation((BinaryOperation) expression);
 
-		} else if (expression instanceof Expression_Mux) {
+		} else if (expression instanceof Expression_Conditional) {
 
-			return evaluateMux((Expression_Mux) expression);
+			return evaluateConditional((Expression_Conditional) expression);
 
 		} else if (expression instanceof Expression_FunctionCall) {
 
@@ -445,7 +456,7 @@ public final class ConstantExpressionEvaluator {
 	}
 
 	@NotNull
-	private ConstantValue evaluateMux(@NotNull Expression_Mux mux) {
+	private ConstantValue evaluateConditional(@NotNull Expression_Conditional conditional) {
 
 		//
 		// I'm not sure yet whether to allow type errors in the not-taken branch. The use-cases
@@ -453,9 +464,9 @@ public final class ConstantExpressionEvaluator {
 		// For now, let's be strict about it so no ugly code creeps in.
 		//
 
-		ConstantValue conditionValue = evaluate(mux.getCondition());
-		ConstantValue thenValue = evaluate(mux.getThenBranch());
-		ConstantValue elseValue = evaluate(mux.getElseBranch());
+		ConstantValue conditionValue = evaluate(conditional.getCondition());
+		ConstantValue thenValue = evaluate(conditional.getThenBranch());
+		ConstantValue elseValue = evaluate(conditional.getElseBranch());
 		boolean error = false;
 
 		// handle condition
@@ -466,7 +477,7 @@ public final class ConstantExpressionEvaluator {
 		} else {
 			Boolean conditionBooleanOrNull = conditionValue.convertToBoolean();
 			if (conditionBooleanOrNull == null) {
-				error(mux.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
+				error(conditional.getCondition(), "cannot use value of type " + conditionValue.getDataTypeFamily().getDisplayString() + " as selector");
 				error = true;
 				conditionBoolean = false;
 			} else {
@@ -477,13 +488,13 @@ public final class ConstantExpressionEvaluator {
 		// handle branches
 		if (!thenValue.getDataType().equals(elseValue.getDataType())) {
 			if (thenValue instanceof ConstantValue.Integer && elseValue instanceof ConstantValue.Vector) {
-				int size  = ((ConstantValue.Vector) elseValue).getSize();
+				int size = ((ConstantValue.Vector) elseValue).getSize();
 				thenValue = new ConstantValue.Vector(size, ((ConstantValue.Integer) thenValue).getValue());
 			} else if (thenValue instanceof ConstantValue.Vector && elseValue instanceof ConstantValue.Integer) {
 				int size = ((ConstantValue.Vector) thenValue).getSize();
 				elseValue = new ConstantValue.Vector(size, ((ConstantValue.Integer) elseValue).getValue());
 			} else {
-				error(mux, "incompatible types in then/else branches: " + thenValue.getDataType() + " vs. " + elseValue.getDataType());
+				error(conditional, "incompatible types in then/else branches: " + thenValue.getDataType() + " vs. " + elseValue.getDataType());
 				error = true;
 			}
 		}
@@ -525,6 +536,16 @@ public final class ConstantExpressionEvaluator {
 	 * folding MUST be performed before run-time if this method returns true, because the expression could contain
 	 * integers (which cannot be evaluated at run-time) and so certain errors such as integer-to-vector conversion
 	 * overflow is guaranteed to be reported at compile-time.
+	 *
+	 * Note also that some kinds of folding cannot be performed by this evaluator alone since they must not appear
+	 * in formally constant expressions. These are not required to be performed by the language spec. An example
+	 * would be:
+	 *
+	 *     signal vector[16] result = constantSelectorThatIsTrue ? someConstant : someSignal
+	 *
+	 * Being used for a signal, this expression is not required to be constant, so using a signal on the right-hand
+	 * side is allowed. This expression is not formally constant since it contains a signal reference. Therefore, this
+	 * constant evaluator will reject it.
 	 */
 	public final boolean isConstant(@NotNull Expression expression) {
 		MutableBoolean resultHolder = new MutableBoolean(true);
@@ -536,6 +557,8 @@ public final class ConstantExpressionEvaluator {
 					// been established.
 					resultHolder.setFalse();
 				}
+			} else if (node instanceof ExtendedExpression_Switch) {
+				resultHolder.setFalse();
 			}
 		});
 		return resultHolder.getValue();

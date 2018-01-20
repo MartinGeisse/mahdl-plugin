@@ -9,7 +9,6 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
-import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -149,17 +148,17 @@ public final class ExpressionTypeChecker {
 			ProcessedDataType rightOperandType = checkExpression(binaryOperation.getRightOperand());
 			// TODO
 
-		} else if (expression instanceof Expression_Mux) {
+		} else if (expression instanceof Expression_Conditional) {
 
 			boolean error = false;
-			Expression_Mux mux = (Expression_Mux)expression;
-			ProcessedDataType conditionType = checkExpression(mux.getCondition());
+			Expression_Conditional conditional = (Expression_Conditional)expression;
+			ProcessedDataType conditionType = checkExpression(conditional.getCondition());
 			if (!(conditionType instanceof ProcessedDataType.Bit)) {
-				error(mux.getCondition(), conditionType.getFamily() + " type cannot be used as mux condition");
+				error(conditional.getCondition(), conditionType.getFamily() + " type cannot be used as condition");
 				error = true;
 			}
-			ProcessedDataType thenBranchType = checkExpression(mux.getThenBranch());
-			ProcessedDataType elseBranchType = checkExpression(mux.getElseBranch());
+			ProcessedDataType thenBranchType = checkExpression(conditional.getThenBranch());
+			ProcessedDataType elseBranchType = checkExpression(conditional.getElseBranch());
 			if (thenBranchType.equals(elseBranchType)) {
 				return thenBranchType;
 			} else {
