@@ -69,15 +69,15 @@ public final class ModuleProcessor {
 	public void process() {
 
 		// make sure the module name matches the file name
-		for (PsiElement element = module; element != null; element = element.getParent()) {
-			if (element instanceof MahdlSourceFile) {
+		{
+			MahdlSourceFile mahdlSourceFile = PsiUtil.getAncestor(module, MahdlSourceFile.class);
+			if (mahdlSourceFile != null) {
 				String moduleName = module.getModuleName().getText();
 				String expectedFileName = moduleName + '.' + MahdlFileType.DEFAULT_EXTENSION;
-				String actualFileName = ((MahdlSourceFile) element).getName();
+				String actualFileName = mahdlSourceFile.getName();
 				if (!actualFileName.equals(expectedFileName)) {
 					errorHandler.onError(module.getModuleName(), "module '" + moduleName + "' should be defined in a file named '" + expectedFileName + "'");
 				}
-				break;
 			}
 		}
 

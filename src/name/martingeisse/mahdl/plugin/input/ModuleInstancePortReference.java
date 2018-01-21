@@ -43,22 +43,27 @@ public class ModuleInstancePortReference implements PsiReference {
 	@Nullable
 	private PsiElement resolveModule() {
 		PsiElement parent = instancePortName.getParent();
-		// TODO this reference type is not only used in instance port expressions but also in the port connection
-		// list of an instance definition! Make this distinction here or use two distinct subclasses with the same
-		// base class!
-		if (!(parent instanceof Expression_InstancePort)) {
+
+		// this reference type can be used both in an instance port connection and in an instance port expression
+		PsiElement someElementInsideInstanceDefinition;
+		if (parent instanceof Expression_InstancePort) {
+			someElementInsideInstanceDefinition = ((Expression_InstancePort) parent).getInstanceName().getReference().resolve();
+			if (someElementInsideInstanceDefinition == null) {
+				// the instance name before the dot is unknown, so the port name is meaningless
+				return null;
+			}
+		} else if (parent instanceof PortConnection) {
+			someElementInsideInstanceDefinition = instancePortName;
+		} else {
 			// port name element is lost in a PSI soup and not even part of a real port reference
 			return null;
 		}
-		PsiElement instanceNameDefiningElement = ((Expression_InstancePort) parent).getInstanceName().getReference().resolve();
-		if (instanceNameDefiningElement == null) {
-			// the instance name before the dot is unknown, so the port name is meaningless
-			return null;
-		}
-		ImplementationItem_ModuleInstance moduleInstanceElement = PsiUtil.getAncestor(instanceNameDefiningElement, ImplementationItem_ModuleInstance.class);
+
+		// now that we found a PSI element that is part of the instance definition, both cases are handled the same way
+		ImplementationItem_ModuleInstance moduleInstanceElement = PsiUtil.getAncestor(someElementInsideInstanceDefinition, ImplementationItem_ModuleInstance.class);
 		if (moduleInstanceElement == null) {
 			// the element which defines the instance name was found but is lost in a PSI soup -- at least resolve to the name-defining element.
-			return instanceNameDefiningElement;
+			return someElementInsideInstanceDefinition;
 		}
 		PsiElement moduleNameDefiningElement = moduleInstanceElement.getModuleName().getReference().resolve();
 		if (moduleNameDefiningElement == null) {

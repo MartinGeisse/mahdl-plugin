@@ -9,8 +9,10 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
@@ -50,23 +52,27 @@ public final class ExpressionTypeChecker {
 
 	private final ErrorHandler errorHandler;
 	private final Map<String, Named> definitions;
+	private final DataTypeProcessor dataTypeProcessor;
 
-	public ExpressionTypeChecker(@NotNull ErrorHandler errorHandler, @NotNull Map<String, Named> definitions) {
+	public ExpressionTypeChecker(@NotNull ErrorHandler errorHandler, @NotNull Map<String, Named> definitions, DataTypeProcessor dataTypeProcessor) {
 		this.errorHandler = errorHandler;
 		this.definitions = definitions;
+		this.dataTypeProcessor = dataTypeProcessor;
 	}
 
 	@NotNull
 	public ProcessedDataType checkExpression(@NotNull Expression expression) {
-		// TODO
 		if (expression instanceof Expression_Literal) {
+
 			try {
 				ConstantValue literalValue = LiteralParser.parseLiteral((Expression_Literal) expression);
 				return literalValue.getDataType();
 			} catch (LiteralParser.ParseException e) {
 				return error(expression, e.getMessage());
 			}
+
 		} else if (expression instanceof Expression_Identifier) {
+
 			String name = ((Expression_Identifier) expression).getIdentifier().getText();
 			Named definition = definitions.get(name);
 			if (definition == null) {
@@ -77,25 +83,36 @@ public final class ExpressionTypeChecker {
 			} else {
 				return error(expression, "symbol '" + name + "' does not refer to a signal-like");
 			}
-		} else if (expression instanceof Expression_InstancePort) {
-			// TODO Expression_InstancePort should be a PSI reference!
-			Expression_InstancePort instancePortReference = (Expression_InstancePort)expression;
-//			{
-//				String instanceName = instancePortReference.getInstanceName().getIdentifier().getText();
-//				Named instance = definitions.get(instanceName);
-//				if (instance == null) {
-//					return error(expression, "cannot resolve symbol '" + instanceName + "'");
-//				} else if (!(instance instanceof ModuleInstance)) {
-//					return error(expression, "symbol '" + instanceName + "' does not refer to a module instance");
-//				} else {
-//					ModuleInstance moduleInstance = (ModuleInstance)instance;
-//					QualifiedModuleName moduleName = moduleInstance.getModuleInstanceElement().getModuleName();
-//
-//				}
-//
-//			}
 
-			// TODO
+		} else if (expression instanceof Expression_InstancePort) {
+
+			Expression_InstancePort instancePortReference = (Expression_InstancePort)expression;
+			PsiElement referenceTarget = instancePortReference.getPortName().getReference().resolve();
+			if (!(referenceTarget instanceof PortDefinition)) {
+				// check whether we can find the instance, and choose an error message accordingly
+				String instanceName = instancePortReference.getInstanceName().getIdentifier().getText();
+				Named instanceDefinition = definitions.get(instanceName);
+				if (instanceDefinition == null) {
+					return error(instancePortReference.getInstanceName(), "cannot resolve symbol '" + instanceName + "'");
+				} else if (!(instanceDefinition instanceof ModuleInstance)) {
+					return error(instancePortReference.getInstanceName(), instanceName + " is not a module instance");
+				} else {
+					String portName = instancePortReference.getPortName().getIdentifier().getText();
+					return error(instancePortReference.getPortName(), "cannot resolve port " + portName + " in instance " + instanceName);
+				}
+			}
+			PortDefinition portDefinition = (PortDefinition)referenceTarget;
+			PortDefinitionGroup portDefinitionGroup = PsiUtil.getAncestor(portDefinition, PortDefinitionGroup.class);
+			if (portDefinitionGroup == null) {
+				return error(instancePortReference.getPortName(), "port definition is broken");
+			}
+			ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+			if (processedDataType instanceof ProcessedDataType.Unknown) {
+				// TODO How will the annotation holder react to an annotation being placed in the wrong file?
+				return error(instancePortReference.getPortName(), "port data type is broken");
+			} else {
+				return processedDataType;
+			}
 
 		} else if (expression instanceof Expression_IndexSelection) {
 
@@ -126,9 +143,20 @@ public final class ExpressionTypeChecker {
 				return error(indexSelection.getIndex(), "cannot use a value of type " + indexType + " as index");
 			}
 
-		} else if (expression instanceof Expression_RangeSelection) {
+		} else if (expression instanceof Expression_RangeSelectionFixed) {
 
-			// TODO problem: the result size may not be constant!
+			// TODO
+			return error(expression, "NOT YET IMPLEMENTED");
+
+		} else if (expression instanceof Expression_RangeSelectionUpwards) {
+
+			// TODO
+			return error(expression, "NOT YET IMPLEMENTED");
+
+		} else if (expression instanceof Expression_RangeSelectionDownwards) {
+
+			// TODO
+			return error(expression, "NOT YET IMPLEMENTED");
 
 		} else if (expression instanceof UnaryOperation) {
 
@@ -147,6 +175,7 @@ public final class ExpressionTypeChecker {
 			ProcessedDataType leftOperandType = checkExpression(binaryOperation.getLeftOperand());
 			ProcessedDataType rightOperandType = checkExpression(binaryOperation.getRightOperand());
 			// TODO
+			return error(expression, "NOT YET IMPLEMENTED");
 
 		} else if (expression instanceof Expression_Conditional) {
 
@@ -163,20 +192,23 @@ public final class ExpressionTypeChecker {
 				return thenBranchType;
 			} else {
 				// TODO
+				return error(expression, "NOT YET IMPLEMENTED");
 			}
 
 
 		} else if (expression instanceof Expression_FunctionCall) {
 
 			// TODO
+			return error(expression, "NOT YET IMPLEMENTED");
 
 		} else if (expression instanceof Expression_Parenthesized) {
 
 			return checkExpression(((Expression_Parenthesized) expression).getExpression());
 
-		}
+		} else {
 
-		return null;
+			return error(expression, "unknown expression type");
+		}
 	}
 
 	@NotNull
