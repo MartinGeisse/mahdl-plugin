@@ -9,13 +9,25 @@ public final class ProcessedBinaryOperation extends ProcessedExpression {
 
 	private final ProcessedExpression leftOperand;
 	private final ProcessedExpression rightOperand;
-	private final ProcessedUnaryOperator operator;
+	private final ProcessedBinaryOperator operator;
 
-	public ProcessedBinaryOperation(ProcessedDataType dataType, ProcessedExpression leftOperand, ProcessedExpression rightOperand, ProcessedUnaryOperator operator) {
-		super(dataType);
+	public ProcessedBinaryOperation(ProcessedExpression leftOperand, ProcessedExpression rightOperand, ProcessedBinaryOperator operator) throws TypeErrorException {
+		super(operator.checkTypes(leftOperand.getDataType(), rightOperand.getDataType()));
 		this.leftOperand = leftOperand;
 		this.rightOperand = rightOperand;
 		this.operator = operator;
+	}
+
+	public ProcessedExpression getLeftOperand() {
+		return leftOperand;
+	}
+
+	public ProcessedExpression getRightOperand() {
+		return rightOperand;
+	}
+
+	public ProcessedBinaryOperator getOperator() {
+		return operator;
 	}
 
 }

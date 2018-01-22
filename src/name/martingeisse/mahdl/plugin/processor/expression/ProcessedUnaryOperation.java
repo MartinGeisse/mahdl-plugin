@@ -10,10 +10,18 @@ public final class ProcessedUnaryOperation extends ProcessedExpression {
 	private final ProcessedExpression operand;
 	private final ProcessedUnaryOperator operator;
 
-	public ProcessedUnaryOperation(ProcessedDataType dataType, ProcessedExpression operand, ProcessedUnaryOperator operator) {
-		super(dataType);
+	public ProcessedUnaryOperation(ProcessedExpression operand, ProcessedUnaryOperator operator) throws TypeErrorException {
+		super(operator.checkType(operator.checkType(operand.getDataType())));
 		this.operand = operand;
 		this.operator = operator;
+	}
+
+	public ProcessedExpression getOperand() {
+		return operand;
+	}
+
+	public ProcessedUnaryOperator getOperator() {
+		return operator;
 	}
 
 }
