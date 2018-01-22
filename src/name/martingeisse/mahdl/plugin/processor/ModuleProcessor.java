@@ -11,7 +11,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
-import name.martingeisse.mahdl.plugin.processor.expression.ExpressionTypeChecker;
+import name.martingeisse.mahdl.plugin.processor.expression_old.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
@@ -81,6 +81,7 @@ public final class ModuleProcessor {
 			}
 		}
 
+		// TODO even the new expression processor must work in lockstep with the rest here
 		// evaluate constants. The ConstantExpressionEvaluator and the DataTypeProcessor work in lockstep here since
 		// every constant definition may use the constants defined above for its data type.
 		constantExpressionEvaluator = new ConstantExpressionEvaluator(errorHandler, module);
