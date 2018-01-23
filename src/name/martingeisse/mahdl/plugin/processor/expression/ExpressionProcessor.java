@@ -41,33 +41,37 @@ public class ExpressionProcessor {
 	}
 
 	public ProcessedExpression process(Expression expression) {
-		// TODO handle bit literals
-		if (expression instanceof Expression_Literal) {
-			return process((Expression_Literal) expression);
-		} else if (expression instanceof Expression_Identifier) {
-			return process((Expression_Identifier) expression);
-		} else if (expression instanceof Expression_InstancePort) {
-			// TODO
-		} else if (expression instanceof Expression_IndexSelection) {
-			// TODO
-		} else if (expression instanceof Expression_RangeSelectionFixed) {
-			// TODO
-		} else if (expression instanceof Expression_RangeSelectionUpwards) {
-			// TODO
-		} else if (expression instanceof Expression_RangeSelectionDownwards) {
-			// TODO
-		} else if (expression instanceof UnaryOperation) {
-			// TODO
-		} else if (expression instanceof BinaryOperation) {
-			// TODO
-		} else if (expression instanceof Expression_Conditional) {
-			// TODO
-		} else if (expression instanceof Expression_FunctionCall) {
-			// TODO
-		} else if (expression instanceof Expression_Parenthesized) {
-			return process(((Expression_Parenthesized) expression).getExpression());
-		} else {
-			return error(expression, "unknown expression type");
+		try {
+			// TODO handle bit literals
+			if (expression instanceof Expression_Literal) {
+				return process((Expression_Literal) expression);
+			} else if (expression instanceof Expression_Identifier) {
+				return process((Expression_Identifier) expression);
+			} else if (expression instanceof Expression_InstancePort) {
+				// TODO
+			} else if (expression instanceof Expression_IndexSelection) {
+				return process((Expression_IndexSelection)expression);
+			} else if (expression instanceof Expression_RangeSelectionFixed) {
+				// TODO
+			} else if (expression instanceof Expression_RangeSelectionUpwards) {
+				// TODO
+			} else if (expression instanceof Expression_RangeSelectionDownwards) {
+				// TODO
+			} else if (expression instanceof UnaryOperation) {
+				// TODO
+			} else if (expression instanceof BinaryOperation) {
+				// TODO
+			} else if (expression instanceof Expression_Conditional) {
+				// TODO
+			} else if (expression instanceof Expression_FunctionCall) {
+				// TODO
+			} else if (expression instanceof Expression_Parenthesized) {
+				return process(((Expression_Parenthesized) expression).getExpression());
+			} else {
+				return error(expression, "unknown expression type");
+			}
+		} catch (TypeErrorException e) {
+			return error(expression, "internal error during type-check");
 		}
 	}
 
@@ -93,7 +97,7 @@ public class ExpressionProcessor {
 		}
 	}
 
-	private ProcessedExpression process(Expression_IndexSelection expression) {
+	private ProcessedExpression process(Expression_IndexSelection expression) throws TypeErrorException {
 
 		ProcessedExpression container = process(expression.getContainer());
 		int containerSizeIfKnown = determineContainerSize(container, true, "index-select");
@@ -132,7 +136,6 @@ public class ExpressionProcessor {
 	}
 
 	private ProcessedExpression handleIndex(@NotNull ProcessedExpression index, int containerSizeIfKnown) {
-		// TODO insert type conversions ??? probably not.
 		if (index.getDataType() instanceof ProcessedDataType.Integer) {
 			// For an integer, the actual value is relevant, so non-PO2-sized containers can be indexed with a
 			// constant index without getting errors. There won't be an error based on the type alone nor a type
