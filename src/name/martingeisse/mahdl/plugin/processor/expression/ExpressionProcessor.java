@@ -104,20 +104,15 @@ public class ExpressionProcessor {
 		if (containerSizeIfKnown == -1 || index instanceof UnknownExpression) {
 			return new UnknownExpression(expression);
 		} else {
-			// TODO determine output type
-
-			// TODO difference between constant and non-constant?
-			//
-			// signal vector[6] foo = ...;
-			// signal bit bar = vector[5]; // this is okay
-			// signal bit baz = vector[3d5]; // unclear! The index is valid but its type could select out-of-range.
-			//
-			// There shouldn't be a difference between constant and non-constant here (otherwise depends on folding,
-			// which is informal), so should probably reject the second one based on its *type*, not accept it based
-			// on its *value*.
-			//
-
-			return new ProcessedIndexSelection(expression, dataType, container, index);
+			if (container.getDataType() instanceof ProcessedDataType.Vector) {
+				// TODO type conversion?
+				return new ProcessedIndexSelection.BitFromVector(expression, container, index);
+			} else if (container.getDataType() instanceof ProcessedDataType.Memory) {
+				// TODO type conversion?
+				return new ProcessedIndexSelection.VectorFromMemory(expression, container, index);
+			} else {
+				return error(expression, "unknown container type");
+			}
 		}
 
 	}
@@ -137,35 +132,28 @@ public class ExpressionProcessor {
 	}
 
 	private ProcessedExpression handleIndex(@NotNull ProcessedExpression index, int containerSizeIfKnown) {
-		// TODO insert type conversions
+		// TODO insert type conversions ??? probably not.
 		if (index.getDataType() instanceof ProcessedDataType.Integer) {
+			// For an integer, the actual value is relevant, so non-PO2-sized containers can be indexed with a
+			// constant index without getting errors. There won't be an error based on the type alone nor a type
+			// conversion.
 			return index;
 		} else if (index.getDataType() instanceof ProcessedDataType.Vector) {
 			if (containerSizeIfKnown < 0) {
 				return new UnknownExpression(index.getErrorSource());
 			} else {
-				// It is an error for the index size to be too large, even if the index is a constant whose actual
-				// value is within bounds.
 				int indexSize = ((ProcessedDataType.Vector) index.getDataType()).getSize();
-				// TODO ??? if (containerSizeIfKnown < (1 << indexSize))
-				return
+				if (containerSizeIfKnown < (1 << indexSize)) {
+					return error(index, "index of vector size " + indexSize +
+						" must index a container vector of at least " + (1 << indexSize) + " in size, found "+
+						containerSizeIfKnown);
+				} else {
+					return index;
+				}
 			}
 		} else {
 			return error(index, "cannot use an expression of type " + index.getDataType().getFamily() + " as index");
 		}
-
-
-		BigInteger numericIndexValue = indexValue.convertToInteger();
-		if (numericIndexValue == null) {
-			error(indexExpression, "value of type  " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
-			return -1;
-		}
-		int intValue = numericIndexValue.intValue();
-		if (intValue >= containerSize) {
-			error(indexExpression, "index " + numericIndexValue + " is out of bounds for type " + containerType);
-			return -1;
-		}
-		return intValue;
 	}
 
 	@NotNull
