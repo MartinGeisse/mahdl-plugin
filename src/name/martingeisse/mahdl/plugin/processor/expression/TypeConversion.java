@@ -1,5 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
@@ -17,8 +18,8 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 	private final ProcessedExpression operand;
 
-	private TypeConversion(ProcessedDataType dataType, ProcessedExpression operand) {
-		super(dataType);
+	private TypeConversion(PsiElement errorSource, ProcessedDataType dataType, ProcessedExpression operand) {
+		super(errorSource, dataType);
 		this.operand = operand;
 	}
 
@@ -28,43 +29,59 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 	public static final class ToText extends TypeConversion {
 
-		public ToText(ProcessedExpression operand) {
-			super(ProcessedDataType.Text.INSTANCE, operand);
+		public ToText(PsiElement errorSource, ProcessedExpression operand) {
+			super(errorSource, ProcessedDataType.Text.INSTANCE, operand);
 		}
 
+		@Override
+		public ProcessedDataType.Text getDataType() {
+			return (ProcessedDataType.Text)super.getDataType();
+		}
 	}
 
 	public static final class BitToVector extends TypeConversion {
 
-		public BitToVector(ProcessedExpression operand) throws TypeErrorException {
-			super(new ProcessedDataType.Vector(1), operand);
+		public BitToVector(PsiElement errorSource, ProcessedExpression operand) throws TypeErrorException {
+			super(errorSource, new ProcessedDataType.Vector(1), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Bit)) {
 				throw new TypeErrorException();
 			}
 		}
 
+		@Override
+		public ProcessedDataType.Vector getDataType() {
+			return (ProcessedDataType.Vector)super.getDataType();
+		}
 	}
 
 	public static final class IntegerToVector extends TypeConversion {
 
-		public IntegerToVector(int targetSize, ProcessedExpression operand) throws TypeErrorException {
-			super(new ProcessedDataType.Vector(targetSize), operand);
+		public IntegerToVector(PsiElement errorSource, int targetSize, ProcessedExpression operand) throws TypeErrorException {
+			super(errorSource, new ProcessedDataType.Vector(targetSize), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Integer)) {
 				throw new TypeErrorException();
 			}
 		}
 
+		@Override
+		public ProcessedDataType.Vector getDataType() {
+			return (ProcessedDataType.Vector)super.getDataType();
+		}
 	}
 
 	public static final class VectorToInteger extends TypeConversion {
 
-		public VectorToInteger(ProcessedExpression operand) throws TypeErrorException {
-			super(new ProcessedDataType.Integer(), operand);
+		public VectorToInteger(PsiElement errorSource, ProcessedExpression operand) throws TypeErrorException {
+			super(errorSource, new ProcessedDataType.Integer(), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Vector)) {
 				throw new TypeErrorException();
 			}
 		}
 
+		@Override
+		public ProcessedDataType.Integer getDataType() {
+			return (ProcessedDataType.Integer)super.getDataType();
+		}
 	}
 
 }

@@ -2,7 +2,6 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -27,7 +26,7 @@ public enum ProcessedUnaryOperator {
 				return operandType;
 			}
 		}
-		throw new TypeErrorException("operand type " + operandType + " not supported by operator " + this);
+		throw new TypeErrorException();
 	}
 
 }

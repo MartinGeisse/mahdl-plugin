@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.processor.expression;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
@@ -11,10 +12,8 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
  */
 public final class UnknownExpression extends ProcessedExpression {
 
-	public static final UnknownExpression INSTANCE = new UnknownExpression();
-
-	public UnknownExpression() {
-		super(ProcessedDataType.Unknown.INSTANCE);
+	public UnknownExpression(PsiElement errorSource) {
+		super(errorSource, ProcessedDataType.Unknown.INSTANCE);
 	}
 
 }

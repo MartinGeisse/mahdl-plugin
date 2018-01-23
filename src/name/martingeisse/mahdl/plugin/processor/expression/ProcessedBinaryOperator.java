@@ -81,7 +81,7 @@ public enum ProcessedBinaryOperator {
 			}
 
 		}
-		throw new TypeErrorException("operand types " + leftType + " and " + rightType + " not supported by operator " + this);
+		throw new TypeErrorException();
 	}
 
 }
