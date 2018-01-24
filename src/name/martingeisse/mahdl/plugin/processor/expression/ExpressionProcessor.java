@@ -109,10 +109,8 @@ public class ExpressionProcessor {
 			return new UnknownExpression(expression);
 		} else {
 			if (container.getDataType() instanceof ProcessedDataType.Vector) {
-				// TODO type conversion?
 				return new ProcessedIndexSelection.BitFromVector(expression, container, index);
 			} else if (container.getDataType() instanceof ProcessedDataType.Memory) {
-				// TODO type conversion?
 				return new ProcessedIndexSelection.VectorFromMemory(expression, container, index);
 			} else {
 				return error(expression, "unknown container type");
@@ -145,6 +143,8 @@ public class ExpressionProcessor {
 			if (containerSizeIfKnown < 0) {
 				return new UnknownExpression(index.getErrorSource());
 			} else {
+				// For a vector, the greatest possible value is releant, not the actual value, even if the vector is
+				// constant (see language design documents for details).
 				int indexSize = ((ProcessedDataType.Vector) index.getDataType()).getSize();
 				if (containerSizeIfKnown < (1 << indexSize)) {
 					return error(index, "index of vector size " + indexSize +

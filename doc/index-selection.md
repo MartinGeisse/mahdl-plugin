@@ -19,10 +19,10 @@ be clearly separated from constant folding and checking the resulting values. If
 be possibly out-of-bounds in type as long as they are in-bounds in value, the type check has to be delayed until it
 has been determined whether the index vector is formally constant.
 
+**The more important rationale:**
 It is also less obvious in such a case which kinds of expressions are allowed for the index of a container that does
 not have a power-of-two size. Most of the language behavior and what is allowed is defined in terms of *types*, not
-*constness*, and is much easier to understand that way (see operators.md). Making an exception here seems like an ugly
-exception.
+*constness*, and is much easier to understand that way (see operators.md). Making an exception here seems ugly.
 
 **TODO** it might be possible to mix constant folding into the expression processor without a lot of effort. But even
 then, it is still unclear whether this is a good idea: Most of the behavior of the language is bound to types, not
@@ -32,5 +32,7 @@ expression) but with an integer it works. This *could* have been defined in term
 hard to understand. Another example would be (myVectorSignal < 5) vs. (myVectorSignal < -3). The former is okay while
 the latter is a compile-time error because it can never be true. But based solely on constness, this is hard to define,
 while in types, -3 cannot be a vector and using the integer -3 causes a compile-time conversion error -- exactly what
-we want.
-
+we want. As a third example, type conversion in (myVector + myConstant) converts the constant to a vector (if it is an
+integer) because of *types*. Defining this on constness and on type conversion of the result is ugly and cumbersome.
+**Conclusion**: It makes sense to use a value-based bounds check based on *types*, not *constness*, too. This means that
+for an index vector, the bounds check is based on its type, not value.
