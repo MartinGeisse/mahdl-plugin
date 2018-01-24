@@ -135,7 +135,8 @@ public class ExpressionProcessor {
 			return new UnknownExpression(expression);
 		} else {
 			if (container.getDataType() instanceof ProcessedDataType.Vector) {
-				// TODO return new ProcessedRangeSelection
+				// TODO need constant evaluation here!
+				return new ProcessedRangeSelection(expression, dataType, container, fromIndex, toIndex);
 			} else {
 				return error(expression, "unknown container type");
 			}
