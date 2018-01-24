@@ -3,15 +3,12 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
-
-import java.math.BigInteger;
 
 /**
  *
@@ -52,7 +49,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_IndexSelection) {
 				return process((Expression_IndexSelection)expression);
 			} else if (expression instanceof Expression_RangeSelectionFixed) {
-				// TODO
+				return process((Expression_RangeSelectionFixed)expression);
 			} else if (expression instanceof Expression_RangeSelectionUpwards) {
 				// TODO
 			} else if (expression instanceof Expression_RangeSelectionDownwards) {
@@ -112,6 +109,33 @@ public class ExpressionProcessor {
 				return new ProcessedIndexSelection.BitFromVector(expression, container, index);
 			} else if (container.getDataType() instanceof ProcessedDataType.Memory) {
 				return new ProcessedIndexSelection.VectorFromMemory(expression, container, index);
+			} else {
+				return error(expression, "unknown container type");
+			}
+		}
+
+	}
+
+	private ProcessedExpression process(Expression_RangeSelectionFixed expression) throws TypeErrorException {
+
+		ProcessedExpression container = process(expression.getContainer());
+		int containerSizeIfKnown = determineContainerSize(container, false, "range-select");
+
+		ProcessedExpression fromIndex = process(expression.getFrom());
+		if (!(fromIndex.getDataType() instanceof ProcessedDataType.Integer)) {
+			fromIndex = error(expression.getFrom(), "from-index must be of type integer, found " + fromIndex.getDataType());
+		}
+
+		ProcessedExpression toIndex = process(expression.getTo());
+		if (!(toIndex.getDataType() instanceof ProcessedDataType.Integer)) {
+			toIndex = error(expression.getTo(), "to-index must be of type integer, found " + toIndex.getDataType());
+		}
+
+		if (containerSizeIfKnown == -1 || fromIndex instanceof UnknownExpression || toIndex instanceof UnknownExpression) {
+			return new UnknownExpression(expression);
+		} else {
+			if (container.getDataType() instanceof ProcessedDataType.Vector) {
+				// TODO return new ProcessedRangeSelection
 			} else {
 				return error(expression, "unknown container type");
 			}

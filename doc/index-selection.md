@@ -36,3 +36,10 @@ we want. As a third example, type conversion in (myVector + myConstant) converts
 integer) because of *types*. Defining this on constness and on type conversion of the result is ugly and cumbersome.
 **Conclusion**: It makes sense to use a value-based bounds check based on *types*, not *constness*, too. This means that
 for an index vector, the bounds check is based on its type, not value.
+
+For range-selection, things are even worse: We need to statically determine the selected size, and that the from-index
+is not less than the to-index. Applying the same logic as for index-select, both range ends must be integers since
+vectors "could be anything within their value range".
+
+**OTOH, range-selection shows that expression processing and constant folding MUST work in lock-step!** The expression
+processor must evaluate embedded formally constant sub-expressions to find out the result type of a range-selection!
