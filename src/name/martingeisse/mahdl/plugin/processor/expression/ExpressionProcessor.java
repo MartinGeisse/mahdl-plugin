@@ -47,11 +47,11 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_InstancePort) {
 				// TODO
 			} else if (expression instanceof Expression_IndexSelection) {
-				return process((Expression_IndexSelection)expression);
+				return process((Expression_IndexSelection) expression);
 			} else if (expression instanceof Expression_RangeSelection) {
-				return process((Expression_RangeSelection)expression);
+				return process((Expression_RangeSelection) expression);
 			} else if (expression instanceof UnaryOperation) {
-				// TODO
+				return process((UnaryOperation) expression);
 			} else if (expression instanceof BinaryOperation) {
 				// TODO
 			} else if (expression instanceof Expression_Conditional) {
@@ -169,7 +169,7 @@ public class ExpressionProcessor {
 				int indexSize = ((ProcessedDataType.Vector) index.getDataType()).getSize();
 				if (containerSizeIfKnown < (1 << indexSize)) {
 					return error(index, "index of vector size " + indexSize +
-						" must index a container vector of at least " + (1 << indexSize) + " in size, found "+
+						" must index a container vector of at least " + (1 << indexSize) + " in size, found " +
 						containerSizeIfKnown);
 				} else {
 					return index;
@@ -177,6 +177,19 @@ public class ExpressionProcessor {
 			}
 		} else {
 			return error(index, "cannot use an expression of type " + index.getDataType().getFamily() + " as index");
+		}
+	}
+
+	private ProcessedExpression process(UnaryOperation expression) {
+		ProcessedExpression operand = process(expression.getOperand());
+		if (operand.getDataType() instanceof ProcessedDataType.Unknown) {
+			return operand;
+		}
+		ProcessedUnaryOperator operator = ProcessedUnaryOperator.from(expression);
+		try {
+			return new ProcessedUnaryOperation(expression, operand, operator);
+		} catch (TypeErrorException e) {
+			return error(expression, "cannot apply operator " + operator + " to an operand of type " + operand.getDataType());
 		}
 	}
 
