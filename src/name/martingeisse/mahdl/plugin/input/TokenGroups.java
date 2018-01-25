@@ -56,7 +56,7 @@ public final class TokenGroups {
 		Symbols.OP_GREATER_THAN_OR_EQUAL,
 		Symbols.OP_LESS_THAN,
 		Symbols.OP_LESS_THAN_OR_EQUAL,
-		Symbols.OP_MUX,
+		Symbols.OP_CONDITIONAL,
 		Symbols.OP_CONCAT
 	);
 
