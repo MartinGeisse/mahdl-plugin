@@ -37,9 +37,29 @@ integer) because of *types*. Defining this on constness and on type conversion o
 **Conclusion**: It makes sense to use a value-based bounds check based on *types*, not *constness*, too. This means that
 for an index vector, the bounds check is based on its type, not value.
 
+# Fixed Range Selection (Verilog: a[b:c])
+
 For range-selection, things are even worse: We need to statically determine the selected size, and that the from-index
 is not less than the to-index. Applying the same logic as for index-select, both range ends must be integers since
 vectors "could be anything within their value range".
 
 **OTOH, range-selection shows that expression processing and constant folding MUST work in lock-step!** The expression
 processor must evaluate embedded formally constant sub-expressions to find out the result type of a range-selection!
+
+# Dynamic Range Selection (Verilog: a[b+:c] and a[b-:c])
+
+First, observe that using the above rules, downwards range selection cannot work at all unless the selection width
+is 1, which makes it equivalent to index selection: The dynamic part of the range "could be" everything down to zero,
+and any width greater than 1 "could be" out of range, which must be rejected according to the above rules. Since
+downward range selection isn't fundamentally more powerful than upwards range selection, I'd rather just throw it
+out of the language.
+
+Next, consider upwards range selection. This is an operator that I never used in practice. Even when it is absolutely
+needed, there are two alternatives:
+* use the shift operator and fixed range selection
+* provide a built-in function for upwards range selection
+
+This means, like signed arithmetic, upwards range selection is not commonly enough used to deserve its own operator in
+the language. (I would even suspect it to be much less common than signed arithmetic).
+
+With both kinds of dynamic selection removed, fixed range selection can be renamed to just "range selection".
