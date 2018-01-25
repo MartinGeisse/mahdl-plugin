@@ -1,5 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
+import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
@@ -34,6 +35,48 @@ public enum ProcessedBinaryOperator {
 	LESS_THAN_OR_EQUAL,
 	GREATER_THAN,
 	GREATER_THAN_OR_EQUAL;
+
+	// NOTE: cannot detect concatenation operator because text/vector concatenation are detected by type, which is unknown here
+	public static ProcessedBinaryOperator from(BinaryOperation operation) {
+		if (operation instanceof Expression_BinaryAnd) {
+			return AND;
+		} else if (operation instanceof Expression_BinaryOr) {
+			return OR;
+		} else if (operation instanceof Expression_BinaryXor) {
+			return XOR;
+		} else if (operation instanceof Expression_BinaryConcat) {
+			throw new IllegalArgumentException("concatenation should not be passed to this method");
+		} else if (operation instanceof Expression_BinaryPlus) {
+			return PLUS;
+		} else if (operation instanceof Expression_BinaryMinus) {
+			return MINUS;
+		} else if (operation instanceof Expression_BinaryTimes) {
+			return TIMES;
+		} else if (operation instanceof Expression_BinaryDividedBy) {
+			return DIVIDED_BY;
+		} else if (operation instanceof Expression_BinaryRemainder) {
+			return REMAINDER;
+		} else if (operation instanceof Expression_BinaryShiftLeft) {
+			return SHIFT_LEFT;
+		} else if (operation instanceof Expression_BinaryShiftRight) {
+			return SHIFT_RIGHT;
+		} else if (operation instanceof Expression_BinaryEqual) {
+			return EQUAL;
+		} else if (operation instanceof Expression_BinaryNotEqual) {
+			return NOT_EQUAL;
+		} else if (operation instanceof Expression_BinaryLessThan) {
+			return LESS_THAN;
+		} else if (operation instanceof Expression_BinaryLessThanOrEqual) {
+			return LESS_THAN_OR_EQUAL;
+		} else if (operation instanceof Expression_BinaryGreaterThan) {
+			return GREATER_THAN;
+		} else if (operation instanceof Expression_BinaryGreaterThanOrEqual) {
+			return GREATER_THAN_OR_EQUAL;
+		} else {
+			throw new IllegalArgumentException("unknown unary operation: " + operation);
+		}
+	}
+
 
 	public ProcessedDataType checkTypes(ProcessedDataType leftType, ProcessedDataType rightType) throws TypeErrorException {
 		if (leftType instanceof ProcessedDataType.Unknown || rightType instanceof ProcessedDataType.Unknown) {

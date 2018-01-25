@@ -3,12 +3,16 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.constant.BinaryOperatorUtil;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
+
+import java.math.BigInteger;
 
 /**
  *
@@ -53,7 +57,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof UnaryOperation) {
 				return process((UnaryOperation) expression);
 			} else if (expression instanceof BinaryOperation) {
-				// TODO
+				return process((BinaryOperation)expression);
 			} else if (expression instanceof Expression_Conditional) {
 				// TODO
 			} else if (expression instanceof Expression_FunctionCall) {
@@ -183,14 +187,86 @@ public class ExpressionProcessor {
 	private ProcessedExpression process(UnaryOperation expression) {
 		ProcessedExpression operand = process(expression.getOperand());
 		if (operand.getDataType() instanceof ProcessedDataType.Unknown) {
-			return operand;
+			return new UnknownExpression(expression);
 		}
 		ProcessedUnaryOperator operator = ProcessedUnaryOperator.from(expression);
+		// unary operators have simple type handling -- we can even use the safety check and TypeErrorException to
+		// detect errors without checking ourselves.
 		try {
 			return new ProcessedUnaryOperation(expression, operand, operator);
 		} catch (TypeErrorException e) {
 			return error(expression, "cannot apply operator " + operator + " to an operand of type " + operand.getDataType());
 		}
+	}
+
+	private ProcessedExpression process(BinaryOperation expression) throws TypeErrorException {
+		ProcessedExpression leftOperand = process(expression.getLeftOperand());
+		ProcessedExpression rightOperand = process(expression.getRightOperand());
+		if (leftOperand.getDataType() instanceof ProcessedDataType.Unknown || rightOperand.getDataType() instanceof ProcessedDataType.Unknown) {
+			return new UnknownExpression(expression);
+		}
+
+		// handle concatenation operator -- it can have one of two entirely different meanings and has complex type handling
+		if (expression instanceof Expression_BinaryConcat) {
+			// TODO
+			return error(expression, "TODO");
+		}
+		ProcessedBinaryOperator operator = ProcessedBinaryOperator.from(expression);
+
+		// now, only logical operators can handle bit values, and only if both operands are bits.
+		if ((leftOperand.getDataType() instanceof ProcessedDataType.Bit) != (rightOperand.getDataType() instanceof ProcessedDataType.Bit)) {
+			return error(expression, "this operator cannot be used for " + leftOperand.getDataType().getFamily() +
+				" and " + rightOperand.getDataType().getFamily() + " operands");
+		}
+		if (leftOperand.getDataType() instanceof ProcessedDataType.Bit) {
+			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, operator);
+		}
+
+		// all other binary operators are IVOs
+		{
+			boolean error = false;
+			if (!(leftOperand.getDataType() instanceof ProcessedDataType.Vector) && !(leftOperand.getDataType() instanceof ProcessedDataType.Integer)) {
+				error = true;
+			}
+			if (!(rightOperand.getDataType() instanceof ProcessedDataType.Vector) && !(rightOperand.getDataType() instanceof ProcessedDataType.Integer)) {
+				error = true;
+			}
+			if (error) {
+				return error(expression, "cannot apply operator " + operator + " to operands of type " + leftOperand.getDataType() + " and " + rightOperand.getDataType());
+			}
+		}
+
+		// handle TAIVOs (shift operators) specially
+		// TODO
+		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
+			if (leftOperand.getDataType() instanceof ProcessedDataType.Vector) {
+				int size = ((ProcessedDataType.Vector) leftOperand.getDataType()).getSize();
+				return new ProcessedDataType.Vector(size, resultInteger);
+			} else {
+				return integerResultValue;
+			}
+		}
+
+		// handle TSIVOs
+		if (leftOperand.getDataType() instanceof ProcessedDataType.Vector) {
+			int leftSize = ((ProcessedDataType.Vector) leftOperand.getDataType()).getSize();
+			if (rightOperand.getDataType() instanceof ProcessedDataType.Vector) {
+				int rightSize = ((ProcessedDataType.Vector) rightOperand.getDataType()).getSize();
+				if (leftSize != rightSize) {
+					return error(expression, "cannot apply operator " + operator + " to vectors of different sizes " +
+						leftSize + " and " + rightSize);
+				}
+			} else {
+				rightOperand = new TypeConversion.IntegerToVector(leftSize, rightOperand);
+			}
+		} else {
+			if (rightOperand.getDataType() instanceof ProcessedDataType.Vector) {
+				int rightSize = ((ProcessedDataType.Vector) rightOperand.getDataType()).getSize();
+				leftOperand = new TypeConversion.IntegerToVector(rightSize, leftOperand)
+			}
+		}
+		return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, operator);
+
 	}
 
 	@NotNull
