@@ -79,7 +79,7 @@ UnsignedInteger = "0" | {PositiveInteger}
 \<\= { return Symbols.OP_LESS_THAN_OR_EQUAL; }
 
 // other operators
-\? { return Symbols.OP_MUX; }
+\? { return Symbols.OP_CONDITIONAL; }
 \_ { return Symbols.OP_CONCAT; }
 
 // module and interface keywords

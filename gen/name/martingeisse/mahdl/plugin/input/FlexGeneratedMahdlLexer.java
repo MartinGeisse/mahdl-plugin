@@ -670,7 +670,7 @@ public class FlexGeneratedMahdlLexer implements FlexLexer {
             }
           case 81: break;
           case 26: 
-            { return Symbols.OP_MUX;
+            { return Symbols.OP_CONDITIONAL;
             }
           case 82: break;
           case 27: 
