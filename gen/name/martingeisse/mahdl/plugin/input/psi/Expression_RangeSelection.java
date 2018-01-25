@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_RangeSelectionUpwards extends Expression  {
+public final class Expression_RangeSelection extends Expression  {
 
-    public Expression_RangeSelectionUpwards(@NotNull ASTNode node) {
+    public Expression_RangeSelection(@NotNull ASTNode node) {
         super(node);
     }
 
@@ -33,8 +33,8 @@ public final class Expression_RangeSelectionUpwards extends Expression  {
         public Expression getFrom() {
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
-        public Expression getWidth() {
-            return (Expression)InternalPsiUtil.getChild(this, 5);
+        public Expression getTo() {
+            return (Expression)InternalPsiUtil.getChild(this, 4);
         }
     
 			

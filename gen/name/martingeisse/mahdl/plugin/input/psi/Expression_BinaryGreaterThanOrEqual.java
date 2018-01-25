@@ -21,7 +21,7 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Expression_BinaryGreaterThanOrEqual extends Expression implements BinaryOperation {
+public final class Expression_BinaryGreaterThanOrEqual extends Expression  {
 
     public Expression_BinaryGreaterThanOrEqual(@NotNull ASTNode node) {
         super(node);

@@ -168,9 +168,7 @@ expression ::= {
 	identifier ::= IDENTIFIER:identifier;
 	instancePort ::= instanceReferenceName:instanceName DOT instancePortName:portName;
 	indexSelection ::= expression:container OPENING_SQUARE_BRACKET expression:index CLOSING_SQUARE_BRACKET;
-	rangeSelectionFixed ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_SQUARE_BRACKET;
-	rangeSelectionUpwards ::= expression:container OPENING_SQUARE_BRACKET expression:from OP_PLUS COLON expression:width CLOSING_SQUARE_BRACKET;
-	rangeSelectionDownwards ::= expression:container OPENING_SQUARE_BRACKET expression:from OP_MINUS COLON expression:width CLOSING_SQUARE_BRACKET;
+	rangeSelection ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_SQUARE_BRACKET;
 	parenthesized ::= OPENING_PARENTHESIS expression:expression CLOSING_PARENTHESIS;
 	functionCall ::= IDENTIFIER:functionName OPENING_PARENTHESIS (expression, COMMA)+:arguments CLOSING_PARENTHESIS;
 
