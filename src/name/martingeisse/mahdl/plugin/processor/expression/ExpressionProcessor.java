@@ -48,12 +48,8 @@ public class ExpressionProcessor {
 				// TODO
 			} else if (expression instanceof Expression_IndexSelection) {
 				return process((Expression_IndexSelection)expression);
-			} else if (expression instanceof Expression_RangeSelectionFixed) {
-				return process((Expression_RangeSelectionFixed)expression);
-			} else if (expression instanceof Expression_RangeSelectionUpwards) {
-				// TODO
-			} else if (expression instanceof Expression_RangeSelectionDownwards) {
-				// TODO
+			} else if (expression instanceof Expression_RangeSelection) {
+				return process((Expression_RangeSelection)expression);
 			} else if (expression instanceof UnaryOperation) {
 				// TODO
 			} else if (expression instanceof BinaryOperation) {
@@ -100,7 +96,7 @@ public class ExpressionProcessor {
 		int containerSizeIfKnown = determineContainerSize(container, true, "index-select");
 
 		ProcessedExpression index = process(expression.getIndex());
-		index = handleIndex(index, containerSizeIfKnown, 1);
+		index = handleIndex(index, containerSizeIfKnown);
 
 		if (containerSizeIfKnown == -1 || index instanceof UnknownExpression) {
 			return new UnknownExpression(expression);
@@ -116,7 +112,7 @@ public class ExpressionProcessor {
 
 	}
 
-	private ProcessedExpression process(Expression_RangeSelectionFixed expression) throws TypeErrorException {
+	private ProcessedExpression process(Expression_RangeSelection expression) throws TypeErrorException {
 
 		ProcessedExpression container = process(expression.getContainer());
 		int containerSizeIfKnown = determineContainerSize(container, false, "range-select");
@@ -144,34 +140,6 @@ public class ExpressionProcessor {
 
 	}
 
-	private ProcessedExpression process(Expression_RangeSelectionUpwards expression) throws TypeErrorException {
-
-		ProcessedExpression container = process(expression.getContainer());
-		int containerSizeIfKnown = determineContainerSize(container, false, "range-select");
-
-		ProcessedExpression width = process(expression.getWidth());
-		if (!(width.getDataType() instanceof ProcessedDataType.Integer)) {
-			width = error(expression.getWidth(), "width must be of type integer, found " + width.getDataType());
-		}
-		// TODO check negative width
-
-		// TODO needs constant evaluation here too to know the width
-		ProcessedExpression fromIndex = process(expression.getFrom());
-		fromIndex = handleIndex(fromIndex, containerSizeIfKnown, widthValue);
-
-		if (containerSizeIfKnown == -1 || fromIndex instanceof UnknownExpression || width instanceof UnknownExpression) {
-			return new UnknownExpression(expression);
-		} else {
-			if (container.getDataType() instanceof ProcessedDataType.Vector) {
-				// TODO need constant evaluation here!
-				return new ProcessedRangeSelection(expression, dataType, container, fromIndex, toIndex);
-			} else {
-				return error(expression, "unknown container type");
-			}
-		}
-
-	}
-
 	private int determineContainerSize(@NotNull ProcessedExpression container, boolean allowMemory, String operatorVerb) {
 		ProcessedDataType type = container.getDataType();
 		if (type instanceof ProcessedDataType.Unknown) {
@@ -186,7 +154,7 @@ public class ExpressionProcessor {
 		}
 	}
 
-	private ProcessedExpression handleIndex(@NotNull ProcessedExpression index, int containerSizeIfKnown, int minIndex, int maxIndex) {
+	private ProcessedExpression handleIndex(@NotNull ProcessedExpression index, int containerSizeIfKnown) {
 		if (index.getDataType() instanceof ProcessedDataType.Integer) {
 			// For an integer, the actual value is relevant, so non-PO2-sized containers can be indexed with a
 			// constant index without getting errors. There won't be an error based on the type alone nor a type
@@ -199,9 +167,8 @@ public class ExpressionProcessor {
 				// For a vector, the greatest possible value is releant, not the actual value, even if the vector is
 				// constant (see language design documents for details).
 				int indexSize = ((ProcessedDataType.Vector) index.getDataType()).getSize();
-				if (containerSizeIfKnown < minContainerSize) {
+				if (containerSizeIfKnown < (1 << indexSize)) {
 					return error(index, "index of vector size " + indexSize +
-							(selectionWidth == 1 ? "" : (" and selection width " + selectionWidth)) +
 						" must index a container vector of at least " + (1 << indexSize) + " in size, found "+
 						containerSizeIfKnown);
 				} else {
