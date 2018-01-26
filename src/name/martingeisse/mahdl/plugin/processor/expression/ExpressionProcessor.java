@@ -3,7 +3,6 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.constant.BinaryOperatorUtil;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
@@ -12,7 +11,7 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.math.BigInteger;
+import java.util.BitSet;
 
 /**
  *
@@ -57,7 +56,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof UnaryOperation) {
 				return process((UnaryOperation) expression);
 			} else if (expression instanceof BinaryOperation) {
-				return process((BinaryOperation)expression);
+				return process((BinaryOperation) expression);
 			} else if (expression instanceof Expression_Conditional) {
 				// TODO
 			} else if (expression instanceof Expression_FunctionCall) {
@@ -208,8 +207,7 @@ public class ExpressionProcessor {
 
 		// handle concatenation operator -- it can have one of two entirely different meanings and has complex type handling
 		if (expression instanceof Expression_BinaryConcat) {
-			// TODO
-			return error(expression, "TODO");
+			return handleConcatenation((Expression_BinaryConcat)expression, leftOperand, rightOperand);
 		}
 		ProcessedBinaryOperator operator = ProcessedBinaryOperator.from(expression);
 
@@ -236,15 +234,9 @@ public class ExpressionProcessor {
 			}
 		}
 
-		// handle TAIVOs (shift operators) specially
-		// TODO
+		// handle TAIVOs (shift operators) specially (no conversion; result type is that of the left operand)
 		if (expression instanceof Expression_BinaryShiftLeft || expression instanceof Expression_BinaryShiftRight) {
-			if (leftOperand.getDataType() instanceof ProcessedDataType.Vector) {
-				int size = ((ProcessedDataType.Vector) leftOperand.getDataType()).getSize();
-				return new ProcessedDataType.Vector(size, resultInteger);
-			} else {
-				return integerResultValue;
-			}
+			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, operator);
 		}
 
 		// handle TSIVOs
@@ -262,10 +254,40 @@ public class ExpressionProcessor {
 		} else {
 			if (rightOperand.getDataType() instanceof ProcessedDataType.Vector) {
 				int rightSize = ((ProcessedDataType.Vector) rightOperand.getDataType()).getSize();
-				leftOperand = new TypeConversion.IntegerToVector(rightSize, leftOperand)
+				leftOperand = new TypeConversion.IntegerToVector(rightSize, leftOperand);
 			}
 		}
 		return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, operator);
+
+	}
+
+	private ProcessedExpression handleConcatenation(Expression_BinaryConcat expression,
+													ProcessedExpression leftOperand,
+													ProcessedExpression rightOperand) throws TypeErrorException {
+
+
+		// handle text concatenation
+		if (leftOperand.getDataType() instanceof ProcessedDataType.Text || rightOperand.getDataType() instanceof ProcessedDataType.Text) {
+			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, ProcessedBinaryOperator.TEXT_CONCAT);
+		}
+
+		// handle bit / vector concatenation
+		boolean typeError = false;
+		if (leftOperand.getDataType() instanceof ProcessedDataType.Bit) {
+			leftOperand = new TypeConversion.BitToVector(leftOperand);
+		} else if (!(leftOperand.getDataType() instanceof ProcessedDataType.Vector)) {
+			typeError = true;
+		}
+		if (rightOperand.getDataType() instanceof ProcessedDataType.Bit) {
+			rightOperand = new TypeConversion.BitToVector(rightOperand);
+		} else if (!(rightOperand.getDataType() instanceof ProcessedDataType.Vector)) {
+			typeError = true;
+		}
+		if (typeError) {
+			return error(expression, "cannot apply concatenation operator to operands of type " + leftOperand.getDataType() + " and " + rightOperand.getDataType());
+		} else {
+			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, ProcessedBinaryOperator.VECTOR_CONCAT);
+		}
 
 	}
 

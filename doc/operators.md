@@ -63,6 +63,7 @@ way:
 * the shifted value is taken from the integer meaning of the left operand, without any further conversion.
 * the shift amount is the integer meaning of the right operand, without any further conversion. A negative shift
 amount shifts to the opposite direction.
+* the result type is that of the left operand
 
 Observations and rationale:
 * If the left-hand operand is an integer, then we don't have an "obvious" vector size to impose on it as we have for
