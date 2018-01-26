@@ -1,6 +1,8 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
@@ -10,6 +12,9 @@ import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -58,7 +63,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_Conditional) {
 				return process((Expression_Conditional) expression);
 			} else if (expression instanceof Expression_FunctionCall) {
-				// TODO
+				return process((Expression_FunctionCall)expression);
 			} else if (expression instanceof Expression_Parenthesized) {
 				return process(((Expression_Parenthesized) expression).getExpression());
 			} else {
@@ -321,6 +326,49 @@ public class ExpressionProcessor {
 			return new UnknownExpression(expression);
 		} else {
 			return new ProcessedConditional(expression, condition, thenBranch, elseBranch);
+		}
+
+	}
+
+	private ProcessedExpression process(Expression_FunctionCall expression) {
+		boolean error = false;
+
+		String functionName = expression.getFunctionName().getText();
+		StandardFunction standardFunction = StandardFunction.getFromNameInCode(functionName);
+		if (standardFunction == null) {
+			error(expression.getFunctionName(), "unknown function: " + functionName);
+			error = true;
+		}
+
+		List<ProcessedExpression> arguments = new ArrayList<>();
+		for (Expression argumentExpression : expression.getArguments().getAll()) {
+			ProcessedExpression argument = process(argumentExpression);
+			if (argument.getDataType() instanceof ProcessedDataType.Unknown) {
+				error = true;
+			}
+			arguments.add(argument);
+		}
+
+		if (error) {
+			return new UnknownExpression(expression);
+		}
+
+		try {
+			return new ProcessedFunctionCall(expression, standardFunction, ImmutableList.copyOf(arguments));
+		} catch (TypeErrorException e) {
+			StringBuilder builder = new StringBuilder();
+			builder.append("function ").append(functionName).append(" cannot be applied to arguments of type (");
+			boolean first = true;
+			for (ProcessedExpression argument : arguments) {
+				if (first) {
+					first = false;
+				} else {
+					builder.append(", ");
+				}
+				builder.append(argument.getDataType());
+			}
+			builder.append(")");
+			return error(expression, builder.toString());
 		}
 
 	}
