@@ -11,8 +11,6 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
-
 /**
  *
  */
@@ -58,7 +56,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof BinaryOperation) {
 				return process((BinaryOperation) expression);
 			} else if (expression instanceof Expression_Conditional) {
-				// TODO
+				return process((Expression_Conditional) expression);
 			} else if (expression instanceof Expression_FunctionCall) {
 				// TODO
 			} else if (expression instanceof Expression_Parenthesized) {
@@ -207,7 +205,7 @@ public class ExpressionProcessor {
 
 		// handle concatenation operator -- it can have one of two entirely different meanings and has complex type handling
 		if (expression instanceof Expression_BinaryConcat) {
-			return handleConcatenation((Expression_BinaryConcat)expression, leftOperand, rightOperand);
+			return handleConcatenation((Expression_BinaryConcat) expression, leftOperand, rightOperand);
 		}
 		ProcessedBinaryOperator operator = ProcessedBinaryOperator.from(expression);
 
@@ -265,7 +263,6 @@ public class ExpressionProcessor {
 													ProcessedExpression leftOperand,
 													ProcessedExpression rightOperand) throws TypeErrorException {
 
-
 		// handle text concatenation
 		if (leftOperand.getDataType() instanceof ProcessedDataType.Text || rightOperand.getDataType() instanceof ProcessedDataType.Text) {
 			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, ProcessedBinaryOperator.TEXT_CONCAT);
@@ -287,6 +284,43 @@ public class ExpressionProcessor {
 			return error(expression, "cannot apply concatenation operator to operands of type " + leftOperand.getDataType() + " and " + rightOperand.getDataType());
 		} else {
 			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, ProcessedBinaryOperator.VECTOR_CONCAT);
+		}
+
+	}
+
+	private ProcessedExpression process(Expression_Conditional expression) throws TypeErrorException {
+		ProcessedExpression condition = process(expression.getCondition());
+		ProcessedExpression thenBranch = process(expression.getThenBranch());
+		ProcessedExpression elseBranch = process(expression.getElseBranch());
+
+		// handle condition
+		boolean error = false;
+		if (condition.getDataType() instanceof ProcessedDataType.Unknown) {
+			error = true;
+		} else if (!(condition.getDataType() instanceof ProcessedDataType.Bit)) {
+			error(condition, "condition must be of type bit");
+			error = true;
+		}
+
+		// handle branches
+		if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
+			if ((thenBranch.getDataType() instanceof ProcessedDataType.Vector) && (elseBranch.getDataType() instanceof ProcessedDataType.Integer)) {
+				int size = ((ProcessedDataType.Vector) thenBranch.getDataType()).getSize();
+				elseBranch = new TypeConversion.IntegerToVector(size, elseBranch);
+			} else if ((thenBranch.getDataType() instanceof ProcessedDataType.Integer) && (elseBranch.getDataType() instanceof ProcessedDataType.Vector)) {
+				int size = ((ProcessedDataType.Vector) elseBranch.getDataType()).getSize();
+				thenBranch = new TypeConversion.IntegerToVector(size, thenBranch);
+			} else {
+				error(elseBranch, "incompatible types in then/else branches: " + thenBranch.getDataType() + " vs. " + elseBranch.getDataType());
+				error = true;
+			}
+		}
+
+		// check for errors
+		if (error) {
+			return new UnknownExpression(expression);
+		} else {
+			return new ProcessedConditional(expression, condition, thenBranch, elseBranch);
 		}
 
 	}
