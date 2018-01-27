@@ -20,4 +20,9 @@ public final class ProcessedConstantValue extends ProcessedExpression {
 		return value;
 	}
 
+	@Override
+	public ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+		return value;
+	}
+
 }

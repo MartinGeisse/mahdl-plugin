@@ -1,6 +1,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
@@ -42,6 +43,18 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 
 	public ProcessedExpression getToIndex() {
 		return toIndex;
+	}
+
+	private int handleContainerValue(FormallyConstantEvaluationContext context, ConstantValue containerValue) {
+		if (containerValue instanceof ConstantValue.Unknown) {
+			return -1;
+		} else if (containerValue instanceof ConstantValue.Vector) {
+			return ((ConstantValue.Vector) containerValue).getSize();
+		} else {
+			context.error(container.getErrorSource(), "cannot range-select from an expression of type " +
+				containerValue.getDataTypeFamily().getDisplayString());
+			return -1;
+		}
 	}
 
 }

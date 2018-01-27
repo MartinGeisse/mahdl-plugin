@@ -85,132 +85,9 @@ public final class ConstantExpressionEvaluator {
 
 	}
 
-	/**
-	 * Returns a ConstantValue.Unknown for non-constant expressions or errors and also reports those to the error reporter.
-	 */
-	@NotNull
-	public final ConstantValue evaluate(@NotNull ExtendedExpression expression) {
-		if (expression instanceof ExtendedExpression_Normal) {
-			return evaluate(((ExtendedExpression_Normal) expression).getExpression());
-		} else if (expression instanceof ExtendedExpression_Switch) {
-			// we don't support constant switch expressions for now because of the complex type handling
-			return error(expression, "constant switch expressions are currently not supported");
-		} else {
-			return nonConstant(expression);
-		}
-	}
-
-	/**
-	 * Returns a ConstantValue.Unknown for non-constant expressions or errors and also reports those to the error reporter.
-	 */
-	@NotNull
-	public final ConstantValue evaluate(@NotNull Expression expression) {
-		if (expression instanceof Expression_Literal) {
-
-			return evaluateLiteral((Expression_Literal) expression);
-
-		} else if (expression instanceof Expression_Identifier) {
-
-			String name = ((Expression_Identifier) expression).getIdentifier().getText();
-			ConstantValue value = definedConstants.get(name);
-			if (value == null) {
-				return error(expression, "undefined constant: '" + name + "'");
-			}
-			return value;
-
-		} else if (expression instanceof Expression_InstancePort) {
-
-			return nonConstant(expression);
-
-		} else if (expression instanceof Expression_IndexSelection) {
-
-			return evaluateIndexSelection((Expression_IndexSelection) expression);
-
-		} else if (expression instanceof Expression_RangeSelectionFixed) {
-
-			return evaluateRangeSelectionFixed((Expression_RangeSelectionFixed) expression);
-
-		} else if (expression instanceof Expression_RangeSelectionUpwards) {
-
-			return evaluateRangeSelectionUpwards((Expression_RangeSelectionUpwards) expression);
-
-		} else if (expression instanceof Expression_RangeSelectionDownwards) {
-
-			return evaluateRangeSelectionDownwards((Expression_RangeSelectionDownwards) expression);
-
-		} else if (expression instanceof UnaryOperation) {
-
-			return evaluateUnaryOperation((UnaryOperation) expression);
-
-		} else if (expression instanceof BinaryOperation) {
-
-			return evaluateBinaryOperation((BinaryOperation) expression);
-
-		} else if (expression instanceof Expression_Conditional) {
-
-			return evaluateConditional((Expression_Conditional) expression);
-
-		} else if (expression instanceof Expression_FunctionCall) {
-
-			return evaluateFunctionCall((Expression_FunctionCall) expression);
-
-		} else if (expression instanceof Expression_Parenthesized) {
-
-			return evaluate(((Expression_Parenthesized) expression).getExpression());
-
-		} else {
-
-			return nonConstant(expression);
-
-		}
-	}
-
-	@NotNull
-	private ConstantValue error(@NotNull PsiElement element, @NotNull String message) {
-		errorHandler.onError(element, message);
-		return ConstantValue.Unknown.INSTANCE;
-	}
-
-	@NotNull
-	private ConstantValue nonConstant(@NotNull PsiElement element) {
-		return error(element, "expression must be constant");
-	}
-
-	@NotNull
-	private ConstantValue evaluateLiteral(@NotNull Expression_Literal literalExpression) {
-		try {
-			return LiteralParser.parseLiteral(literalExpression);
-		} catch (LiteralParser.ParseException e) {
-			return error(literalExpression, e.getMessage());
-		}
-	}
-
-	@NotNull
-	private ConstantValue evaluateIndexSelection(@NotNull Expression_IndexSelection indexSelection) {
-		ConstantValue containerValue = evaluate(indexSelection.getContainer());
-		int containerSize = handleContainerValue(indexSelection.getContainer(), containerValue, true, "index-select");
-		int intIndexValue = handleIndexValue(containerSize, containerValue.getDataType().toString(), indexSelection.getIndex());
-		if (containerSize < 0 || intIndexValue < 0) {
-			return ConstantValue.Unknown.INSTANCE;
-		} else {
-			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
-			return containerValue.selectIndex(intIndexValue);
-		}
-	}
-
 	@NotNull
 	private ConstantValue evaluateRangeSelectionFixed(@NotNull Expression_RangeSelectionFixed rangeSelection) {
 		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getTo(), 0);
-	}
-
-	@NotNull
-	private ConstantValue evaluateRangeSelectionUpwards(@NotNull Expression_RangeSelectionUpwards rangeSelection) {
-		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getWidth(), 1);
-	}
-
-	@NotNull
-	private ConstantValue evaluateRangeSelectionDownwards(@NotNull Expression_RangeSelectionDownwards rangeSelection) {
-		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getWidth(), -1);
 	}
 
 	private ConstantValue evaluateRangeSelectionHelper(Expression container, Expression from, Expression other, int direction) {
@@ -218,8 +95,7 @@ public final class ConstantExpressionEvaluator {
 		int containerSize = handleContainerValue(container, containerValue, false, "range-select");
 		String containerTypeText = containerValue.getDataType().toString();
 		int intFrom = handleIndexValue(containerSize, containerTypeText, from);
-		int intTo = (direction == 0) ? handleIndexValue(containerSize, containerTypeText, other) :
-			handleWidthValue(other, containerSize, containerTypeText, intFrom, direction);
+		int intTo = (direction == 0) ? handleIndexValue(containerSize, containerTypeText, other) : null;
 		if (containerSize < 0 || intFrom < 0 || intTo < 0) {
 			return ConstantValue.Unknown.INSTANCE;
 		} else {
@@ -228,75 +104,8 @@ public final class ConstantExpressionEvaluator {
 		}
 	}
 
-	private int handleContainerValue(@NotNull Expression errorSource, ConstantValue containerValue, boolean allowMemory, String operatorVerb) {
-		if (containerValue instanceof ConstantValue.Unknown) {
-			return -1;
-		} else if (containerValue instanceof ConstantValue.Vector) {
-			return ((ConstantValue.Vector) containerValue).getSize();
-		} else if (allowMemory && containerValue instanceof ConstantValue.Memory) {
-			return ((ConstantValue.Memory) containerValue).getFirstSize();
-		} else {
-			error(errorSource, "cannot " + operatorVerb + " from an expression of type " +
-				containerValue.getDataTypeFamily().getDisplayString());
-			return -1;
-		}
-	}
 
-	private int handleIndexValue(int containerSize, @NotNull String containerType, @NotNull Expression indexExpression) {
-		ConstantValue indexValue = evaluate(indexExpression);
-		BigInteger numericIndexValue = indexValue.convertToInteger();
-		if (numericIndexValue == null) {
-			error(indexExpression, "value of type  " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
-			return -1;
-		}
-		if (numericIndexValue.compareTo(BigInteger.ZERO) < 0) {
-			error(indexExpression, "index is negative: " + numericIndexValue);
-			return -1;
-		}
-		if (numericIndexValue.compareTo(MAX_INDEX_VALUE) > 0) {
-			error(indexExpression, "index too large: " + numericIndexValue);
-			return -1;
-		}
-		if (containerSize < 0) {
-			// could not determine container type -- stop here
-			return -1;
-		}
-		int intValue = numericIndexValue.intValue();
-		if (intValue >= containerSize) {
-			error(indexExpression, "index " + numericIndexValue + " is out of bounds for type " + containerType);
-			return -1;
-		}
-		return intValue;
-	}
 
-	private int handleWidthValue(@NotNull Expression widthExpression, int containerSize, @NotNull String containerType,
-								 int startIndex, int direction) {
-		ConstantValue widthValue = evaluate(widthExpression);
-		BigInteger numericWidthValue = widthValue.convertToInteger();
-		if (numericWidthValue == null) {
-			error(widthExpression, "value of type  " + widthValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
-			return -1;
-		} else if (numericWidthValue.compareTo(BigInteger.ZERO) < 0) {
-			error(widthExpression, "width is negative: " + numericWidthValue);
-			return -1;
-		} else if (numericWidthValue.compareTo(MAX_INDEX_VALUE) > 0) {
-			error(widthExpression, "width too large: " + numericWidthValue);
-			return -1;
-		} else if (containerSize < 0) {
-			// could not determine container type
-			return -1;
-		}
-		int width = numericWidthValue.intValue();
-		int endIndex = startIndex + direction * (width - 1);
-		if (endIndex < 0) {
-			error(widthExpression, "resulting index " + endIndex + " is negative");
-			return -1;
-		} else if (endIndex >= containerSize) {
-			error(widthExpression, "resulting index " + endIndex + " is out of bounds for type " + containerType);
-			return -1;
-		}
-		return width;
-	}
 
 	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
 

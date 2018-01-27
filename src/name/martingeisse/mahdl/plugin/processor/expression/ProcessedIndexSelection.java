@@ -1,12 +1,17 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+
+import java.math.BigInteger;
 
 /**
  *
  */
 public abstract class ProcessedIndexSelection extends ProcessedExpression {
+
+	private static final BigInteger MAX_INDEX_VALUE = BigInteger.valueOf(Integer.MAX_VALUE);
 
 	private final ProcessedExpression container;
 	private final ProcessedExpression index;
@@ -26,6 +31,60 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 
 	public ProcessedExpression getIndex() {
 		return index;
+	}
+
+	@Override
+	public ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+		ConstantValue containerValue = container.evaluateFormallyConstant(context);
+		ConstantValue indexValue = index.evaluateFormallyConstant(context);
+		int containerSize = handleContainerValue(context, containerValue);
+		int intIndexValue = handleIndexValue(context, indexValue, containerSize);
+		if (containerSize < 0 || intIndexValue < 0) {
+			return ConstantValue.Unknown.INSTANCE;
+		} else {
+			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
+			return containerValue.selectIndex(intIndexValue);
+		}
+	}
+
+	private int handleContainerValue(FormallyConstantEvaluationContext context, ConstantValue containerValue) {
+		if (containerValue instanceof ConstantValue.Unknown) {
+			return -1;
+		} else if (containerValue instanceof ConstantValue.Vector) {
+			return ((ConstantValue.Vector) containerValue).getSize();
+		} else if (containerValue instanceof ConstantValue.Memory) {
+			return ((ConstantValue.Memory) containerValue).getFirstSize();
+		} else {
+			context.error(container.getErrorSource(), "cannot index-select from an expression of type " +
+				containerValue.getDataTypeFamily().getDisplayString());
+			return -1;
+		}
+	}
+
+	private int handleIndexValue(FormallyConstantEvaluationContext context, ConstantValue indexValue, int containerSize) {
+		BigInteger numericIndexValue = indexValue.convertToInteger();
+		if (numericIndexValue == null) {
+			context.error(index, "value of type " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
+			return -1;
+		}
+		if (numericIndexValue.compareTo(BigInteger.ZERO) < 0) {
+			context.error(index, "index is negative: " + numericIndexValue);
+			return -1;
+		}
+		if (numericIndexValue.compareTo(MAX_INDEX_VALUE) > 0) {
+			context.error(index, "index too large: " + numericIndexValue);
+			return -1;
+		}
+		if (containerSize < 0) {
+			// could not determine container type -- stop here
+			return -1;
+		}
+		int intValue = numericIndexValue.intValue();
+		if (intValue >= containerSize) {
+			context.error(index, "index " + numericIndexValue + " is out of bounds for type " + container.getDataType());
+			return -1;
+		}
+		return intValue;
 	}
 
 	public static final class BitFromVector extends ProcessedIndexSelection {

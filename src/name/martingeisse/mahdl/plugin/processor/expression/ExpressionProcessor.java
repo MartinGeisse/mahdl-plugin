@@ -44,7 +44,7 @@ public class ExpressionProcessor {
 	}
 
 	private ProcessedExpression process(ExtendedExpression_Switch expression) {
-		// TODO
+		return error(expression, "switch expressions not yet implemented"); // TODO
 	}
 
 	public ProcessedExpression process(Expression expression) {
