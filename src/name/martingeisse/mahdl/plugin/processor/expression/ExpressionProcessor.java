@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +25,12 @@ public class ExpressionProcessor {
 
 	private final ErrorHandler errorHandler;
 	private final LocalDefinitionResolver localDefinitionResolver;
+	private final DataTypeProcessor dataTypeProcessor;
 
-	public ExpressionProcessor(ErrorHandler errorHandler, LocalDefinitionResolver localDefinitionResolver) {
+	public ExpressionProcessor(ErrorHandler errorHandler, LocalDefinitionResolver localDefinitionResolver, DataTypeProcessor dataTypeProcessor) {
 		this.errorHandler = errorHandler;
 		this.localDefinitionResolver = localDefinitionResolver;
+		this.dataTypeProcessor = dataTypeProcessor;
 	}
 
 	public ProcessedExpression process(ExtendedExpression expression) {
