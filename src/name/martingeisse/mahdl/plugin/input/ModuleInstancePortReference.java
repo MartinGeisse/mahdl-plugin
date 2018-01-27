@@ -78,6 +78,15 @@ public class ModuleInstancePortReference implements PsiReference {
 		return module;
 	}
 
+	// Works similar to resolve(), but won't return anything other than an ImplementationItem_ModuleInstance for the
+	// module instance to which the port belongs. Any failure case doesn't resolve the reference "as good as we can" but
+	// just returns null.
+	@Nullable
+	public ImplementationItem_ModuleInstance resolveModuleOnly() {
+		PsiElement element = resolveModule();
+		return (element instanceof ImplementationItem_ModuleInstance ? (ImplementationItem_ModuleInstance)element : null);
+	}
+
 	@Nullable
 	@Override
 	public PsiElement resolve() {
@@ -97,6 +106,14 @@ public class ModuleInstancePortReference implements PsiReference {
 		}
 		// we found a module, but that module doesn't have a matching port. At least resolve to the module. TODO test if this works!
 		return targetModule;
+	}
+
+	// Works similar to resolve(), but won't return anything other than a PortDefinition. That is, any failure case
+	// doesn't resolve the reference "as good as we can" but just returns null.
+	@Nullable
+	public PortDefinition resolvePortDefinitionOnly() {
+		PsiElement element = resolve();
+		return (element instanceof PortDefinition ? (PortDefinition)element : null);
 	}
 
 	@NotNull

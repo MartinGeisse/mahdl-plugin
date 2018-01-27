@@ -3,6 +3,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
+import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
@@ -51,7 +52,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_Identifier) {
 				return process((Expression_Identifier) expression);
 			} else if (expression instanceof Expression_InstancePort) {
-				// TODO
+				return process((Expression_InstancePort) expression);
 			} else if (expression instanceof Expression_IndexSelection) {
 				return process((Expression_IndexSelection) expression);
 			} else if (expression instanceof Expression_RangeSelection) {
@@ -63,7 +64,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_Conditional) {
 				return process((Expression_Conditional) expression);
 			} else if (expression instanceof Expression_FunctionCall) {
-				return process((Expression_FunctionCall)expression);
+				return process((Expression_FunctionCall) expression);
 			} else if (expression instanceof Expression_Parenthesized) {
 				return process(((Expression_Parenthesized) expression).getExpression());
 			} else {
@@ -94,6 +95,48 @@ public class ExpressionProcessor {
 		} else {
 			return error(expression, "symbol '" + name + "' does not refer to a signal-like");
 		}
+	}
+
+	private ProcessedExpression process(Expression_InstancePort expression) {
+
+		// find the module instance
+		ModuleInstance moduleInstance;
+		{
+			String instanceName = expression.getInstanceName().getIdentifier().getText();
+			Named moduleInstanceCandidate = localDefinitionResolver.getDefinition(instanceName);
+			if (moduleInstanceCandidate == null) {
+				return error(expression.getInstanceName(), "cannot resolve symbol '" + instanceName + "'");
+			} else if (moduleInstanceCandidate instanceof ModuleInstance) {
+				moduleInstance = (ModuleInstance)moduleInstanceCandidate;
+			} else {
+				return error(expression.getInstanceName(), instanceName + " is not a module instance");
+			}
+		}
+
+		// resolve the port refeference
+		String portName = expression.getPortName().getIdentifier().getText();
+		PortDefinition portDefinition;
+		{
+			ModuleInstancePortReference reference = (ModuleInstancePortReference) expression.getPortName().getReference();
+			portDefinition = reference.resolvePortDefinitionOnly();
+			if (portDefinition == null) {
+				return error(expression.getPortName(), "cannot resolve port " + portName + " in instance " + moduleInstance.getName());
+			}
+		}
+
+		// determine the port's type
+		PortDefinitionGroup portDefinitionGroup = PsiUtil.getAncestor(portDefinition, PortDefinitionGroup.class);
+		if (portDefinitionGroup == null) {
+			return error(expression.getPortName(), "port definition is broken");
+		}
+		// TODO How will the annotation holder react to an annotation being placed in the wrong file?
+		ProcessedDataType dataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+		if (dataType instanceof ProcessedDataType.Unknown) {
+			return error(expression.getPortName(), "port data type is broken");
+		} else {
+			return new ProcessedInstancePort(expression, dataType, moduleInstance, portName);
+		}
+
 	}
 
 	private ProcessedExpression process(Expression_IndexSelection expression) throws TypeErrorException {
