@@ -312,31 +312,5 @@ public final class ConstantExpressionEvaluator {
 		return error ? ConstantValue.Unknown.INSTANCE : conditionBoolean ? thenValue : elseValue;
 	}
 
-	@NotNull
-	private ConstantValue evaluateFunctionCall(@NotNull Expression_FunctionCall functionCall) {
-		String functionName = functionCall.getFunctionName().getText();
-		StandardFunction standardFunction = StandardFunction.getFromNameInCode(functionName);
-		boolean error = false;
-		if (standardFunction == null) {
-			error(functionCall.getFunctionName(), "unknown function");
-			error = true;
-		}
-		List<ConstantValue> arguments = new ArrayList<>();
-		for (Expression argumentExpression : functionCall.getArguments().getAll()) {
-			ConstantValue argument = evaluate(argumentExpression);
-			arguments.add(argument);
-			if (argument instanceof ConstantValue.Unknown) {
-				error = true;
-			}
-		}
-		if (error) {
-			return ConstantValue.Unknown.INSTANCE;
-		}
-		try {
-			return standardFunction.applyToConstantValues(arguments.toArray(new ConstantValue[arguments.size()]));
-		} catch (FunctionParameterException e) {
-			return error(functionCall, e.getMessage());
-		}
-	}
 
 }
