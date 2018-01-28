@@ -29,7 +29,21 @@ public abstract class ProcessedExpression {
 		return dataType;
 	}
 
-	public abstract ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context);
+	public final ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+		ConstantValue value = evaluateFormallyConstantInternal(context);
+		if (value == null) {
+			return context.evaluationInconsistency(this, "evaluating this expression as formally constant returned null");
+		} else if (value instanceof ConstantValue.Unknown) {
+			return value;
+		} else if (!value.getDataType().equals(dataType)) {
+			return context.evaluationInconsistency(this, "evaluating this expression as formally constant returned a value of type " +
+				value.getDataType() + ", but the expression type was " + dataType);
+		} else {
+			return value;
+		}
+	}
+
+	protected abstract ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context);
 
 	public static final class FormallyConstantEvaluationContext {
 
@@ -59,12 +73,28 @@ public abstract class ProcessedExpression {
 		}
 
 		public final ConstantValue.Unknown notConstant(PsiElement errorSource) {
-			errorHandler.onError(errorSource, "expected a formally constant expression");
-			return ConstantValue.Unknown.INSTANCE;
+			return error(errorSource, "expected a formally constant expression");
 		}
 
 		public final ConstantValue.Unknown notConstant(ProcessedExpression errorSource) {
 			return notConstant(errorSource.getErrorSource());
+		}
+
+		public final ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource, String message) {
+			return error(errorSource, "internal error: detected an inconsistency between static type check and constant evaluation" +
+				(message == null ? "" : (": " + message)));
+		}
+
+		public final ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource, String message) {
+			return evaluationInconsistency(errorSource.getErrorSource(), message);
+		}
+
+		public final ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource) {
+			return evaluationInconsistency(errorSource, null);
+		}
+
+		public final ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource) {
+			return evaluationInconsistency(errorSource.getErrorSource());
 		}
 
 	}

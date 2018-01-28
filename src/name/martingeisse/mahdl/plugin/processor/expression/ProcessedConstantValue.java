@@ -21,7 +21,7 @@ public final class ProcessedConstantValue extends ProcessedExpression {
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		return value;
 	}
 

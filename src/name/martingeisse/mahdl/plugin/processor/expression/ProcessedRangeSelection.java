@@ -51,8 +51,7 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 		} else if (containerValue instanceof ConstantValue.Vector) {
 			return ((ConstantValue.Vector) containerValue).getSize();
 		} else {
-			context.error(container.getErrorSource(), "cannot range-select from an expression of type " +
-				containerValue.getDataTypeFamily().getDisplayString());
+			context.evaluationInconsistency(container.getErrorSource(), "range-select found container value " + containerValue);
 			return -1;
 		}
 	}

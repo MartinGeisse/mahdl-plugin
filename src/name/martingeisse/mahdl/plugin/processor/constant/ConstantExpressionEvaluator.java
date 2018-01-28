@@ -107,54 +107,7 @@ public final class ConstantExpressionEvaluator {
 
 
 
-	private ConstantValue evaluateUnaryOperation(UnaryOperation expression) {
 
-		// determine operand value
-		if (expression.getOperand() == null) {
-			return ConstantValue.Unknown.INSTANCE;
-		}
-		ConstantValue operandValue = evaluate(expression.getOperand());
-		if (operandValue instanceof ConstantValue.Unknown) {
-			return operandValue;
-		}
-
-		// Only unary NOT can handle bit values. All other operators require a vector or integer.
-		if (expression instanceof Expression_UnaryNot && operandValue instanceof ConstantValue.Bit) {
-			boolean bitOperandValue = ((ConstantValue.Bit) operandValue).isSet();
-			return new ConstantValue.Bit(!bitOperandValue);
-		}
-		if (!(operandValue instanceof ConstantValue.Vector) && !(operandValue instanceof ConstantValue.Integer)) {
-			return error(expression, operandValue.getDataTypeFamily().getDisplayString() + " type not allowed as operand here");
-		}
-
-		// shortcut for unary plus, which doesn't actually do anything
-		if (expression instanceof Expression_UnaryPlus) {
-			return operandValue;
-		}
-
-		// perform the corresponding integer operation
-		BigInteger integerOperand = operandValue.convertToInteger();
-		if (integerOperand == null) {
-			return error(expression, "could not convert operand to integer");
-		}
-		BigInteger integerResult;
-		if (expression instanceof Expression_UnaryNot) {
-			integerResult = integerOperand.not();
-		} else if (expression instanceof Expression_UnaryMinus) {
-			integerResult = integerOperand.negate();
-		} else {
-			return error(expression, "unknown operator");
-		}
-
-		// if the operand was a vector, turn the result into a vector of the same size, otherwise return as integer
-		if (operandValue instanceof ConstantValue.Vector) {
-			int size = ((ConstantValue.Vector) operandValue).getSize();
-			return new ConstantValue.Vector(size, integerResult);
-		} else {
-			return new ConstantValue.Integer(integerResult);
-		}
-
-	}
 
 	private ConstantValue evaluateBinaryOperation(BinaryOperation expression) {
 
@@ -384,41 +337,6 @@ public final class ConstantExpressionEvaluator {
 		} catch (FunctionParameterException e) {
 			return error(functionCall, e.getMessage());
 		}
-	}
-
-	/**
-	 * Checks whether the specified expression is considered constant and should therefore be evaluated by this
-	 * evaluator for constant folding. This method, as well as folding itself, should not be performed on an
-	 * expression unless the {@link ExpressionTypeChecker} has first confirmed its type-safety. On the other hand,
-	 * folding MUST be performed before run-time if this method returns true, because the expression could contain
-	 * integers (which cannot be evaluated at run-time) and so certain errors such as integer-to-vector conversion
-	 * overflow is guaranteed to be reported at compile-time.
-	 * <p>
-	 * Note also that some kinds of folding cannot be performed by this evaluator alone since they must not appear
-	 * in formally constant expressions. These are not required to be performed by the language spec. An example
-	 * would be:
-	 * <p>
-	 * signal vector[16] result = constantSelectorThatIsTrue ? someConstant : someSignal
-	 * <p>
-	 * Being used for a signal, this expression is not required to be constant, so using a signal on the right-hand
-	 * side is allowed. This expression is not formally constant since it contains a signal reference. Therefore, this
-	 * constant evaluator will reject it.
-	 */
-	public final boolean isConstant(@NotNull Expression expression) {
-		MutableBoolean resultHolder = new MutableBoolean(true);
-		PsiUtil.foreachPsiNode(expression, node -> {
-			if (node instanceof Expression_Identifier) {
-				String name = ((Expression_Identifier) expression).getIdentifier().getText();
-				if (definedConstants.get(name) == null) {
-					// if it's not a constant, it must be a non-constant signal-like because type safety has already
-					// been established.
-					resultHolder.setFalse();
-				}
-			} else if (node instanceof ExtendedExpression_Switch) {
-				resultHolder.setFalse();
-			}
-		});
-		return resultHolder.getValue();
 	}
 
 }

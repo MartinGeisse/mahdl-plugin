@@ -34,7 +34,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		ConstantValue containerValue = container.evaluateFormallyConstant(context);
 		ConstantValue indexValue = index.evaluateFormallyConstant(context);
 		int containerSize = handleContainerValue(context, containerValue);
@@ -55,8 +55,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 		} else if (containerValue instanceof ConstantValue.Memory) {
 			return ((ConstantValue.Memory) containerValue).getFirstSize();
 		} else {
-			context.error(container.getErrorSource(), "cannot index-select from an expression of type " +
-				containerValue.getDataTypeFamily().getDisplayString());
+			context.evaluationInconsistency(container.getErrorSource(), "index selection found container value " + containerValue);
 			return -1;
 		}
 	}
@@ -64,7 +63,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 	private int handleIndexValue(FormallyConstantEvaluationContext context, ConstantValue indexValue, int containerSize) {
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {
-			context.error(index, "value of type " + indexValue.getDataTypeFamily().getDisplayString() + " cannot be converted to integer");
+			context.evaluationInconsistency(index, "value " + indexValue + " cannot be converted to integer");
 			return -1;
 		}
 		if (numericIndexValue.compareTo(BigInteger.ZERO) < 0) {

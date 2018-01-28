@@ -22,12 +22,12 @@ public final class SignalLikeReference extends ProcessedExpression {
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
+	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		String name = definition.getName();
 		ConstantValue value = context.getDefinedConstants().get(name);
 		if (definition instanceof Constant) {
 			if (value == null) {
-				return context.error(this, "missing pre-computed value for constant '" + name + "'");
+				return context.evaluationInconsistency(this, "missing pre-computed value for constant '" + name + "'");
 			} else {
 				return value;
 			}
@@ -35,7 +35,7 @@ public final class SignalLikeReference extends ProcessedExpression {
 			if (value == null) {
 				return context.error(this, "undefined constant: '" + name + "'");
 			} else {
-				return context.error(this, "found pre-computed constant value for non-constant '" + name + "' -- WTF?");
+				return context.evaluationInconsistency(this, "found pre-computed constant value for non-constant '" + name + "' -- WTF?");
 			}
 		}
 	}
