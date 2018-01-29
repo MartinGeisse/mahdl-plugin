@@ -7,7 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.Expression;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

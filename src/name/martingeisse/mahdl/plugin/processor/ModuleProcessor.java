@@ -9,7 +9,7 @@ import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression_old.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;

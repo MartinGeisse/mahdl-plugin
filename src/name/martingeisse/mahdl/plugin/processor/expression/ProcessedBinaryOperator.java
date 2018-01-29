@@ -3,38 +3,99 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
+import java.math.BigInteger;
+import java.util.function.BiPredicate;
+import java.util.function.BinaryOperator;
+
 /**
  * These operators mostly correspond to those from the language grammar, but they are much more restricted with
  * respect to types: For example, for TSIVOs, only integer/integer and vector/vector are supported; mixed operands
  * should be shielded by inserting type conversions.
- *
+ * <p>
  * The concatenation operators for texts and for vectors have been split up here. They use the same PSI nodes because
  * they use the same textual symbol, but they are split up in processing because most code pieces treat them very
  * differently.
  */
 public enum ProcessedBinaryOperator {
 
-	AND,
-	OR,
-	XOR,
-	TEXT_CONCAT,
-	VECTOR_CONCAT,
+	// logical operators
+	AND((x, y) -> x & y, BigInteger::and, null, false),
+	OR((x, y) -> x | y, BigInteger::or, null, false),
+	XOR((x, y) -> x ^ y, BigInteger::xor, null, false),
 
-	PLUS,
-	MINUS,
-	TIMES,
-	DIVIDED_BY,
-	REMAINDER,
+	// concatenation operators
+	TEXT_CONCAT(null, null, null, false),
+	VECTOR_CONCAT(null, null, null, false),
 
-	SHIFT_LEFT,
-	SHIFT_RIGHT,
+	// arithmetic operators
+	PLUS(null, BigInteger::add, null, false),
+	MINUS(null, BigInteger::subtract, null, false),
+	TIMES(null, BigInteger::multiply, null, false),
+	DIVIDED_BY(null, BigInteger::divide, null, true),
+	REMAINDER(null, BigInteger::remainder, null, true),
 
-	EQUAL,
-	NOT_EQUAL,
-	LESS_THAN,
-	LESS_THAN_OR_EQUAL,
-	GREATER_THAN,
-	GREATER_THAN_OR_EQUAL;
+	// shift operators
+	SHIFT_LEFT(null, null, null, false) {
+		@Override
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+			int rightInt;
+			try {
+				rightInt = rightOperand.intValueExact();
+			} catch (ArithmeticException e) {
+				throw new OperatorException("shift amount too large: " + rightOperand);
+			}
+			return new ConstantValue.Integer(leftOperand.shiftLeft(rightInt));
+		}
+	},
+	SHIFT_RIGHT(null, null, null, false) {
+		@Override
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+			int rightInt;
+			try {
+				rightInt = rightOperand.intValueExact();
+			} catch (ArithmeticException e) {
+				throw new OperatorException("shift amount too large: " + rightOperand);
+			}
+			return new ConstantValue.Integer(leftOperand.shiftRight(rightInt));
+		}
+	},
+
+	// equality and comparison operators
+	EQUAL {
+		@Override
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+			return new ConstantValue.Bit(leftOperand.equals(rightOperand));
+		}
+	},
+	NOT_EQUAL {
+		@Override
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+			return new ConstantValue.Bit(!leftOperand.equals(rightOperand));
+		}
+	},
+	LESS_THAN(null, null, x -> x < 0, false),
+	LESS_THAN_OR_EQUAL(null, null, x -> x <= 0, false),
+	GREATER_THAN(null, null, x -> x > 0, false),
+	GREATER_THAN_OR_EQUAL(null, null, x -> x >= 0, false);
+
+	private final LogicalOperation logicalOperation;
+	private final BinaryOperator<BigInteger> bigIntegerEquivalentOperator;
+	private final CompareResultPredicate compareResultPredicate;
+	private final boolean zeroCheckRightOperand;
+
+	private interface LogicalOperation {
+		public boolean evaluate(boolean leftOperand, boolean rightOperand);
+	}
+	private interface CompareResultPredicate {
+		public boolean test(int compareResult);
+	}
+
+	ProcessedBinaryOperator(LogicalOperation logicalOperation, BinaryOperator<BigInteger> bigIntegerEquivalentOperator, CompareResultPredicate compareResultPredicate, boolean zeroCheckRightOperand) {
+		this.logicalOperation = logicalOperation;
+		this.bigIntegerEquivalentOperator = bigIntegerEquivalentOperator;
+		this.compareResultPredicate = compareResultPredicate;
+		this.zeroCheckRightOperand = zeroCheckRightOperand;
+	}
 
 	// NOTE: cannot detect concatenation operator because text/vector concatenation are detected by type, which is unknown here
 	public static ProcessedBinaryOperator from(BinaryOperation operation) {
@@ -76,7 +137,6 @@ public enum ProcessedBinaryOperator {
 			throw new IllegalArgumentException("unknown unary operation: " + operation);
 		}
 	}
-
 
 	public ProcessedDataType checkTypes(ProcessedDataType leftType, ProcessedDataType rightType) throws TypeErrorException {
 		if (leftType instanceof ProcessedDataType.Unknown || rightType instanceof ProcessedDataType.Unknown) {
@@ -125,6 +185,41 @@ public enum ProcessedBinaryOperator {
 
 		}
 		throw new TypeErrorException();
+	}
+
+	public boolean evaluateLogicalOperator(boolean leftOperand, boolean rightOperand) throws OperatorException {
+		if (expression instanceof Expression_BinaryAnd) {
+			return leftOperand & rightOperand;
+		} else if (expression instanceof Expression_BinaryOr) {
+			return leftOperand | rightOperand;
+		} else if (expression instanceof Expression_BinaryXor) {
+			return leftOperand ^ rightOperand;
+		} else if (expression instanceof Expression_BinaryEqual) {
+			return leftOperand == rightOperand;
+		} else if (expression instanceof Expression_BinaryNotEqual) {
+			return leftOperand != rightOperand;
+		} else {
+			throw new OperatorException("unknown operator");
+		}
+	}
+
+	public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+		if (zeroCheckRightOperand && rightOperand.equals(BigInteger.ZERO)) {
+			throw new OperatorException("right operand is zero");
+		}
+		if (bigIntegerEquivalentOperator != null) {
+			return new ConstantValue.Integer(bigIntegerEquivalentOperator.apply(leftOperand, rightOperand));
+		} else if (compareResultPredicate != null) {
+			return new ConstantValue.Bit(compareResultPredicate.test(leftOperand.compareTo(rightOperand)));
+		} else {
+			throw new OperatorException("evaluateIntegerVectorOperator() not supported for this operator");
+		}
+	}
+
+	public static class OperatorException extends Exception {
+		public OperatorException(String message) {
+			super(message);
+		}
 	}
 
 }

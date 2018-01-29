@@ -3,10 +3,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
-
-import java.util.Map;
 
 /**
  *

@@ -2,7 +2,7 @@ package name.martingeisse.mahdl.plugin.util;
 
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;

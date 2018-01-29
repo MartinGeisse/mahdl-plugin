@@ -7,7 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.type;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;

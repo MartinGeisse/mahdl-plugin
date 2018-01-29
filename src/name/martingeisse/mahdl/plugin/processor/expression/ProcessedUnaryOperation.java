@@ -1,12 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.input.psi.Expression_UnaryMinus;
-import name.martingeisse.mahdl.plugin.input.psi.Expression_UnaryNot;
-import name.martingeisse.mahdl.plugin.input.psi.Expression_UnaryPlus;
-import name.martingeisse.mahdl.plugin.input.psi.UnaryOperation;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
-import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.math.BigInteger;
 

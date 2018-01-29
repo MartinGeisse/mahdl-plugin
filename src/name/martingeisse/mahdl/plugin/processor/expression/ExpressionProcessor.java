@@ -6,7 +6,6 @@ import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;

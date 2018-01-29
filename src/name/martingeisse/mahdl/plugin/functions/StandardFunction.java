@@ -4,9 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.functions;
 
-import com.google.common.collect.ImmutableList;
-import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.expression.TypeErrorException;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;

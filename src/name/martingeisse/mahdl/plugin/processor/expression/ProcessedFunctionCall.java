@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
 
 import java.util.ArrayList;
 import java.util.List;

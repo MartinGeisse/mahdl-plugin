@@ -4,8 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.processor.type;
 
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantValue;
-import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 
