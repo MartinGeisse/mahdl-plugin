@@ -23,7 +23,7 @@ public enum ProcessedBinaryOperator {
 	OR((x, y) -> x | y, BigInteger::or, null, false),
 	XOR((x, y) -> x ^ y, BigInteger::xor, null, false),
 
-	// concatenation operators
+	// concatenation operators (handled specially during evaluation)
 	TEXT_CONCAT(null, null, null, false),
 	VECTOR_CONCAT(null, null, null, false),
 
@@ -37,39 +37,39 @@ public enum ProcessedBinaryOperator {
 	// shift operators
 	SHIFT_LEFT(null, null, null, false) {
 		@Override
-		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperandValueException {
 			int rightInt;
 			try {
 				rightInt = rightOperand.intValueExact();
 			} catch (ArithmeticException e) {
-				throw new OperatorException("shift amount too large: " + rightOperand);
+				throw new OperandValueException("shift amount too large: " + rightOperand);
 			}
 			return new ConstantValue.Integer(leftOperand.shiftLeft(rightInt));
 		}
 	},
 	SHIFT_RIGHT(null, null, null, false) {
 		@Override
-		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperandValueException {
 			int rightInt;
 			try {
 				rightInt = rightOperand.intValueExact();
 			} catch (ArithmeticException e) {
-				throw new OperatorException("shift amount too large: " + rightOperand);
+				throw new OperandValueException("shift amount too large: " + rightOperand);
 			}
 			return new ConstantValue.Integer(leftOperand.shiftRight(rightInt));
 		}
 	},
 
 	// equality and comparison operators
-	EQUAL {
+	EQUAL((x, y) -> x == y, null, null, false) {
 		@Override
-		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) {
 			return new ConstantValue.Bit(leftOperand.equals(rightOperand));
 		}
 	},
-	NOT_EQUAL {
+	NOT_EQUAL((x, y) -> x != y, null, null, false) {
 		@Override
-		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+		public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) {
 			return new ConstantValue.Bit(!leftOperand.equals(rightOperand));
 		}
 	},
@@ -84,10 +84,11 @@ public enum ProcessedBinaryOperator {
 	private final boolean zeroCheckRightOperand;
 
 	private interface LogicalOperation {
-		public boolean evaluate(boolean leftOperand, boolean rightOperand);
+		boolean evaluate(boolean leftOperand, boolean rightOperand);
 	}
+
 	private interface CompareResultPredicate {
-		public boolean test(int compareResult);
+		boolean test(int compareResult);
 	}
 
 	ProcessedBinaryOperator(LogicalOperation logicalOperation, BinaryOperator<BigInteger> bigIntegerEquivalentOperator, CompareResultPredicate compareResultPredicate, boolean zeroCheckRightOperand) {
@@ -187,37 +188,34 @@ public enum ProcessedBinaryOperator {
 		throw new TypeErrorException();
 	}
 
-	public boolean evaluateLogicalOperator(boolean leftOperand, boolean rightOperand) throws OperatorException {
-		if (expression instanceof Expression_BinaryAnd) {
-			return leftOperand & rightOperand;
-		} else if (expression instanceof Expression_BinaryOr) {
-			return leftOperand | rightOperand;
-		} else if (expression instanceof Expression_BinaryXor) {
-			return leftOperand ^ rightOperand;
-		} else if (expression instanceof Expression_BinaryEqual) {
-			return leftOperand == rightOperand;
-		} else if (expression instanceof Expression_BinaryNotEqual) {
-			return leftOperand != rightOperand;
-		} else {
-			throw new OperatorException("unknown operator");
+	public boolean evaluateLogicalOperator(boolean leftOperand, boolean rightOperand) throws OperatorInconsistencyException {
+		if (logicalOperation == null) {
+			throw new OperatorInconsistencyException("evaluateLogicalOperator() not supported for this operator");
 		}
+		return logicalOperation.evaluate(leftOperand, rightOperand);
 	}
 
-	public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorException {
+	public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorInconsistencyException, OperandValueException {
 		if (zeroCheckRightOperand && rightOperand.equals(BigInteger.ZERO)) {
-			throw new OperatorException("right operand is zero");
+			throw new OperandValueException("right operand is zero");
 		}
 		if (bigIntegerEquivalentOperator != null) {
 			return new ConstantValue.Integer(bigIntegerEquivalentOperator.apply(leftOperand, rightOperand));
 		} else if (compareResultPredicate != null) {
 			return new ConstantValue.Bit(compareResultPredicate.test(leftOperand.compareTo(rightOperand)));
 		} else {
-			throw new OperatorException("evaluateIntegerVectorOperator() not supported for this operator");
+			throw new OperatorInconsistencyException("evaluateIntegerVectorOperator() not supported for this operator");
 		}
 	}
 
-	public static class OperatorException extends Exception {
-		public OperatorException(String message) {
+	public static class OperandValueException extends Exception {
+		public OperandValueException(String message) {
+			super(message);
+		}
+	}
+
+	public static class OperatorInconsistencyException extends Exception {
+		public OperatorInconsistencyException(String message) {
 			super(message);
 		}
 	}
