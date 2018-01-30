@@ -37,7 +37,7 @@ public final class IntegerBitUtil {
 	}
 
 	@NotNull
-	public static BigInteger convertToInteger(@NotNull BitSet bits, int size) {
+	public static BigInteger convertToSignedInteger(@NotNull BitSet bits, int size) {
 		int index = 0;
 		BigInteger significance = BigInteger.ONE;
 		BigInteger result = BigInteger.ZERO;
@@ -55,13 +55,9 @@ public final class IntegerBitUtil {
 		return result;
 	}
 
-	// TODO we possibly only need unsigned conversion, so we could simplify this code. Signed conversion is currently
-	// only needed for numeric negation (unary minus), which would work well using unsigned conversion. We *should*
-	// make sure that the bitset used in a constant vector value is restricted to the vector size, and also that it is
-	// immutable!
 	@NotNull
 	public static BigInteger convertToUnsignedInteger(@NotNull BitSet bits) {
-		return convertToInteger(bits, bits.length() + 1);
+		return convertToSignedInteger(bits, bits.length() + 1);
 	}
 
 }
