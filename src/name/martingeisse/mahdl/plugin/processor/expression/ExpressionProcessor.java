@@ -178,6 +178,8 @@ public class ExpressionProcessor {
 			toIndex = error(expression.getTo(), "to-index must be of type integer, found " + toIndex.getDataType());
 		}
 
+		// TODO check out of range
+
 		if (containerSizeIfKnown == -1 || fromIndex instanceof UnknownExpression || toIndex instanceof UnknownExpression) {
 			return new UnknownExpression(expression);
 		} else {
