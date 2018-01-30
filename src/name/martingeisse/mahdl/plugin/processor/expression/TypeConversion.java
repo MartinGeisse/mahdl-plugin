@@ -21,8 +21,6 @@ import java.util.BitSet;
  * don't want to allow them for any integer expression that turns out to be 0 or 1. We only want to allow using 0
  * or 1 directly as literals. To make this rule useful, such bit literals are not allowed in any ambiguous or
  * non-obvious case.
- * <p>
- * TODO bit literals are not yet handled
  */
 public abstract class TypeConversion extends ProcessedExpression {
 

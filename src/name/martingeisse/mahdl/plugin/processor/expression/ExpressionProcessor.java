@@ -49,7 +49,6 @@ public class ExpressionProcessor {
 
 	public ProcessedExpression process(Expression expression) {
 		try {
-			// TODO handle bit literals
 			if (expression instanceof Expression_Literal) {
 				return process((Expression_Literal) expression);
 			} else if (expression instanceof Expression_Identifier) {
@@ -69,6 +68,7 @@ public class ExpressionProcessor {
 			} else if (expression instanceof Expression_FunctionCall) {
 				return process((Expression_FunctionCall) expression);
 			} else if (expression instanceof Expression_Parenthesized) {
+				// TODO handle bit literals in such a way that parenthesized expressions get unwrapped
 				return process(((Expression_Parenthesized) expression).getExpression());
 			} else {
 				return error(expression, "unknown expression type");
@@ -264,6 +264,7 @@ public class ExpressionProcessor {
 		ProcessedBinaryOperator operator = ProcessedBinaryOperator.from(expression);
 
 		// now, only logical operators can handle bit values, and only if both operands are bits.
+		// TODO handle bit literals here
 		if ((leftOperand.getDataType() instanceof ProcessedDataType.Bit) != (rightOperand.getDataType() instanceof ProcessedDataType.Bit)) {
 			return error(expression, "this operator cannot be used for " + leftOperand.getDataType().getFamily() +
 				" and " + rightOperand.getDataType().getFamily() + " operands");
@@ -348,6 +349,7 @@ public class ExpressionProcessor {
 		ProcessedExpression elseBranch = process(expression.getElseBranch());
 
 		// handle condition
+		// TODO handle bit literals here
 		boolean error = false;
 		if (condition.getDataType() instanceof ProcessedDataType.Unknown) {
 			error = true;
@@ -357,6 +359,7 @@ public class ExpressionProcessor {
 		}
 
 		// handle branches
+		// TODO handle bit literals here
 		if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
 			if ((thenBranch.getDataType() instanceof ProcessedDataType.Vector) && (elseBranch.getDataType() instanceof ProcessedDataType.Integer)) {
 				int size = ((ProcessedDataType.Vector) thenBranch.getDataType()).getSize();
