@@ -23,19 +23,10 @@ public final class SignalLikeReference extends ProcessedExpression {
 	@Override
 	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		String name = definition.getName();
-		ConstantValue value = context.getDefinedConstants().get(name);
 		if (definition instanceof Constant) {
-			if (value == null) {
-				return context.evaluationInconsistency(this, "missing pre-computed value for constant '" + name + "'");
-			} else {
-				return value;
-			}
+			return ((Constant) definition).getValue();
 		} else {
-			if (value == null) {
-				return context.error(this, "undefined constant: '" + name + "'");
-			} else {
-				return context.evaluationInconsistency(this, "found pre-computed constant value for non-constant '" + name + "' -- WTF?");
-			}
+			return context.error(this, "'" + name + "' is not a constant");
 		}
 	}
 

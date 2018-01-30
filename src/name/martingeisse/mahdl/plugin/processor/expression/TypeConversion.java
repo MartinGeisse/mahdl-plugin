@@ -2,9 +2,17 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
+
+import java.math.BigInteger;
+import java.util.BitSet;
 
 /**
  * Represents a conversion from one type to another. In processed expressions, these conversions are made explicit.
+ * <p>
+ * To-text conversion is not represented by this class because it is not needed: Text values can only occur in
+ * formally constant (sub-)expressions, and constant evaluation can convert to text implicitly since all implementations
+ * of {@link ConstantValue} implement {@link ConstantValue#convertToString()}.
  * <p>
  * Special case: Using 0 or 1 as a bit literal is NOT handled by treating it as an integer literal with a conversion.
  * Instead, these are recognized by the {@link ExpressionProcessor} and turned into a bit literal. Actual bit
@@ -33,20 +41,11 @@ public abstract class TypeConversion extends ProcessedExpression {
 		return operand;
 	}
 
-	public static final class ToText extends TypeConversion {
+	protected abstract ConstantValue perform(FormallyConstantEvaluationContext context, ConstantValue operandValue);
 
-		public ToText(ProcessedExpression operand) {
-			super(ProcessedDataType.Text.INSTANCE, operand);
-		}
-
-		public ToText(PsiElement errorSource, ProcessedExpression operand) {
-			super(errorSource, ProcessedDataType.Text.INSTANCE, operand);
-		}
-
-		@Override
-		public ProcessedDataType.Text getDataType() {
-			return (ProcessedDataType.Text)super.getDataType();
-		}
+	@Override
+	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+		return perform(context, operand.evaluateFormallyConstant(context));
 	}
 
 	public static final class BitToVector extends TypeConversion {
@@ -67,8 +66,20 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 		@Override
 		public ProcessedDataType.Vector getDataType() {
-			return (ProcessedDataType.Vector)super.getDataType();
+			return (ProcessedDataType.Vector) super.getDataType();
 		}
+
+		@Override
+		protected ConstantValue perform(FormallyConstantEvaluationContext context, ConstantValue operandValue) {
+			if (operandValue instanceof ConstantValue.Bit) {
+				BitSet bits = new BitSet();
+				bits.set(0, ((ConstantValue.Bit) operandValue).isSet());
+				return new ConstantValue.Vector(1, bits);
+			} else {
+				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
+			}
+		}
+
 	}
 
 	public static final class IntegerToVector extends TypeConversion {
@@ -89,8 +100,21 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 		@Override
 		public ProcessedDataType.Vector getDataType() {
-			return (ProcessedDataType.Vector)super.getDataType();
+			return (ProcessedDataType.Vector) super.getDataType();
 		}
+
+		@Override
+		protected ConstantValue perform(FormallyConstantEvaluationContext context, ConstantValue operandValue) {
+			BigInteger integer = operandValue.convertToInteger();
+			if (integer == null) {
+				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
+			} else {
+				int size = getDataType().getSize();
+				BitSet bits = IntegerBitUtil.convertToBitSet(integer, size);
+				return new ConstantValue.Vector(size, bits);
+			}
+		}
+
 	}
 
 	public static final class VectorToInteger extends TypeConversion {
@@ -111,8 +135,19 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 		@Override
 		public ProcessedDataType.Integer getDataType() {
-			return (ProcessedDataType.Integer)super.getDataType();
+			return (ProcessedDataType.Integer) super.getDataType();
 		}
+
+		@Override
+		protected ConstantValue perform(FormallyConstantEvaluationContext context, ConstantValue operandValue) {
+			if (operandValue instanceof ConstantValue.Vector) {
+				ConstantValue.Vector operandVector = (ConstantValue.Vector)operandValue;
+				return new ConstantValue.Integer(IntegerBitUtil.convertToUnsignedInteger(operandVector.getBits()));
+			} else {
+				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
+			}
+		}
+
 	}
 
 }

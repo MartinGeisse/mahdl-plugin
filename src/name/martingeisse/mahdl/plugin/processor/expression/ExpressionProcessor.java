@@ -14,6 +14,7 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -109,7 +110,7 @@ public class ExpressionProcessor {
 			if (moduleInstanceCandidate == null) {
 				return error(expression.getInstanceName(), "cannot resolve symbol '" + instanceName + "'");
 			} else if (moduleInstanceCandidate instanceof ModuleInstance) {
-				moduleInstance = (ModuleInstance)moduleInstanceCandidate;
+				moduleInstance = (ModuleInstance) moduleInstanceCandidate;
 			} else {
 				return error(expression.getInstanceName(), instanceName + " is not a module instance");
 			}
@@ -165,31 +166,32 @@ public class ExpressionProcessor {
 
 	private ProcessedExpression process(Expression_RangeSelection expression) throws TypeErrorException {
 
+		// evaluate container
 		ProcessedExpression container = process(expression.getContainer());
 		int containerSizeIfKnown = determineContainerSize(container, false, "range-select");
 
+		// evaluate from-index
 		ProcessedExpression fromIndex = process(expression.getFrom());
 		if (!(fromIndex.getDataType() instanceof ProcessedDataType.Integer)) {
 			fromIndex = error(expression.getFrom(), "from-index must be of type integer, found " + fromIndex.getDataType());
 		}
+		Integer fromIndexInteger = evaluateLocalSmallIntegerExpressionThatMustBeFormallyConstant(fromIndex);
 
+		// evaluate to-index
 		ProcessedExpression toIndex = process(expression.getTo());
 		if (!(toIndex.getDataType() instanceof ProcessedDataType.Integer)) {
 			toIndex = error(expression.getTo(), "to-index must be of type integer, found " + toIndex.getDataType());
 		}
+		Integer toIndexInteger = evaluateLocalSmallIntegerExpressionThatMustBeFormallyConstant(toIndex);
 
-		// TODO check out of range
-
-		if (containerSizeIfKnown == -1 || fromIndex instanceof UnknownExpression || toIndex instanceof UnknownExpression) {
+		// stop here if any of them failed
+		if (containerSizeIfKnown < 0 || fromIndexInteger == null || toIndexInteger == null) {
 			return new UnknownExpression(expression);
-		} else {
-			if (container.getDataType() instanceof ProcessedDataType.Vector) {
-				// TODO need constant evaluation here!
-				return new ProcessedRangeSelection(expression, dataType, container, fromIndex, toIndex);
-			} else {
-				return error(expression, "unknown container type");
-			}
 		}
+
+		// otherwise return a range selection node
+		int width = fromIndexInteger - toIndexInteger + 1;
+		return new ProcessedRangeSelection(expression, new ProcessedDataType.Vector(width), container, fromIndexInteger, toIndexInteger);
 
 	}
 
@@ -420,6 +422,25 @@ public class ExpressionProcessor {
 
 	}
 
+	private ConstantValue evaluateLocalExpressionThatMustBeFormallyConstant(ProcessedExpression expression) {
+		return expression.evaluateFormallyConstant(
+			new ProcessedExpression.FormallyConstantEvaluationContext(localDefinitionResolver, errorHandler));
+	}
+
+	private Integer evaluateLocalSmallIntegerExpressionThatMustBeFormallyConstant(ProcessedExpression expression) {
+		BigInteger integerValue = evaluateLocalExpressionThatMustBeFormallyConstant(expression).convertToInteger();
+		if (integerValue == null) {
+			errorHandler.onError(expression.getErrorSource(), "cannot convert value to integer");
+			return null;
+		}
+		try {
+			return integerValue.intValueExact();
+		} catch (ArithmeticException e) {
+			errorHandler.onError(expression.getErrorSource(), "value too large");
+			return null;
+		}
+	}
+
 	@NotNull
 	private ProcessedExpression error(@NotNull ProcessedExpression processedExpression, @NotNull String message) {
 		return error(processedExpression.getErrorSource(), message);
@@ -427,6 +448,7 @@ public class ExpressionProcessor {
 
 	@NotNull
 	private ProcessedExpression error(@NotNull PsiElement errorSource, @NotNull String message) {
+		// TODO sometimes called to attach errors to sub-nodes, but then the sub-node is also returned as the error source for the return value!
 		errorHandler.onError(errorSource, message);
 		return new UnknownExpression(errorSource);
 	}

@@ -1,6 +1,5 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -44,16 +43,10 @@ public abstract class ProcessedExpression {
 
 	public static final class FormallyConstantEvaluationContext {
 
-		private final ImmutableMap<String, ConstantValue> definedConstants;
 		private final ErrorHandler errorHandler;
 
-		public FormallyConstantEvaluationContext(ImmutableMap<String, ConstantValue> definedConstants, ErrorHandler errorHandler) {
-			this.definedConstants = definedConstants;
+		public FormallyConstantEvaluationContext(ErrorHandler errorHandler) {
 			this.errorHandler = errorHandler;
-		}
-
-		public ImmutableMap<String, ConstantValue> getDefinedConstants() {
-			return definedConstants;
 		}
 
 		public ErrorHandler getErrorHandler() {

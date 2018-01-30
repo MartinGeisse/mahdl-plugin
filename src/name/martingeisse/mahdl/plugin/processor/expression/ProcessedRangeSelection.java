@@ -12,7 +12,7 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 	private final int fromIndex;
 	private final int toIndex;
 
-	private ProcessedRangeSelection(PsiElement errorSource,
+	public ProcessedRangeSelection(PsiElement errorSource,
 									ProcessedDataType dataType,
 									ProcessedExpression container,
 									int fromIndex,
