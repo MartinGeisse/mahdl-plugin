@@ -16,16 +16,18 @@ public final class ProcessedConditional extends ProcessedExpression {
 								ProcessedExpression condition,
 								ProcessedExpression thenBranch,
 								ProcessedExpression elseBranch) throws TypeErrorException {
-		super(errorSource, checkTypes(condition, thenBranch, elseBranch));
+		super(errorSource, thenBranch.getDataType());
+
+		if (!(condition.getDataType() instanceof ProcessedDataType.Bit)) {
+			throw new TypeErrorException();
+		}
+		if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
+			throw new TypeErrorException();
+		}
+
 		this.condition = condition;
 		this.thenBranch = thenBranch;
 		this.elseBranch = elseBranch;
-	}
-
-	private static ProcessedDataType checkTypes(ProcessedExpression condition,
-												ProcessedExpression thenBranch,
-												ProcessedExpression elseBranch) throws TypeErrorException {
-		// TODO
 	}
 
 	public ProcessedExpression getCondition() {
@@ -38,6 +40,21 @@ public final class ProcessedConditional extends ProcessedExpression {
 
 	public ProcessedExpression getElseBranch() {
 		return elseBranch;
+	}
+
+	@Override
+	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+		// evaluate both branches to detect errors even in the not-taken branch
+		Boolean conditionBoolean = condition.evaluateFormallyConstant(context).convertToBoolean();
+		ConstantValue thenValue = thenBranch.evaluateFormallyConstant(context);
+		ConstantValue elseValue = elseBranch.evaluateFormallyConstant(context);
+		if (conditionBoolean == null) {
+			return context.evaluationInconsistency(this, "cannot convert condition to boolean");
+		} else if (conditionBoolean) {
+			return thenValue;
+		} else {
+			return elseValue;
+		}
 	}
 
 }

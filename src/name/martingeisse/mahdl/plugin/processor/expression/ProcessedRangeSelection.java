@@ -1,7 +1,9 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.input.psi.Expression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -52,6 +54,25 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 		} else {
 			context.evaluationInconsistency(container.getErrorSource(), "range-select found container value " + containerValue);
 			return -1;
+		}
+	}
+
+	@NotNull
+	private ConstantValue evaluateRangeSelectionFixed(@NotNull Expression_RangeSelectionFixed rangeSelection) {
+		return evaluateRangeSelectionHelper(rangeSelection.getContainer(), rangeSelection.getFrom(), rangeSelection.getTo(), 0);
+	}
+
+	private ConstantValue evaluateRangeSelectionHelper(Expression container, Expression from, Expression other, int direction) {
+		ConstantValue containerValue = evaluate(container);
+		int containerSize = handleContainerValue(container, containerValue, false, "range-select");
+		String containerTypeText = containerValue.getDataType().toString();
+		int intFrom = handleIndexValue(containerSize, containerTypeText, from);
+		int intTo = (direction == 0) ? handleIndexValue(containerSize, containerTypeText, other) : null;
+		if (containerSize < 0 || intFrom < 0 || intTo < 0) {
+			return ConstantValue.Unknown.INSTANCE;
+		} else {
+			// all error cases should be handled above and should have reported an error already, so we don't have to do that here
+			return containerValue.selectRange(intFrom, intTo);
 		}
 	}
 
