@@ -441,16 +441,29 @@ public class ExpressionProcessor {
 		}
 	}
 
+	/**
+	 * This method is sometimes called with a sub-expression of the current expression as the error source, in case
+	 * that error can be attributed to that sub-expression. For example, if an operand of an operator has a type
+	 * the operator can't handle, then the error message will be attached to the operand, not the whole binary
+	 * expression.
+	 *
+	 * The same error source gets attached to the returned {@link UnknownExpression} as the error source for other
+	 * error messages added later. This is wrong in principle, since those error messages should be attached to the
+	 * whole parent expression instead. However, since the return value right now is an UnknownExpression, no further
+	 * error messages should be generated at all, and so this wrong behavior should not matter.
+	 */
+	@NotNull
+	private ProcessedExpression error(@NotNull PsiElement errorSource, @NotNull String message) {
+		errorHandler.onError(errorSource, message);
+		return new UnknownExpression(errorSource);
+	}
+
+	/**
+	 * the same note as for the other error method above applies to this one
+	 */
 	@NotNull
 	private ProcessedExpression error(@NotNull ProcessedExpression processedExpression, @NotNull String message) {
 		return error(processedExpression.getErrorSource(), message);
-	}
-
-	@NotNull
-	private ProcessedExpression error(@NotNull PsiElement errorSource, @NotNull String message) {
-		// TODO sometimes called to attach errors to sub-nodes, but then the sub-node is also returned as the error source for the return value!
-		errorHandler.onError(errorSource, message);
-		return new UnknownExpression(errorSource);
 	}
 
 }
