@@ -10,8 +10,10 @@ import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +40,7 @@ public final class ModuleProcessor {
 	private final ErrorHandler errorHandler;
 
 	private DataTypeProcessor dataTypeProcessor;
+	private DataTypeProcessor actualDataTypeProcessor;
 	private ExpressionProcessor expressionProcessor;
 	private DefinitionProcessor definitionProcessor;
 
@@ -75,9 +78,11 @@ public final class ModuleProcessor {
 		}
 
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
-		// a mutual dependency between the type system, constant evaluation and expression processing.
-		dataTypeProcessor = new DataTypeProcessor(errorHandler, expressionProcessor); // TODO expression processor is null here (cycle!)
-		expressionProcessor = new ExpressionProcessor(errorHandler, getDefinitions()::get, dataTypeProcessor);
+		// a mutual dependency between the type system, constant evaluation and expression processing. Note the
+		// distinction between dataTypeProcessor and actualDataTypeProcessor used to break the dependency cycle.
+		dataTypeProcessor = t -> actualDataTypeProcessor.processDataType(t);
+		expressionProcessor = new ExpressionProcessorImpl(errorHandler, name -> getDefinitions().get(name), dataTypeProcessor);
+		actualDataTypeProcessor = new DataTypeProcessorImpl(errorHandler, expressionProcessor);
 		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor);
 
 		// process module definitions
@@ -103,8 +108,7 @@ public final class ModuleProcessor {
 		}
 
 
-
-
+		// --- TODO ---
 
 
 		// this object detects duplicate or missing assignments
