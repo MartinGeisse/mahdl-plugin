@@ -26,6 +26,7 @@ public abstract class ProcessedDataType {
 	@NotNull
 	public abstract Family getFamily();
 
+	// TODO replace by static conversion -- not just needed for compile-time constant values!
 	@NotNull
 	public abstract ConstantValue convertConstantValueImplicitly(ConstantValue inputValue);
 
