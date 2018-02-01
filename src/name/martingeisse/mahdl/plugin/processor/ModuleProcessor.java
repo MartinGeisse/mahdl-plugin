@@ -8,14 +8,10 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
-import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
-import name.martingeisse.mahdl.plugin.processor.expression_old.ExpressionTypeChecker;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
-import name.martingeisse.mahdl.plugin.processor.type.FormallyConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +37,9 @@ public final class ModuleProcessor {
 	private final Module module;
 	private final ErrorHandler errorHandler;
 
-	private FormallyConstantExpressionEvaluator formallyConstantExpressionEvaluator;
 	private DataTypeProcessor dataTypeProcessor;
-	private ModuleAnalyzer moduleAnalyzer;
 	private ExpressionProcessor expressionProcessor;
+	private DefinitionProcessor definitionProcessor;
 
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
 //	private RuntimeAssignmentChecker runtimeAssignmentChecker;
@@ -61,7 +56,7 @@ public final class ModuleProcessor {
 
 	@NotNull
 	public Map<String, Named> getDefinitions() {
-		return moduleAnalyzer.getDefinitions();
+		return definitionProcessor.getDefinitions();
 	}
 
 	public void process() {
@@ -81,38 +76,32 @@ public final class ModuleProcessor {
 
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
 		// a mutual dependency between the type system, constant evaluation and expression processing.
-		formallyConstantExpressionEvaluator = new FormallyConstantExpressionEvaluator() {
-
-			@NotNull
-			@Override
-			public ConstantValue evaluate(@NotNull ExtendedExpression expression) {
-				// TODO what about annotations that would be placed in foreign files?
-				return expressionProcessor.process(expression).evaluateFormallyConstant(
-					new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
-			}
-
-			@NotNull
-			@Override
-			public ConstantValue evaluate(@NotNull Expression expression) {
-				// TODO what about annotations that would be placed in foreign files?
-				return expressionProcessor.process(expression).evaluateFormallyConstant(
-					new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
-			}
-
-		};
-		dataTypeProcessor = new DataTypeProcessor(errorHandler, formallyConstantExpressionEvaluator);
-		moduleAnalyzer = new ModuleAnalyzer(errorHandler, dataTypeProcessor, formallyConstantExpressionEvaluator, module);
+		dataTypeProcessor = new DataTypeProcessor(errorHandler, expressionProcessor); // TODO expression processor is null here (cycle!)
 		expressionProcessor = new ExpressionProcessor(errorHandler, getDefinitions()::get, dataTypeProcessor);
+		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor);
 
-		// Process defined constants first. These are mutually order-sensitive, but order-insensitive with respect to
-		// other definitions.
-		moduleAnalyzer.analyzeAndEvaluateConstants();
+		// process module definitions
+		definitionProcessor.processPorts(module.getPortDefinitionGroups());
+		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
+			if (isConstant(implementationItem)) {
+				for (Named definition : definitionProcessor.process(implementationItem)) {
+					Constant constant = (Constant)definition;
+					constant.processInitializer(expressionProcessor);
+					constant.evaluate(new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
+				}
+			}
+		}
+		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
+			if (!isConstant(implementationItem)) {
+				definitionProcessor.process(implementationItem);
+			}
+		}
+		for (Named definition : getDefinitions().values()) {
+			if (definition instanceof SignalLike && !(definition instanceof Constant)) {
+				((SignalLike) definition).processInitializer(expressionProcessor);
+			}
+		}
 
-		// next, analyze other items, but don't process expressions yet
-		moduleAnalyzer.analyzeNonConstants();
-
-		//
-		// TODO
 
 
 
@@ -145,8 +134,17 @@ public final class ModuleProcessor {
 
 	}
 
+	private boolean isConstant(ImplementationItem item) {
+		if (item instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+			SignalLikeKind kind = ((ImplementationItem_SignalLikeDefinitionGroup) item).getKind();
+			return kind instanceof SignalLikeKind_Constant;
+		} else {
+			return false;
+		}
+	}
+
 	private void processDefinition(@NotNull Named item) {
-		// constants have been handled by the constant evaluator already
+		// constants have been handled by the constant evaluator already TODO not true anymore
 		if (item instanceof SignalLike && !(item instanceof Constant)) {
 			SignalLike signalLike = (SignalLike) item;
 			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
