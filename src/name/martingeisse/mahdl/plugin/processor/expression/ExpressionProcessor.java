@@ -427,7 +427,7 @@ public class ExpressionProcessor {
 
 	private ConstantValue evaluateLocalExpressionThatMustBeFormallyConstant(ProcessedExpression expression) {
 		return expression.evaluateFormallyConstant(
-			new ProcessedExpression.FormallyConstantEvaluationContext(localDefinitionResolver, errorHandler));
+			new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
 	}
 
 	private Integer evaluateLocalSmallIntegerExpressionThatMustBeFormallyConstant(ProcessedExpression expression) {

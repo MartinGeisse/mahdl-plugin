@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
+import name.martingeisse.mahdl.plugin.processor.type.FormallyConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,12 +25,17 @@ public final class ModuleAnalyzer {
 
 	private final ErrorHandler errorHandler;
 	private final DataTypeProcessor dataTypeProcessor;
+	private final FormallyConstantExpressionEvaluator formallyConstantExpressionEvaluator;
 	private final Module module;
 	private final Map<String, Named> definitions;
 
-	public ModuleAnalyzer(@NotNull ErrorHandler errorHandler, @NotNull DataTypeProcessor dataTypeProcessor, @NotNull Module module) {
+	public ModuleAnalyzer(@NotNull ErrorHandler errorHandler,
+						  @NotNull DataTypeProcessor dataTypeProcessor,
+						  @NotNull FormallyConstantExpressionEvaluator formallyConstantExpressionEvaluator,
+						  @NotNull Module module) {
 		this.errorHandler = errorHandler;
 		this.dataTypeProcessor = dataTypeProcessor;
+		this.formallyConstantExpressionEvaluator = formallyConstantExpressionEvaluator;
 		this.module = module;
 		this.definitions = new HashMap<>();
 	}
@@ -40,36 +46,48 @@ public final class ModuleAnalyzer {
 	}
 
 	/**
-	 * Registers all constants. This must be done before the actual analysis, and after the constants have been
-	 * evaluated, because all constants -- even those defined later -- are needed in evaluated form for this analyzer
-	 * to work.
+	 * Processes the constant definitions from the module and stores their values. Each constant has an initializer
+	 * that is evaluated and converted to the data type of the constant. Subsequent constants can use the value of
+	 * previous constants to define their data type. Thus, this constant evaluator, its data type processor and its
+	 * expression processor must work in lockstep to define constants and data types. Specifically, for each data type
+	 * being processed, the data type processor must take the up-to-date constant values returned by getDefinitions()
+	 * at the time the data type is being processed into account.
 	 */
-	public final void registerConstants(@NotNull Map<String, ConstantValue> constantValues) {
+	public void analyzeAndEvaluateConstants() {
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
-				ImplementationItem_SignalLikeDefinitionGroup typedImplementationItem = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
-				if (typedImplementationItem.getKind() instanceof SignalLikeKind_Constant) {
-					DataType dataType = typedImplementationItem.getDataType();
+				ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
+				if (signalLike.getKind() instanceof SignalLikeKind_Constant) {
+					DataType dataType = signalLike.getDataType();
 					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
-					for (SignalLikeDefinition signalLikeDefinition : typedImplementationItem.getDefinitions().getAll()) {
+					for (SignalLikeDefinition signalLikeDefinition : signalLike.getDefinitions().getAll()) {
 						PsiElement nameElement;
-						Expression initializer;
+						ExtendedExpression initializer;
+						ConstantValue value;
 						if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
-							SignalLikeDefinition_WithoutInitializer typedDeclaredSignal = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
-							nameElement = typedDeclaredSignal.getIdentifier();
+
+							SignalLikeDefinition_WithoutInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
+							errorHandler.onError(signalLikeDefinition, "constant must have an initializer");
+							nameElement = typedDeclaredSignalLike.getIdentifier();
 							initializer = null;
-						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
-							SignalLikeDefinition_WithInitializer typedDeclaredSignal = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
-							nameElement = typedDeclaredSignal.getIdentifier();
-							initializer = typedDeclaredSignal.getInitializer();
-						} else {
-							continue;
-						}
-						String name = nameElement.getText();
-						ConstantValue value = constantValues.get(name);
-						if (value == null) {
-							errorHandler.onError(signalLikeDefinition, "value for this constant is missing in the constant value map");
 							value = ConstantValue.Unknown.INSTANCE;
+
+						} else if (signalLikeDefinition instanceof SignalLikeDefinition_WithInitializer) {
+
+							SignalLikeDefinition_WithInitializer typedDeclaredSignalLike = (SignalLikeDefinition_WithInitializer) signalLikeDefinition;
+							nameElement = typedDeclaredSignalLike.getIdentifier();
+							initializer = typedDeclaredSignalLike.getInitializer();
+							ConstantValue rawValue = formallyConstantExpressionEvaluator.evaluate(typedDeclaredSignalLike.getInitializer());
+							value = processedDataType.convertConstantValueImplicitly(rawValue);
+							if ((value instanceof ConstantValue.Unknown) && !(rawValue instanceof ConstantValue.Unknown)) {
+								errorHandler.onError(typedDeclaredSignalLike.getInitializer(), "cannot convert value of type " + rawValue.getDataType() + " to type " + processedDataType);
+							}
+
+						} else {
+
+							errorHandler.onError(signalLikeDefinition, "unknown PSI node");
+							continue;
+
 						}
 						add(new Constant(nameElement, dataType, processedDataType, initializer, value));
 					}
@@ -101,7 +119,7 @@ public final class ModuleAnalyzer {
 				}
 				for (SignalLikeDefinition signalLikeDefinition : typedImplementationItem.getDefinitions().getAll()) {
 					LeafPsiElement nameElement;
-					Expression initializer;
+					ExtendedExpression initializer;
 					if (signalLikeDefinition instanceof SignalLikeDefinition_WithoutInitializer) {
 						SignalLikeDefinition_WithoutInitializer typedDeclaredSignal = (SignalLikeDefinition_WithoutInitializer) signalLikeDefinition;
 						nameElement = typedDeclaredSignal.getIdentifier();
@@ -135,7 +153,7 @@ public final class ModuleAnalyzer {
 	@Nullable
 	private SignalLike convertSignalLike(@NotNull ImplementationItem_SignalLikeDefinitionGroup signalLikeDefinitionGroup,
 										 @NotNull LeafPsiElement nameElement,
-										 @Nullable Expression initializer) {
+										 @Nullable ExtendedExpression initializer) {
 		SignalLikeKind kind = signalLikeDefinitionGroup.getKind();
 		DataType dataType = signalLikeDefinitionGroup.getDataType();
 		ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);

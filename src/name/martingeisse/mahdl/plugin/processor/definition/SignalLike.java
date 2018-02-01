@@ -7,6 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.DataType;
 import name.martingeisse.mahdl.plugin.input.psi.Expression;
+import name.martingeisse.mahdl.plugin.input.psi.ExtendedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +19,12 @@ public abstract class SignalLike extends Named {
 
 	private final DataType dataTypeElement;
 	private final ProcessedDataType processedDataType;
-	private final Expression initializer;
+	private final ExtendedExpression initializer;
 
 	public SignalLike(@NotNull PsiElement nameElement,
 					  @NotNull DataType dataTypeElement,
 					  @NotNull ProcessedDataType processedDataType,
-					  @Nullable Expression initializer) {
+					  @Nullable ExtendedExpression initializer) {
 		super(nameElement);
 		this.dataTypeElement = dataTypeElement;
 		this.processedDataType = processedDataType;
@@ -41,7 +42,7 @@ public abstract class SignalLike extends Named {
 	}
 
 	@Nullable
-	public Expression getInitializer() {
+	public ExtendedExpression getInitializer() {
 		return initializer;
 	}
 

@@ -11,8 +11,11 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.constant.ConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
+import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.expression_old.ExpressionTypeChecker;
-import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
+import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
+import name.martingeisse.mahdl.plugin.processor.type.FormallyConstantExpressionEvaluator;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +41,13 @@ public final class ModuleProcessor {
 	private final Module module;
 	private final ErrorHandler errorHandler;
 
-	private ConstantExpressionEvaluator constantExpressionEvaluator;
-	private DataTypeProcessorImpl dataTypeProcessor;
+	private FormallyConstantExpressionEvaluator formallyConstantExpressionEvaluator;
+	private DataTypeProcessor dataTypeProcessor;
 	private ModuleAnalyzer moduleAnalyzer;
-	private Map<String, Named> definitions;
-	private ExpressionTypeChecker expressionTypeChecker;
+	private ExpressionProcessor expressionProcessor;
+
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
-	private RuntimeAssignmentChecker runtimeAssignmentChecker;
+//	private RuntimeAssignmentChecker runtimeAssignmentChecker;
 
 	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
@@ -57,13 +60,8 @@ public final class ModuleProcessor {
 	}
 
 	@NotNull
-	public Map<String, ConstantValue> getConstants() {
-		return constantExpressionEvaluator.getDefinedConstants();
-	}
-
-	@NotNull
 	public Map<String, Named> getDefinitions() {
-		return definitions;
+		return moduleAnalyzer.getDefinitions();
 	}
 
 	public void process() {
@@ -81,21 +79,44 @@ public final class ModuleProcessor {
 			}
 		}
 
-		// TODO even the new expression processor must work in lockstep with the rest here
-		// evaluate constants. The ConstantExpressionEvaluator and the DataTypeProcessor work in lockstep here since
-		// every constant definition may use the constants defined above for its data type.
-		constantExpressionEvaluator = new ConstantExpressionEvaluator(errorHandler, module);
-		dataTypeProcessor = new DataTypeProcessorImpl(errorHandler, constantExpressionEvaluator);
-		constantExpressionEvaluator.processConstantDefinitions(dataTypeProcessor);
+		// Create helper objects. These objects work together, especially during constant definition analysis, due to
+		// a mutual dependency between the type system, constant evaluation and expression processing.
+		formallyConstantExpressionEvaluator = new FormallyConstantExpressionEvaluator() {
 
-		// collect definitions
-		moduleAnalyzer = new ModuleAnalyzer(errorHandler, dataTypeProcessor, module);
-		moduleAnalyzer.registerConstants(constantExpressionEvaluator.getDefinedConstants());
+			@NotNull
+			@Override
+			public ConstantValue evaluate(@NotNull ExtendedExpression expression) {
+				// TODO what about annotations that would be placed in foreign files?
+				return expressionProcessor.process(expression).evaluateFormallyConstant(
+					new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
+			}
+
+			@NotNull
+			@Override
+			public ConstantValue evaluate(@NotNull Expression expression) {
+				// TODO what about annotations that would be placed in foreign files?
+				return expressionProcessor.process(expression).evaluateFormallyConstant(
+					new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
+			}
+
+		};
+		dataTypeProcessor = new DataTypeProcessor(errorHandler, formallyConstantExpressionEvaluator);
+		moduleAnalyzer = new ModuleAnalyzer(errorHandler, dataTypeProcessor, formallyConstantExpressionEvaluator, module);
+		expressionProcessor = new ExpressionProcessor(errorHandler, getDefinitions()::get, dataTypeProcessor);
+
+		// Process defined constants first. These are mutually order-sensitive, but order-insensitive with respect to
+		// other definitions.
+		moduleAnalyzer.analyzeAndEvaluateConstants();
+
+		// next, analyze other items, but don't evaluate anything yet
 		moduleAnalyzer.analyzeNonConstants();
-		definitions = moduleAnalyzer.getDefinitions();
 
-		// this object checks for type errors in expressions and determines their result type
-		expressionTypeChecker = new ExpressionTypeChecker(errorHandler, definitions);
+		//
+		// TODO
+
+
+
+
 
 		// this object detects duplicate or missing assignments
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
@@ -104,8 +125,9 @@ public final class ModuleProcessor {
 		runtimeAssignmentChecker = new RuntimeAssignmentChecker(errorHandler, expressionTypeChecker, definitions);
 
 		// process named definitions
-		for (Named item : definitions.values()) {
+		for (Named item : getDefinitions().values()) {
 			processDefinition(item);
+			inconsistentAssignmentDetector.finishSection();
 		}
 
 		// process do-blocks
@@ -119,7 +141,7 @@ public final class ModuleProcessor {
 		}
 
 		// now check that all ports and signals without initializer have been assigned to
-		inconsistentAssignmentDetector.checkMissingAssignments(definitions.values());
+		inconsistentAssignmentDetector.checkMissingAssignments(getDefinitions().values());
 
 	}
 
