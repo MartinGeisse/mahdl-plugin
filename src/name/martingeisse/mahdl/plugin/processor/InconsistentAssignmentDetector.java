@@ -96,6 +96,8 @@ public final class InconsistentAssignmentDetector {
 		} else if (destination instanceof Expression_InstancePort) {
 			Expression_InstancePort typed = (Expression_InstancePort) destination;
 			handleAssignedToInstancePort(typed.getInstanceName().getText(), typed.getPortName().getText(), typed);
+		} else if (destination != null) {
+			errorHandler.onError(destination, "invalid assignment target");
 		}
 	}
 
