@@ -4,7 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.processor;
 
-import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -18,7 +17,6 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -99,7 +97,7 @@ public final class ModuleProcessor {
 		}
 		for (Named definition : getDefinitions().values()) {
 			if (definition instanceof SignalLike && !(definition instanceof Constant)) {
-				((SignalLike) definition).processInitializer(expressionProcessor);
+				((SignalLike) definition).processExpressions(expressionProcessor);
 			}
 		}
 
@@ -171,28 +169,6 @@ public final class ModuleProcessor {
 			ModuleInstance moduleInstance = (ModuleInstance) item;
 			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
 
-			// resolve the module definition
-			Module resolvedModule;
-			{
-				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
-				if (untypedResolvedModule instanceof Module) {
-					resolvedModule = (Module) untypedResolvedModule;
-				} else {
-					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
-					return;
-				}
-			}
-
-			// build a map of the ports from the module definition
-			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
-			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-					String portName = portDefinition.getName();
-					if (portName != null) {
-						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
-					}
-				}
-			}
 
 			// process port assignments
 			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {

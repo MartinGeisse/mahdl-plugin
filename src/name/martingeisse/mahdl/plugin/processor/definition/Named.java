@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,5 +28,7 @@ public abstract class Named {
 	public final String getName() {
 		return nameElement.getText();
 	}
+
+	public abstract void processExpressions(@NotNull  ExpressionProcessor expressionProcessor);
 
 }
