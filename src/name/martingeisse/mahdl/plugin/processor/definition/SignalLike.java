@@ -52,8 +52,8 @@ public abstract class SignalLike extends Named {
 	@Override
 	public void processExpressions(@NotNull ExpressionProcessor expressionProcessor) {
 		if (initializer != null) {
-			// TODO type conversion!
 			processedInitializer = expressionProcessor.process(initializer);
+			processedInitializer = expressionProcessor.convertImplicitly(processedInitializer, processedDataType);
 		}
 	}
 

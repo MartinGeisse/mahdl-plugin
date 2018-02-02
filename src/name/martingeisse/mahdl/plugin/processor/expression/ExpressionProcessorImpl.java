@@ -444,12 +444,53 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		}
 	}
 
+	@Override
+	public ProcessedExpression convertImplicitly(ProcessedExpression sourceExpression, ProcessedDataType targetType) {
+		ProcessedDataType sourceType = sourceExpression.getDataType();
+
+		// don't add follow-up errors
+		if ((sourceType instanceof ProcessedDataType.Unknown) || (targetType instanceof ProcessedDataType.Unknown)) {
+			return sourceExpression;
+		}
+
+		// check if conversion is needed at all
+		if (sourceType.equals(targetType)) {
+			return sourceExpression;
+		}
+
+		// recognize 0 and 1 as bit literals
+		if (targetType instanceof ProcessedDataType.Bit) {
+			ProcessedExpression bitLiteral = sourceExpression.recognizeBitLiteral();
+			if (bitLiteral != null) {
+				return bitLiteral;
+			}
+		}
+
+		// the only other implicit conversions are integer-to-vector and vector-to-integer
+		try {
+			if (sourceType instanceof ProcessedDataType.Integer) {
+				if (targetType instanceof ProcessedDataType.Vector) {
+					int targetSize = ((ProcessedDataType.Vector) targetType).getSize();
+					return new TypeConversion.IntegerToVector(targetSize, sourceExpression);
+				}
+			} else if (sourceType instanceof ProcessedDataType.Vector) {
+				if (targetType instanceof ProcessedDataType.Integer) {
+					return new TypeConversion.VectorToInteger(sourceExpression);
+				}
+			}
+		} catch (TypeErrorException e) {
+			return error(sourceExpression, "internal error during type conversion");
+		}
+
+		return error(sourceExpression, "cannot convert expression of type " + sourceType + " to type " + targetType);
+	}
+
 	/**
 	 * This method is sometimes called with a sub-expression of the current expression as the error source, in case
 	 * that error can be attributed to that sub-expression. For example, if an operand of an operator has a type
 	 * the operator can't handle, then the error message will be attached to the operand, not the whole binary
 	 * expression.
-	 *
+	 * <p>
 	 * The same error source gets attached to the returned {@link UnknownExpression} as the error source for other
 	 * error messages added later. This is wrong in principle, since those error messages should be attached to the
 	 * whole parent expression instead. However, since the return value right now is an UnknownExpression, no further

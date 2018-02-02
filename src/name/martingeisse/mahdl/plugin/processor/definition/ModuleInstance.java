@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -22,15 +23,18 @@ public final class ModuleInstance extends Named {
 	private final ImplementationItem_ModuleInstance moduleInstanceElement;
 	private final Module moduleElement;
 	private final ImmutableMap<String, PortDefinitionGroup> portNameToPortDefinitionGroup;
+	private final ImmutableMap<String, ProcessedDataType> portNameToProcessedDataType;
 	private ImmutableMap<String, ProcessedExpression> portNameToProcessedExpression;
 
 	public ModuleInstance(@NotNull ImplementationItem_ModuleInstance moduleInstanceElement,
 						  @NotNull Module moduleElement,
-						  @NotNull ImmutableMap<String, PortDefinitionGroup> portNameToPortDefinitionGroup) {
+						  @NotNull ImmutableMap<String, PortDefinitionGroup> portNameToPortDefinitionGroup,
+						  @NotNull ImmutableMap<String, ProcessedDataType> portNameToProcessedDataType) {
 		super(moduleInstanceElement.getInstanceName());
 		this.moduleInstanceElement = moduleInstanceElement;
 		this.moduleElement = moduleElement;
 		this.portNameToPortDefinitionGroup = portNameToPortDefinitionGroup;
+		this.portNameToProcessedDataType = portNameToProcessedDataType;
 	}
 
 	@NotNull
@@ -44,6 +48,10 @@ public final class ModuleInstance extends Named {
 
 	public ImmutableMap<String, PortDefinitionGroup> getPortNameToPortDefinitionGroup() {
 		return portNameToPortDefinitionGroup;
+	}
+
+	public ImmutableMap<String, ProcessedDataType> getPortNameToProcessedDataType() {
+		return portNameToProcessedDataType;
 	}
 
 	public ImmutableMap<String, ProcessedExpression> getPortNameToProcessedExpression() {
@@ -61,8 +69,13 @@ public final class ModuleInstance extends Named {
 				expressionProcessor.error("unknown port: '" + portName + "'");
 				continue;
 			}
+			ProcessedDataType portType = portNameToProcessedDataType.get(portName);
+			if (portType == null) {
+				expressionProcessor.error("could not determine data type for port '" + portName + "'");
+				continue;
+			}
 			if (group.getDirection() instanceof PortDirection_In) {
-				// TODO type conversion!
+				processedExpression = expressionProcessor.convertImplicitly(processedExpression, portType);
 			} else {
 				// TODO type check!
 			}

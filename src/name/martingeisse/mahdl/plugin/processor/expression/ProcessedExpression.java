@@ -3,6 +3,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
@@ -37,6 +38,19 @@ public abstract class ProcessedExpression {
 		} else {
 			return value;
 		}
+	}
+
+	/**
+	 * If this expression can be used as a bit literal, returns the corresponding expression that *is* a bit literal.
+	 * Otherwise returns null.
+	 *
+	 * The only expressions that can be used as a bit literal (except bit literals themselves) are the integer literals
+	 * 0 and 1. (Any computed integer that is 0 or 1, even if formally constant, cannot be used as a bit literal).
+	 * Before turning an integer literal into a bit literal, make sure you need a bit and not an integer!
+	 */
+	@Nullable
+	public ProcessedExpression recognizeBitLiteral() {
+		return null;
 	}
 
 	protected abstract ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context);
