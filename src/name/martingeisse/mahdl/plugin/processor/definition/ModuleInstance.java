@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableMap;
-import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
@@ -66,18 +65,26 @@ public final class ModuleInstance extends Named {
 			ProcessedExpression processedExpression = expressionProcessor.process(connection.getExpression());
 			PortDefinitionGroup group = portNameToPortDefinitionGroup.get(portName);
 			if (group == null) {
-				expressionProcessor.error("unknown port: '" + portName + "'");
+				expressionProcessor.getErrorHandler().onError(connection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
 				continue;
 			}
 			ProcessedDataType portType = portNameToProcessedDataType.get(portName);
 			if (portType == null) {
-				expressionProcessor.error("could not determine data type for port '" + portName + "'");
+				expressionProcessor.getErrorHandler().onError(connection.getPortName().getIdentifier(), "could not determine data type for port '" + portName + "'");
 				continue;
 			}
 			if (group.getDirection() instanceof PortDirection_In) {
 				processedExpression = expressionProcessor.convertImplicitly(processedExpression, portType);
 			} else {
-				// TODO type check!
+				if (!(processedExpression.getDataType() instanceof ProcessedDataType.Unknown)) {
+					if (!(portType instanceof ProcessedDataType.Unknown)) {
+						if (!processedExpression.getDataType().equals(portType)) {
+							expressionProcessor.getErrorHandler().onError(connection.getExpression(), "cannot connect port of type " +
+								portType + " to expression of type " + processedExpression.getDataType());
+							continue;
+						}
+					}
+				}
 			}
 			portNameToProcessedExpression.put(portName, processedExpression);
 		}

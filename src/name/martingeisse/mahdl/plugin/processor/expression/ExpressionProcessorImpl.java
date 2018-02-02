@@ -510,4 +510,8 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		return error(processedExpression.getErrorSource(), message);
 	}
 
+	public ErrorHandler getErrorHandler() {
+		return errorHandler;
+	}
+
 }

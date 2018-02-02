@@ -127,16 +127,19 @@ public final class DefinitionProcessor {
 
 			// build a map of the ports from the module definition
 			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
+			Map<String, ProcessedDataType> portNameToProcessedDataType = new HashMap<>();
 			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 					String portName = portDefinition.getName();
 					if (portName != null) {
 						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+						portNameToProcessedDataType.put(portName, dataTypeProcessor.processDataType(portDefinitionGroup.getDataType()));
 					}
 				}
 			}
 
-			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(portNameToDefinitionGroup)));
+			add(new ModuleInstance(moduleInstanceElement, resolvedModule,
+				ImmutableMap.copyOf(portNameToDefinitionGroup), ImmutableMap.copyOf(portNameToProcessedDataType)));
 		}
 	}
 

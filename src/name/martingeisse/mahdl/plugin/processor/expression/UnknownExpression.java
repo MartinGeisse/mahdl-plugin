@@ -16,4 +16,9 @@ public final class UnknownExpression extends ProcessedExpression {
 		super(errorSource, ProcessedDataType.Unknown.INSTANCE);
 	}
 
+	@Override
+	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+		return ConstantValue.Unknown.INSTANCE;
+	}
+
 }

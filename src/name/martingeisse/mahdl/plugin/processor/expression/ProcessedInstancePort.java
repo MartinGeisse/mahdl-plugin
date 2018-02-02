@@ -30,4 +30,9 @@ public class ProcessedInstancePort extends ProcessedExpression {
 		return portName;
 	}
 
+	@Override
+	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+		return context.notConstant(this);
+	}
+
 }
