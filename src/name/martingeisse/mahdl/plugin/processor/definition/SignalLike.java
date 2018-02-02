@@ -51,6 +51,7 @@ public abstract class SignalLike extends Named {
 
 	public void processInitializer(ExpressionProcessor expressionProcessor) {
 		if (initializer != null) {
+			// TODO type conversion!
 			processedInitializer = expressionProcessor.process(initializer);
 		}
 	}

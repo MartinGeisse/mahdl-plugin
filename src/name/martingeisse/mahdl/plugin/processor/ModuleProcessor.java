@@ -83,17 +83,13 @@ public final class ModuleProcessor {
 		dataTypeProcessor = t -> actualDataTypeProcessor.processDataType(t);
 		expressionProcessor = new ExpressionProcessorImpl(errorHandler, name -> getDefinitions().get(name), dataTypeProcessor);
 		actualDataTypeProcessor = new DataTypeProcessorImpl(errorHandler, expressionProcessor);
-		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor);
+		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor, expressionProcessor);
 
 		// process module definitions
 		definitionProcessor.processPorts(module.getPortDefinitionGroups());
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			if (isConstant(implementationItem)) {
-				for (Named definition : definitionProcessor.process(implementationItem)) {
-					Constant constant = (Constant)definition;
-					constant.processInitializer(expressionProcessor);
-					constant.evaluate(new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
-				}
+				definitionProcessor.process(implementationItem);
 			}
 		}
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
@@ -148,55 +144,46 @@ public final class ModuleProcessor {
 	}
 
 	private void processDefinition(@NotNull Named item) {
-		// constants have been handled by the constant evaluator already TODO not true anymore
-		if (item instanceof SignalLike && !(item instanceof Constant)) {
+
+		// TODO fold constant sub-expressions.
+		// This implicitly also removes all usages of defined constants, so any later processing stage doesn't have to
+		// deal with them anymore (in type specifiers, they are already gone
+		// due to the way ProcessedDataType works).
+
+		if (item instanceof SignalLike) {
 			SignalLike signalLike = (SignalLike) item;
 			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
-			if (dataTypeFamily == ProcessedDataType.Family.UNKNOWN) {
-				// don't complain about type errors if we don't even know the type -- in that case,
-				// the reason why we don't know the type already appears as an error
-				return;
-			}
-			allowedDataTypeCheck:
-			{
-				String usage;
-				boolean valid;
-				if (item instanceof Port) {
-					usage = "ports";
-					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR;
-				} else if (item instanceof Signal || item instanceof Register) {
-					usage = "signals";
-					valid = dataTypeFamily == ProcessedDataType.Family.BIT || dataTypeFamily == ProcessedDataType.Family.VECTOR || dataTypeFamily == ProcessedDataType.Family.MEMORY;
-				} else {
-					break allowedDataTypeCheck;
+			if (item instanceof Port) {
+				if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
+					dataTypeFamily != ProcessedDataType.Family.BIT &&
+					dataTypeFamily != ProcessedDataType.Family.VECTOR) {
+					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for ports");
 				}
-				if (!valid) {
-					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for " + usage);
+			} else if (item instanceof Signal || item instanceof Register) {
+				if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
+					dataTypeFamily != ProcessedDataType.Family.BIT &&
+					dataTypeFamily != ProcessedDataType.Family.VECTOR &&
+					dataTypeFamily != ProcessedDataType.Family.MEMORY) {
+					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for signals and registers");
 				}
-			}
-			if (signalLike.getInitializer() != null) {
-				signalLike.processInitializer(expressionProcessor);
-				if
-				// TODO: if the initializer is constant, we should try to convert that value to the signalLike's type.
-				// Converting a constant value can handle a broader range of types than a run-time conversion.
-				// For example, a constant integer can be assigned to a vector signalLike if the integer fits into
-				// the vector size, but at runtime this is forbidden because integers are.
-				// TODO use tryEvaluateConstantExpression() for that
-//					ProcessedDataType initializerDataType = expressionTypeChecker.check(signalLike.getInitializer());
-//					checkRuntimeAssignment(signalLike.getInitializer(), signalLike.getProcessedDataType(), initializerDataType);
 			}
 		} else if (item instanceof ModuleInstance) {
 			ModuleInstance moduleInstance = (ModuleInstance) item;
-			String instanceName = moduleInstance.getName();
 			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
-			PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+
+			// resolve the module definition
 			Module resolvedModule;
-			if (untypedResolvedModule instanceof Module) {
-				resolvedModule = (Module) untypedResolvedModule;
-			} else {
-				errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
-				resolvedModule = null;
+			{
+				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+				if (untypedResolvedModule instanceof Module) {
+					resolvedModule = (Module) untypedResolvedModule;
+				} else {
+					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
+					return;
+				}
 			}
+
+			// build a map of the ports from the module definition
 			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
 			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
@@ -206,25 +193,32 @@ public final class ModuleProcessor {
 					}
 				}
 			}
+
+			// process port assignments
 			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
 				String portName = portConnection.getPortName().getIdentifier().getText();
-				inconsistentAssignmentDetector.handleAssignedToInstancePort(instanceName, portName, portConnection.getPortName());
 				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
 				if (portDefinitionGroup == null) {
 					errorHandler.onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
-				} else {
-					// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-					ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
-					Expression expression = portConnection.getExpression();
-					ProcessedDataType expressionType = expressionTypeChecker.checkExpression(expression);
-					if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+					continue;
+				}
+
+				// --- TODO below ---
+				// TODO perform implicit type conversion
+				// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
+				ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+				Expression expression = portConnection.getExpression();
+				ProcessedDataType expressionType = expressionTypeChecker.checkExpression(expression);
+				if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance.getName(), portName, portConnection.getPortName());
 //							checkRuntimeAssignment(expression, portType, expressionType);
-					} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+				} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
 //							checkRuntimeAssignment(expression, expressionType, portType);
 //							checkLValue(expression, true, false);
-					}
 				}
+
 			}
+
 		}
 	}
 

@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
@@ -14,7 +13,6 @@ import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,10 +53,25 @@ public final class DefinitionProcessor {
 		}
 	}
 
-	// returns the list of new definitions and also adds them to the definition map
-	@NotNull
-	public List<Named> process(ImplementationItem implementationItem) {
-		List<Named> result = new ArrayList<>();
+	/**
+	 * Processes the specified implementation item to obtain named definitions and adds them to the definition map
+	 * stored in this processor.
+	 *
+	 * Any definition that is a constant gets its initializer processed and evaluated. Constants used in the initializer
+	 * must be present in the definition map. If the current implementation item contains multiple constants, then their
+	 * initializers may use constants that appear earlier in the current implementation item.
+	 *
+	 * Any signal-like definitions that are not constants do not get their initializer processed yet -- that must be
+	 * done later by the caller. This allows the current item's initializers to use definitions that only appear in
+	 * later implementation items.
+	 *
+	 * Usage note: This method must first be called for all constants in the order they appear in the module, then for
+	 * all non-constants (in any order). The former ensures that each constant is available for all constants appearing
+	 * later. The latter ensures that the type specifiers for non-constants can use constants defined later (TODO is
+	 * this is a good idea? probably -- we don't want to enforce that all constants are defined at the top; we only
+	 * demand the mutual ordering of constants because it doesn't work otherwise)
+	 */
+	public void process(ImplementationItem implementationItem) {
 		if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
 			ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 			SignalLikeKind kind = signalLike.getKind();
@@ -82,45 +95,26 @@ public final class DefinitionProcessor {
 					continue;
 				}
 
-				// build the definition
-				Named definition;
+				// add the definition
 				if (kind instanceof SignalLikeKind_Constant) {
 					Constant constant = new Constant(nameElement, dataType, processedDataType, initializer);
-					ConstantValue value;
 					if (initializer == null) {
 						errorHandler.onError(signalLikeDefinition, "constant must have an initializer");
-						value = ConstantValue.Unknown.INSTANCE;
 					} else {
 						constant.processInitializer(expressionProcessor);
 						constant.evaluate(new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
-
-						// TODO --- convert value
-						// TODO value = processedDataType.convertConstantValueImplicitly(rawValue);
-						// TODO if ((value instanceof ConstantValue.Unknown) && !(rawValue instanceof ConstantValue.Unknown)) {
-						// TODO 	errorHandler.onError(initializer, "cannot convert value of type " + rawValue.getDataType() + " to type " + processedDataType);
-						// TODO }
-
 					}
-					definition = constant;
+					add(constant);
 				} else if (kind instanceof SignalLikeKind_Signal) {
-					definition = new Signal(nameElement, dataType, processedDataType, initializer);
+					add(new Signal(nameElement, dataType, processedDataType, initializer));
 				} else if (kind instanceof SignalLikeKind_Register) {
-					definition = new Register(nameElement, dataType, processedDataType, initializer);
-				} else {
-					continue;
+					add(new Register(nameElement, dataType, processedDataType, initializer));
 				}
-
-				// add the definition both to the current result and the definition map
-				add(definition);
-				result.add(definition);
 
 			}
 		} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-			ModuleInstance moduleInstance = new ModuleInstance((ImplementationItem_ModuleInstance) implementationItem);
-			add(moduleInstance);
-			result.add(moduleInstance);
+			add(new ModuleInstance((ImplementationItem_ModuleInstance) implementationItem));
 		}
-		return result;
 	}
 
 	private void add(@NotNull Named element) {
