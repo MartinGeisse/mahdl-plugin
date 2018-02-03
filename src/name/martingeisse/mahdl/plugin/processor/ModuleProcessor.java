@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.processor;
 
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -43,7 +44,6 @@ public final class ModuleProcessor {
 	private DefinitionProcessor definitionProcessor;
 
 	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
-//	private RuntimeAssignmentChecker runtimeAssignmentChecker;
 
 	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
@@ -107,9 +107,6 @@ public final class ModuleProcessor {
 
 		// this object detects duplicate or missing assignments
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
-
-		// this object checks run-time assignments and detects type errors and assignment to non-L-values
-		runtimeAssignmentChecker = new RuntimeAssignmentChecker(errorHandler, expressionTypeChecker, definitions);
 
 		// process named definitions
 		for (Named item : getDefinitions().values()) {
@@ -247,6 +244,53 @@ public final class ModuleProcessor {
 		}
 		if (!(processedCondition.getDataType() instanceof ProcessedDataType.Unknown) && !(processedCondition.getDataType() instanceof ProcessedDataType.Bit)) {
 			errorHandler.onError(condition, "condition must be of type bit");
+		}
+	}
+
+	/**
+	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
+	 * is allowed to be a continuous destination and/or or a clocked destination.
+	 */
+	private void checkLValue(@NotNull Expression expression, boolean allowContinuous, boolean allowClocked) {
+		if (expression instanceof Expression_Identifier) {
+			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
+			String identifierText = identifierElement.getText();
+			Named definition = getDefinitions().get(identifierText);
+			if (definition != null) {
+				// undefined symbols are already marked by the ExpressionTypeChecker
+				if (definition instanceof Port) {
+					PortDirection direction = ((Port) definition).getDirectionElement();
+					if (!(direction instanceof PortDirection_Out)) {
+						errorHandler.onError(expression, "input port " + definition.getName() + " cannot be assigned to");
+					} else if (!allowContinuous) {
+						errorHandler.onError(expression, "continuous assignment not allowed in this context");
+					}
+				} else if (definition instanceof Signal) {
+					if (!allowContinuous) {
+						errorHandler.onError(expression, "continuous assignment not allowed in this context");
+					}
+				} else if (definition instanceof Register) {
+					if (!allowClocked) {
+						errorHandler.onError(expression, "clocked assignment not allowed in this context");
+					}
+				} else if (definition instanceof Constant) {
+					errorHandler.onError(expression, "cannot assign to constant");
+				}
+			}
+		} else if (expression instanceof Expression_IndexSelection) {
+			checkLValue(((Expression_IndexSelection) expression).getContainer(), allowContinuous, allowClocked);
+		} else if (expression instanceof Expression_RangeSelection) {
+			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
+		} else if (expression instanceof Expression_InstancePort) {
+			// TODO
+		} else if (expression instanceof Expression_BinaryConcat) {
+			Expression_BinaryConcat concat = (Expression_BinaryConcat) expression;
+			checkLValue(concat.getLeftOperand(), allowContinuous, allowClocked);
+			checkLValue(concat.getRightOperand(), allowContinuous, allowClocked);
+		} else if (expression instanceof Expression_Parenthesized) {
+			checkLValue(((Expression_Parenthesized) expression).getExpression(), allowContinuous, allowClocked);
+		} else {
+			errorHandler.onError(expression, "expression cannot be assigned to");
 		}
 	}
 

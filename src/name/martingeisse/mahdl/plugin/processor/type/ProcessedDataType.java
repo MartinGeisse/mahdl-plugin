@@ -4,7 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.processor.type;
 
-import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,10 +24,6 @@ public abstract class ProcessedDataType {
 
 	@NotNull
 	public abstract Family getFamily();
-
-	// TODO replace by static conversion -- not just needed for compile-time constant values!
-	@NotNull
-	public abstract ConstantValue convertConstantValueImplicitly(ConstantValue inputValue);
 
 	public static final class Unknown extends ProcessedDataType {
 
@@ -53,12 +48,6 @@ public abstract class ProcessedDataType {
 		@NotNull
 		public Family getFamily() {
 			return Family.UNKNOWN;
-		}
-
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			return ConstantValue.Unknown.INSTANCE;
 		}
 
 	}
@@ -86,12 +75,6 @@ public abstract class ProcessedDataType {
 		@NotNull
 		public Family getFamily() {
 			return Family.BIT;
-		}
-
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			return inputValue instanceof ConstantValue.Bit ? inputValue : ConstantValue.Unknown.INSTANCE;
 		}
 
 	}
@@ -132,30 +115,6 @@ public abstract class ProcessedDataType {
 		@NotNull
 		public Family getFamily() {
 			return Family.VECTOR;
-		}
-
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			if (inputValue instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vector = (ConstantValue.Vector) inputValue;
-				if (vector.getSize() == size) {
-					return inputValue;
-				} else {
-					// no automatic truncating because it just causes bugs, and no automatic expansion because we
-					// don't know how to fill (e.g. could be zero-extend, one-extend, sign-extend, ...)
-					return ConstantValue.Unknown.INSTANCE;
-				}
-			} else if (inputValue instanceof ConstantValue.Integer) {
-				ConstantValue.Integer integer = (ConstantValue.Integer) inputValue;
-				if (integer.getValue().bitLength() > size) {
-					// no automatic truncating
-					return ConstantValue.Unknown.INSTANCE;
-				}
-				return new ConstantValue.Vector(size, integer.getValue());
-			} else {
-				return ConstantValue.Unknown.INSTANCE;
-			}
 		}
 
 	}
@@ -202,18 +161,6 @@ public abstract class ProcessedDataType {
 			return Family.MEMORY;
 		}
 
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			if (inputValue instanceof ConstantValue.Memory) {
-				ConstantValue.Memory memory = (ConstantValue.Memory) inputValue;
-				if (memory.getFirstSize() == firstSize && memory.getSecondSize() == secondSize) {
-					return memory;
-				}
-			}
-			return ConstantValue.Unknown.INSTANCE;
-		}
-
 	}
 
 	public static final class Integer extends ProcessedDataType {
@@ -241,16 +188,6 @@ public abstract class ProcessedDataType {
 			return Family.INTEGER;
 		}
 
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			if (inputValue instanceof ConstantValue.Integer) {
-				return inputValue;
-			} else {
-				return ConstantValue.Unknown.INSTANCE;
-			}
-		}
-
 	}
 
 	public static final class Text extends ProcessedDataType {
@@ -276,16 +213,6 @@ public abstract class ProcessedDataType {
 		@NotNull
 		public Family getFamily() {
 			return Family.TEXT;
-		}
-
-		@Override
-		@NotNull
-		public ConstantValue convertConstantValueImplicitly(ConstantValue inputValue) {
-			if (inputValue instanceof ConstantValue.Text) {
-				return inputValue;
-			} else {
-				return ConstantValue.Unknown.INSTANCE;
-			}
 		}
 
 	}

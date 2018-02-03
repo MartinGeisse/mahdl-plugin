@@ -19,7 +19,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This object detects multiple or missing assignments to signals. It is not concerned with type safety.
+ * This object detects multiple or missing assignments to signals and registers. It is not concerned with type safety,
+ * nor does it check whether a signal or register may be assigned to at all.
  */
 public final class InconsistentAssignmentDetector {
 
