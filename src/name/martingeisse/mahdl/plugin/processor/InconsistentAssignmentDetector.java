@@ -98,7 +98,8 @@ public final class InconsistentAssignmentDetector {
 			Expression_InstancePort typed = (Expression_InstancePort) destination;
 			handleAssignedToInstancePort(typed.getInstanceName().getText(), typed.getPortName().getText(), typed);
 		} else if (destination != null) {
-			errorHandler.onError(destination, "invalid assignment target");
+			// TODO this probably generated redundant error messages since checkLValue() also does the same
+			errorHandler.onError(destination, "expression cannot be assigned to");
 		}
 	}
 

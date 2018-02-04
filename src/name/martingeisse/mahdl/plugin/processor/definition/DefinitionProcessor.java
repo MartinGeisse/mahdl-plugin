@@ -45,8 +45,13 @@ public final class DefinitionProcessor {
 		for (PortDefinitionGroup portDefinitionGroup : psiPortList.getAll()) {
 			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 				DataType dataType = portDefinitionGroup.getDataType();
-				Port port = new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, dataTypeProcessor.processDataType(dataType));
-				add(port);
+				ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
+				ProcessedDataType.Family family = processedDataType.getFamily();
+				if (family != ProcessedDataType.Family.UNKNOWN && family != ProcessedDataType.Family.BIT && family != ProcessedDataType.Family.VECTOR) {
+					errorHandler.onError(dataType, family.getDisplayString() + " type not allowed for ports");
+					processedDataType = ProcessedDataType.Unknown.INSTANCE;
+				}
+				add(new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, processedDataType));
 			}
 		}
 	}
@@ -54,15 +59,15 @@ public final class DefinitionProcessor {
 	/**
 	 * Processes the specified implementation item to obtain named definitions and adds them to the definition map
 	 * stored in this processor.
-	 *
+	 * <p>
 	 * Any definition that is a constant gets its initializer processed and evaluated. Constants used in the initializer
 	 * must be present in the definition map. If the current implementation item contains multiple constants, then their
 	 * initializers may use constants that appear earlier in the current implementation item.
-	 *
+	 * <p>
 	 * Any signal-like definitions that are not constants do not get their initializer processed yet -- that must be
 	 * done later by the caller. This allows the current item's initializers to use definitions that only appear in
 	 * later implementation items.
-	 *
+	 * <p>
 	 * Usage note: This method must first be called for all constants in the order they appear in the module, then for
 	 * all non-constants (in any order). The former ensures that each constant is available for all constants appearing
 	 * later. The latter ensures that the type specifiers for non-constants can use constants defined later (TODO is
@@ -75,6 +80,7 @@ public final class DefinitionProcessor {
 			SignalLikeKind kind = signalLike.getKind();
 			DataType dataType = signalLike.getDataType();
 			ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
+			ProcessedDataType.Family dataTypeFamily = processedDataType.getFamily();
 			for (SignalLikeDefinition signalLikeDefinition : signalLike.getDefinitions().getAll()) {
 
 				// extract name element and initializer
@@ -103,15 +109,24 @@ public final class DefinitionProcessor {
 						constant.evaluate(new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler));
 					}
 					add(constant);
-				} else if (kind instanceof SignalLikeKind_Signal) {
-					add(new Signal(nameElement, dataType, processedDataType, initializer));
-				} else if (kind instanceof SignalLikeKind_Register) {
-					add(new Register(nameElement, dataType, processedDataType, initializer));
+				} else if (kind instanceof SignalLikeKind_Signal || kind instanceof SignalLikeKind_Register) {
+					if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
+						dataTypeFamily != ProcessedDataType.Family.BIT &&
+						dataTypeFamily != ProcessedDataType.Family.VECTOR &&
+						dataTypeFamily != ProcessedDataType.Family.MEMORY) {
+						errorHandler.onError(dataType, dataTypeFamily.getDisplayString() + " type not allowed for signals and registers");
+						processedDataType = ProcessedDataType.Unknown.INSTANCE;
+					}
+					if (kind instanceof SignalLikeKind_Signal) {
+						add(new Signal(nameElement, dataType, processedDataType, initializer));
+					} else {
+						add(new Register(nameElement, dataType, processedDataType, initializer));
+					}
 				}
 
 			}
 		} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-			ImplementationItem_ModuleInstance moduleInstanceElement = (ImplementationItem_ModuleInstance)implementationItem;
+			ImplementationItem_ModuleInstance moduleInstanceElement = (ImplementationItem_ModuleInstance) implementationItem;
 
 			// resolve the module definition
 			Module resolvedModule;
@@ -133,6 +148,7 @@ public final class DefinitionProcessor {
 					String portName = portDefinition.getName();
 					if (portName != null) {
 						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
 						portNameToProcessedDataType.put(portName, dataTypeProcessor.processDataType(portDefinitionGroup.getDataType()));
 					}
 				}

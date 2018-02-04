@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.processor;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
@@ -97,13 +98,9 @@ public final class ModuleProcessor {
 		}
 		for (Named definition : getDefinitions().values()) {
 			if (definition instanceof SignalLike && !(definition instanceof Constant)) {
-				((SignalLike) definition).processExpressions(expressionProcessor);
+				definition.processExpressions(expressionProcessor);
 			}
 		}
-
-
-		// --- TODO ---
-
 
 		// this object detects duplicate or missing assignments
 		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
@@ -146,50 +143,41 @@ public final class ModuleProcessor {
 		// due to the way ProcessedDataType works).
 
 		if (item instanceof SignalLike) {
+
+			// Inconsistencies in the initializer vs. other assignments:
+			// - ports cannot have an initializer
+			// - constants cannot be assigned to other than the initializer (checkLValue() ensures that already)
+			// - signals must be checked here
+			// - for registers, the initializer does not conflict with other assignments
 			SignalLike signalLike = (SignalLike) item;
-			ProcessedDataType.Family dataTypeFamily = signalLike.getProcessedDataType().getFamily();
-			if (item instanceof Port) {
-				if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
-					dataTypeFamily != ProcessedDataType.Family.BIT &&
-					dataTypeFamily != ProcessedDataType.Family.VECTOR) {
-					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for ports");
-				}
-			} else if (item instanceof Signal || item instanceof Register) {
-				if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
-					dataTypeFamily != ProcessedDataType.Family.BIT &&
-					dataTypeFamily != ProcessedDataType.Family.VECTOR &&
-					dataTypeFamily != ProcessedDataType.Family.MEMORY) {
-					errorHandler.onError(signalLike.getDataTypeElement(), dataTypeFamily.getDisplayString() + " type not allowed for signals and registers");
-				}
+			if (signalLike instanceof Signal && signalLike.getInitializer() != null) {
+				inconsistentAssignmentDetector.handleAssignedToSignalLike(signalLike.getName(), signalLike.getInitializer());
 			}
+
 		} else if (item instanceof ModuleInstance) {
 			ModuleInstance moduleInstance = (ModuleInstance) item;
 			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
 
-
 			// process port assignments
 			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
 				String portName = portConnection.getPortName().getIdentifier().getText();
-				PortDefinitionGroup portDefinitionGroup = portNameToDefinitionGroup.get(portName);
+				PortDefinitionGroup portDefinitionGroup = moduleInstance.getPortNameToPortDefinitionGroup().get(portName);
 				if (portDefinitionGroup == null) {
-					errorHandler.onError(portConnection.getPortName(), "unknown port '" + portName + "' in module '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText());
+					// this error has already been reported by the ModuleInstance
 					continue;
 				}
-
-				// --- TODO below ---
-				// TODO perform implicit type conversion
-				// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-				ProcessedDataType portType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
-				Expression expression = portConnection.getExpression();
-				ProcessedDataType expressionType = expressionTypeChecker.checkExpression(expression);
 				if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
 					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance.getName(), portName, portConnection.getPortName());
-//							checkRuntimeAssignment(expression, portType, expressionType);
 				} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-//							checkRuntimeAssignment(expression, expressionType, portType);
-//							checkLValue(expression, true, false);
+					ExtendedExpression expression = portConnection.getExpression();
+					if (!(expression instanceof ExtendedExpression_Normal)) {
+						errorHandler.onError(expression, "expression too complex as target of an output port");
+					} else {
+						Expression simpleExpression = ((ExtendedExpression_Normal) expression).getExpression();
+						checkLValue(simpleExpression, true, false);
+						inconsistentAssignmentDetector.handleAssignedTo(simpleExpression);
+					}
 				}
-
 			}
 
 		}
@@ -250,6 +238,8 @@ public final class ModuleProcessor {
 	/**
 	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
 	 * is allowed to be a continuous destination and/or or a clocked destination.
+	 *
+	 * TODO move to DefinitionProcessor as part of processing module instances and do-blocks?
 	 */
 	private void checkLValue(@NotNull Expression expression, boolean allowContinuous, boolean allowClocked) {
 		if (expression instanceof Expression_Identifier) {
@@ -282,6 +272,11 @@ public final class ModuleProcessor {
 		} else if (expression instanceof Expression_RangeSelection) {
 			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
 		} else if (expression instanceof Expression_InstancePort) {
+			Expression_InstancePort instancePortExpression = (Expression_InstancePort)expression;
+			String instanceName = instancePortExpression.getInstanceName().getIdentifier().getText();
+			Named untypedInstanceDefinition = getDefinitions().get(instanceName);
+
+
 			// TODO
 		} else if (expression instanceof Expression_BinaryConcat) {
 			Expression_BinaryConcat concat = (Expression_BinaryConcat) expression;
