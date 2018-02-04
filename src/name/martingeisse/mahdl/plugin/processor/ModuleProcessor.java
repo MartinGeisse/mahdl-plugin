@@ -124,6 +124,10 @@ public final class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		inconsistentAssignmentDetector.checkMissingAssignments(getDefinitions().values());
 
+		// TODO fold constant sub-expressions.
+		// This implicitly also removes all usages of defined constants, so any later processing stage doesn't have to
+		// deal with them anymore (in type specifiers, they are already gone due to the way ProcessedDataType works).
+
 	}
 
 	private boolean isConstant(ImplementationItem item) {
@@ -136,12 +140,6 @@ public final class ModuleProcessor {
 	}
 
 	private void processDefinition(@NotNull Named item) {
-
-		// TODO fold constant sub-expressions.
-		// This implicitly also removes all usages of defined constants, so any later processing stage doesn't have to
-		// deal with them anymore (in type specifiers, they are already gone
-		// due to the way ProcessedDataType works).
-
 		if (item instanceof SignalLike) {
 
 			// Inconsistencies in the initializer vs. other assignments:

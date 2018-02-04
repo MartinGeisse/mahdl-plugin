@@ -140,22 +140,53 @@ public final class DefinitionProcessor {
 				}
 			}
 
-			// build a map of the ports from the module definition
-			Map<String, PortDefinitionGroup> portNameToDefinitionGroup = new HashMap<>();
+			// build a map of the port definitions from the module definition
+			Map<String, PortDirection> portNameToDirection = new HashMap<>();
 			Map<String, ProcessedDataType> portNameToProcessedDataType = new HashMap<>();
 			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 					String portName = portDefinition.getName();
 					if (portName != null) {
-						portNameToDefinitionGroup.put(portName, portDefinitionGroup);
+
+						// process direction
+						PortDirection direction;
+						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+							direction = PortDirection.IN;
+						} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+							direction = PortDirection.OUT;
+						} else {
+							errorHandler.onError(portDefinitionGroup.getDirection(), "unknown direction");
+							continue;
+						}
+						portNameToDirection.put(portName, direction);
+
+						// process data type
 						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-						portNameToProcessedDataType.put(portName, dataTypeProcessor.processDataType(portDefinitionGroup.getDataType()));
+						ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+						portNameToProcessedDataType.put(portName, processedDataType);
+
 					}
 				}
 			}
 
-			add(new ModuleInstance(moduleInstanceElement, resolvedModule,
-				ImmutableMap.copyOf(portNameToDefinitionGroup), ImmutableMap.copyOf(portNameToProcessedDataType)));
+			// build port connections
+			Map<String, PortConnection> portConnections = new HashMap<>();
+			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection rawPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
+				String portName = rawPortConnection.getName();
+				PortDirection direction = portNameToDirection.get(portName);
+				if (direction == null) {
+					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
+					continue;
+				}
+				ProcessedDataType portType = portNameToProcessedDataType.get(portName);
+				if (portType == null) {
+					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "could not determine data type for port '" + portName + "'");
+					portType = ProcessedDataType.Unknown.INSTANCE;
+				}
+				portConnections.put(portName, new PortConnection(portName, direction, portType, rawPortConnection.getExpression()));
+			}
+
+			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(portConnections)));
 		}
 	}
 
