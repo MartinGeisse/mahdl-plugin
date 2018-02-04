@@ -3,6 +3,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,19 +11,24 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ProcessedExpression {
 
+	@NotNull
 	private final PsiElement errorSource;
+
+	@NotNull
 	private final ProcessedDataType dataType;
 
-	public ProcessedExpression(PsiElement errorSource, ProcessedDataType dataType) {
+	public ProcessedExpression(@NotNull PsiElement errorSource, @NotNull ProcessedDataType dataType) {
 		this.errorSource = errorSource;
 		this.dataType = dataType;
 	}
 
-	public PsiElement getErrorSource() {
+	@NotNull
+	public final PsiElement getErrorSource() {
 		return errorSource;
 	}
 
-	public ProcessedDataType getDataType() {
+	@NotNull
+	public final ProcessedDataType getDataType() {
 		return dataType;
 	}
 

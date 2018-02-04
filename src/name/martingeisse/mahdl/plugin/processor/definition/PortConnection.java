@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.processor.definition;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.ExtendedExpression;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
@@ -16,13 +17,15 @@ import org.jetbrains.annotations.NotNull;
 public final class PortConnection {
 
 	private final String portName;
+	private final PsiElement portNameElement;
 	private final PortDirection portDirection;
 	private final ProcessedDataType portType;
 	private final ExtendedExpression expressionElement;
 	private ProcessedExpression processedExpression;
 
-	public PortConnection(String portName, PortDirection portDirection, ProcessedDataType portType, ExtendedExpression expressionElement) {
+	public PortConnection(String portName, PsiElement portNameElement, PortDirection portDirection, ProcessedDataType portType, ExtendedExpression expressionElement) {
 		this.portName = portName;
+		this.portNameElement = portNameElement;
 		this.portDirection = portDirection;
 		this.portType = portType;
 		this.expressionElement = expressionElement;
@@ -30,6 +33,10 @@ public final class PortConnection {
 
 	public String getPortName() {
 		return portName;
+	}
+
+	public PsiElement getPortNameElement() {
+		return portNameElement;
 	}
 
 	public PortDirection getPortDirection() {

@@ -7,10 +7,8 @@ package name.martingeisse.mahdl.plugin.processor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
-import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
-import name.martingeisse.mahdl.plugin.processor.definition.Named;
-import name.martingeisse.mahdl.plugin.processor.definition.Port;
-import name.martingeisse.mahdl.plugin.processor.definition.Signal;
+import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,6 +98,34 @@ public final class InconsistentAssignmentDetector {
 		} else if (destination != null) {
 			// TODO this probably generated redundant error messages since checkLValue() also does the same
 			errorHandler.onError(destination, "expression cannot be assigned to");
+		}
+	}
+
+	public void handleAssignedTo(@Nullable ProcessedExpression destination) {
+		if (destination instanceof ProcessedConstantValue) {
+			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
+		} else if (destination instanceof SignalLikeReference) {
+			SignalLike signalLike = ((SignalLikeReference) destination).getDefinition();
+			handleAssignedToSignalLike(signalLike.getName(), destination.getErrorSource());
+		} else if (destination instanceof ProcessedIndexSelection) {
+			handleAssignedTo(((ProcessedIndexSelection) destination).getContainer());
+		} else if (destination instanceof ProcessedRangeSelection) {
+			handleAssignedTo(((ProcessedRangeSelection) destination).getContainer());
+		} else if (destination instanceof ProcessedBinaryOperation) {
+			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation)destination;
+			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
+				handleAssignedTo(binaryOperation.getLeftOperand());
+				handleAssignedTo(binaryOperation.getRightOperand());
+			} else {
+				// TODO this probably generated redundant error messages since checkLValue() also does the same
+				errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
+			}
+		} else if (destination instanceof ProcessedInstancePort) {
+			ProcessedInstancePort typed = (ProcessedInstancePort) destination;
+			handleAssignedToInstancePort(typed.getModuleInstance().getName(), typed.getPortName(), typed.getErrorSource());
+		} else if (destination != null && !(destination instanceof UnknownExpression)) {
+			// TODO this probably generated redundant error messages since checkLValue() also does the same
+			errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 		}
 	}
 

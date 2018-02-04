@@ -10,6 +10,8 @@ import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
+import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
@@ -157,24 +159,13 @@ public final class ModuleProcessor {
 			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
 
 			// process port assignments
-			for (PortConnection portConnection : moduleInstanceElement.getPortConnections().getAll()) {
-				String portName = portConnection.getPortName().getIdentifier().getText();
-				PortDefinitionGroup portDefinitionGroup = moduleInstance.getPortNameToPortDefinitionGroup().get(portName);
-				if (portDefinitionGroup == null) {
-					// this error has already been reported by the ModuleInstance
-					continue;
-				}
-				if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
-					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance.getName(), portName, portConnection.getPortName());
-				} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-					ExtendedExpression expression = portConnection.getExpression();
-					if (!(expression instanceof ExtendedExpression_Normal)) {
-						errorHandler.onError(expression, "expression too complex as target of an output port");
-					} else {
-						Expression simpleExpression = ((ExtendedExpression_Normal) expression).getExpression();
-						checkLValue(simpleExpression, true, false);
-						inconsistentAssignmentDetector.handleAssignedTo(simpleExpression);
-					}
+			for (PortConnection portConnection : moduleInstance.getPortConnections().values()) {
+				if (portConnection.getPortDirection() == PortDirection.IN) {
+					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance.getName(),
+						portConnection.getPortName(), portConnection.getPortNameElement());
+				} else {
+					checkLValue(portConnection.getProcessedExpression(), true, false);
+					inconsistentAssignmentDetector.handleAssignedTo(portConnection.getProcessedExpression());
 				}
 			}
 
@@ -236,7 +227,7 @@ public final class ModuleProcessor {
 	/**
 	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
 	 * is allowed to be a continuous destination and/or or a clocked destination.
-	 *
+	 * <p>
 	 * TODO move to DefinitionProcessor as part of processing module instances and do-blocks?
 	 */
 	private void checkLValue(@NotNull Expression expression, boolean allowContinuous, boolean allowClocked) {
@@ -270,10 +261,9 @@ public final class ModuleProcessor {
 		} else if (expression instanceof Expression_RangeSelection) {
 			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
 		} else if (expression instanceof Expression_InstancePort) {
-			Expression_InstancePort instancePortExpression = (Expression_InstancePort)expression;
+			Expression_InstancePort instancePortExpression = (Expression_InstancePort) expression;
 			String instanceName = instancePortExpression.getInstanceName().getIdentifier().getText();
 			Named untypedInstanceDefinition = getDefinitions().get(instanceName);
-
 
 			// TODO
 		} else if (expression instanceof Expression_BinaryConcat) {
