@@ -16,35 +16,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class PortConnection {
 
-	private final String portName;
+	private final InstancePort port;
 	private final PsiElement portNameElement;
-	private final PortDirection portDirection;
-	private final ProcessedDataType portType;
 	private final ExtendedExpression expressionElement;
 	private ProcessedExpression processedExpression;
 
-	public PortConnection(String portName, PsiElement portNameElement, PortDirection portDirection, ProcessedDataType portType, ExtendedExpression expressionElement) {
-		this.portName = portName;
+	public PortConnection(InstancePort port, PsiElement portNameElement, ExtendedExpression expressionElement) {
+		this.port = port;
 		this.portNameElement = portNameElement;
-		this.portDirection = portDirection;
-		this.portType = portType;
 		this.expressionElement = expressionElement;
 	}
 
-	public String getPortName() {
-		return portName;
+	public InstancePort getPort() {
+		return port;
 	}
 
 	public PsiElement getPortNameElement() {
 		return portNameElement;
-	}
-
-	public PortDirection getPortDirection() {
-		return portDirection;
-	}
-
-	public ProcessedDataType getPortType() {
-		return portType;
 	}
 
 	public ExtendedExpression getExpressionElement() {
@@ -57,14 +45,14 @@ public final class PortConnection {
 
 	public void processExpressions(@NotNull ExpressionProcessor expressionProcessor) {
 		processedExpression = expressionProcessor.process(expressionElement);
-		if (portDirection == PortDirection.IN) {
-			processedExpression = expressionProcessor.convertImplicitly(processedExpression, portType);
+		if (port.getDirection() == PortDirection.IN) {
+			processedExpression = expressionProcessor.convertImplicitly(processedExpression, port.getDataType());
 		} else {
 			if (!(processedExpression.getDataType() instanceof ProcessedDataType.Unknown)) {
-				if (!(portType instanceof ProcessedDataType.Unknown)) {
-					if (!processedExpression.getDataType().equals(portType)) {
+				if (!(port.getDataType() instanceof ProcessedDataType.Unknown)) {
+					if (!processedExpression.getDataType().equals(port.getDataType())) {
 						expressionProcessor.getErrorHandler().onError(expressionElement, "cannot connect port of type " +
-							portType + " to expression of type " + processedExpression.getDataType());
+							port.getDataType() + " to expression of type " + processedExpression.getDataType());
 					}
 				}
 			}

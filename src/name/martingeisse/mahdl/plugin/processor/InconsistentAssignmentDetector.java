@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
+import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,44 +73,13 @@ public final class InconsistentAssignmentDetector {
 		}
 	}
 
-	public void handleAssignment(@NotNull Statement_Assignment assignment) {
-		handleAssignedTo(assignment.getLeftSide());
-	}
-
-	// TODO maybe unused -- remove?
-	public void handleAssignedTo(@Nullable Expression destination) {
-		if (destination instanceof Expression_Identifier) {
-			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
-			handleAssignedToSignalLike(signalNameElement.getText(), signalNameElement);
-		} else if (destination instanceof Expression_IndexSelection) {
-			Expression container = ((Expression_IndexSelection) destination).getContainer();
-			handleAssignedTo(container);
-		} else if (destination instanceof Expression_RangeSelection) {
-			Expression container = ((Expression_RangeSelection) destination).getContainer();
-			handleAssignedTo(container);
-		} else if (destination instanceof Expression_Parenthesized) {
-			Expression inner = ((Expression_Parenthesized) destination).getExpression();
-			handleAssignedTo(inner);
-		} else if (destination instanceof Expression_BinaryConcat) {
-			Expression_BinaryConcat typed = (Expression_BinaryConcat) destination;
-			handleAssignedTo(typed.getLeftOperand());
-			handleAssignedTo(typed.getRightOperand());
-		} else if (destination instanceof Expression_InstancePort) {
-			Expression_InstancePort typed = (Expression_InstancePort) destination;
-			handleAssignedToInstancePort(typed.getInstanceName().getText(), typed.getPortName().getText(), typed);
-		} else if (destination != null) {
-			// TODO this probably generated redundant error messages since checkLValue() also does the same
-			errorHandler.onError(destination, "expression cannot be assigned to");
-		}
-	}
-
 	public void handleAssignedTo(@Nullable ProcessedExpression destination) {
 		if (destination instanceof ProcessedConstantValue) {
 			// TODO this probably generated redundant error messages since checkLValue() also does the same
 			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
 		} else if (destination instanceof SignalLikeReference) {
 			SignalLike signalLike = ((SignalLikeReference) destination).getDefinition();
-			handleAssignedToSignalLike(signalLike.getName(), destination.getErrorSource());
+			handleAssignedToSignalLike(signalLike, destination.getErrorSource());
 		} else if (destination instanceof ProcessedIndexSelection) {
 			handleAssignedTo(((ProcessedIndexSelection) destination).getContainer());
 		} else if (destination instanceof ProcessedRangeSelection) {
@@ -124,19 +95,24 @@ public final class InconsistentAssignmentDetector {
 			}
 		} else if (destination instanceof InstancePortReference) {
 			InstancePortReference instancePortReference = (InstancePortReference) destination;
-			handleAssignedToInstancePort(instancePortReference.getModuleInstance().getName(), instancePortReference.getPortName(), instancePortReference.getErrorSource());
+			handleAssignedToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
+				instancePortReference.getErrorSource());
 		} else if (destination != null && !(destination instanceof UnknownExpression)) {
 			// TODO this probably generated redundant error messages since checkLValue() also does the same
 			errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 		}
 	}
 
-	public void handleAssignedToSignalLike(@NotNull String signalLikeName, @NotNull PsiElement errorSource) {
-		handleAssignedToInternal(signalLikeName, errorSource);
+	public void handleAssignedToSignalLike(@NotNull SignalLike signalLike, @NotNull PsiElement errorSource) {
+		handleAssignedToInternal(signalLike.getName(), errorSource);
 	}
 
-	public void handleAssignedToInstancePort(@NotNull String instanceName, @NotNull String portName, @NotNull PsiElement errorSource) {
-		handleAssignedToInternal(instanceName + '.' + portName, errorSource);
+	public void handleAssignedToInstancePort(@NotNull ModuleInstance moduleInstance, @NotNull InstancePort port, @NotNull PsiElement errorSource) {
+		if (port.getDirection() == PortDirection.OUT) {
+			errorHandler.onError(errorSource, "cannot assign to output port");
+		} else {
+			handleAssignedToInternal(moduleInstance.getName() + '.' + port.getName(), errorSource);
+		}
 	}
 
 	private void handleAssignedToInternal(@NotNull String signalName, @NotNull PsiElement errorSource) {

@@ -148,7 +148,7 @@ public final class ModuleProcessor {
 			// - for registers, the initializer does not conflict with other assignments
 			SignalLike signalLike = (SignalLike) item;
 			if (signalLike instanceof Signal && signalLike.getInitializer() != null) {
-				inconsistentAssignmentDetector.handleAssignedToSignalLike(signalLike.getName(), signalLike.getInitializer());
+				inconsistentAssignmentDetector.handleAssignedToSignalLike(signalLike, signalLike.getInitializer());
 			}
 
 		} else if (item instanceof ModuleInstance) {
@@ -157,9 +157,9 @@ public final class ModuleProcessor {
 
 			// process port assignments
 			for (PortConnection portConnection : moduleInstance.getPortConnections().values()) {
-				if (portConnection.getPortDirection() == PortDirection.IN) {
-					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance.getName(),
-						portConnection.getPortName(), portConnection.getPortNameElement());
+				if (portConnection.getPort().getDirection() == PortDirection.IN) {
+					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance,
+						portConnection.getPort(), portConnection.getPortNameElement());
 				} else {
 					checkLValue(portConnection.getProcessedExpression(), true, false);
 					inconsistentAssignmentDetector.handleAssignedTo(portConnection.getProcessedExpression());
@@ -225,7 +225,7 @@ public final class ModuleProcessor {
 	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
 	 * is allowed to be a continuous destination and/or or a clocked destination.
 	 * <p>
-	 * TODO move to DefinitionProcessor as part of processing module instances and do-blocks?
+	 * TODO merge into InconsistentAssignmentDetector and rename to AssignmentValidator
 	 */
 	private void checkLValue(@NotNull ProcessedExpression expression, boolean allowContinuous, boolean allowClocked) {
 		if (expression instanceof ProcessedConstantValue) {
@@ -267,7 +267,7 @@ public final class ModuleProcessor {
 		} else if (expression instanceof InstancePortReference) {
 			InstancePortReference instancePortReference = (InstancePortReference) expression;
 			ModuleInstance moduleInstance = instancePortReference.getModuleInstance();
-			InstancePort port = moduleInstance.getPorts().get(instancePortReference.getPortName());
+			InstancePort port = instancePortReference.getPort();
 			if (port == null) {
 				// TODO report this during expression processing
 			}

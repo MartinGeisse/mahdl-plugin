@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
@@ -28,6 +29,10 @@ public class InstancePortReference extends ProcessedExpression {
 
 	public String getPortName() {
 		return portName;
+	}
+
+	public InstancePort getPort() {
+		return moduleInstance.getPorts().get(portName);
 	}
 
 	@Override
