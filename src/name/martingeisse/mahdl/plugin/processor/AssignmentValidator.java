@@ -5,10 +5,8 @@
 package name.martingeisse.mahdl.plugin.processor;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
-import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
 import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
 import org.jetbrains.annotations.NotNull;
@@ -19,16 +17,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * This object detects multiple or missing assignments to signals and registers. It is not concerned with type safety,
- * nor does it check whether a signal or register may be assigned to at all.
+ * This object detects assignments to invalid targets such as constants or operator expressions (except assignments to
+ * concatenation, which is allowed). It also detects multiple or missing assignments to signals and registers. It is NOT
+ * concerned with type safety and assumes that the {@link ExpressionProcessor} has detected any type errors already.
  */
-public final class InconsistentAssignmentDetector {
+public final class AssignmentValidator {
 
 	private final ErrorHandler errorHandler;
 	private final Set<String> previouslyAssignedSignals = new HashSet<>();
 	private final Set<String> newlyAssignedSignals = new HashSet<>();
 
-	public InconsistentAssignmentDetector(@NotNull ErrorHandler errorHandler) {
+	public AssignmentValidator(@NotNull ErrorHandler errorHandler) {
 		this.errorHandler = errorHandler;
 	}
 
@@ -73,49 +72,91 @@ public final class InconsistentAssignmentDetector {
 		}
 	}
 
-	public void handleAssignedTo(@Nullable ProcessedExpression destination) {
+	public void validateAssignmentTo(@Nullable ProcessedExpression destination, boolean allowContinuous, boolean allowClocked) {
 		if (destination instanceof ProcessedConstantValue) {
-			// TODO this probably generated redundant error messages since checkLValue() also does the same
+
 			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
+
 		} else if (destination instanceof SignalLikeReference) {
+
 			SignalLike signalLike = ((SignalLikeReference) destination).getDefinition();
-			handleAssignedToSignalLike(signalLike, destination.getErrorSource());
+			PsiElement errorSource = destination.getErrorSource();
+			if (signalLike instanceof Port) {
+				PortDirection direction = ((Port) signalLike).getDirection();
+				if (direction != PortDirection.OUT) {
+					errorHandler.onError(errorSource, "input port " + signalLike.getName() + " cannot be assigned to");
+				} else if (!allowContinuous) {
+					errorHandler.onError(errorSource, "assignment to module port must be continuous");
+				}
+			} else if (signalLike instanceof Signal) {
+				if (!allowContinuous) {
+					errorHandler.onError(errorSource, "assignment to signal must be continuous");
+				}
+			} else if (signalLike instanceof Register) {
+				if (!allowClocked) {
+					errorHandler.onError(errorSource, "assignment to register must be clocked");
+				}
+			} else if (signalLike instanceof Constant) {
+				errorHandler.onError(errorSource, "cannot assign to constant");
+			}
+			considerAssignedTo(signalLike, destination.getErrorSource());
+
 		} else if (destination instanceof ProcessedIndexSelection) {
-			handleAssignedTo(((ProcessedIndexSelection) destination).getContainer());
+
+			validateAssignmentTo(((ProcessedIndexSelection) destination).getContainer(), allowContinuous, allowClocked);
+
 		} else if (destination instanceof ProcessedRangeSelection) {
-			handleAssignedTo(((ProcessedRangeSelection) destination).getContainer());
+
+			validateAssignmentTo(((ProcessedRangeSelection) destination).getContainer(), allowContinuous, allowClocked);
+
 		} else if (destination instanceof ProcessedBinaryOperation) {
-			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation)destination;
+
+			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation) destination;
 			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
-				handleAssignedTo(binaryOperation.getLeftOperand());
-				handleAssignedTo(binaryOperation.getRightOperand());
+				validateAssignmentTo(binaryOperation.getLeftOperand(), allowContinuous, allowClocked);
+				validateAssignmentTo(binaryOperation.getRightOperand(), allowContinuous, allowClocked);
 			} else {
-				// TODO this probably generated redundant error messages since checkLValue() also does the same
 				errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 			}
+
 		} else if (destination instanceof InstancePortReference) {
+
 			InstancePortReference instancePortReference = (InstancePortReference) destination;
-			handleAssignedToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
+			if (!allowContinuous) {
+				errorHandler.onError(destination.getErrorSource(), "assignment to instance port must be continuous");
+			}
+			validateAssignmentToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
 				instancePortReference.getErrorSource());
+
 		} else if (destination != null && !(destination instanceof UnknownExpression)) {
-			// TODO this probably generated redundant error messages since checkLValue() also does the same
+
 			errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
+
 		}
 	}
 
-	public void handleAssignedToSignalLike(@NotNull SignalLike signalLike, @NotNull PsiElement errorSource) {
-		handleAssignedToInternal(signalLike.getName(), errorSource);
+	/**
+	 * Remembers the specified signal-like as "assigned to" in the current "section" (definition or do-block).
+	 * <p>
+	 * Does not check whether the signal-like can be assigned to in this context -- e.g. it will not treat an assignment
+	 * to a constant as an error. It just checks whether this assignment is in conflict with another assignment.
+	 * <p>
+	 * Therefore, this method should not be called for the initializer of a register, because that initializer is not
+	 * in conflict with an assignment to the register, but calling this function would assume it to be.
+	 */
+	public void considerAssignedTo(@NotNull SignalLike signalLike, @NotNull PsiElement errorSource) {
+		considerAssignedTo(signalLike.getName(), errorSource);
 	}
 
-	public void handleAssignedToInstancePort(@NotNull ModuleInstance moduleInstance, @NotNull InstancePort port, @NotNull PsiElement errorSource) {
+	public void validateAssignmentToInstancePort(@NotNull ModuleInstance moduleInstance, @NotNull InstancePort port, @NotNull PsiElement errorSource) {
 		if (port.getDirection() == PortDirection.OUT) {
 			errorHandler.onError(errorSource, "cannot assign to output port");
 		} else {
-			handleAssignedToInternal(moduleInstance.getName() + '.' + port.getName(), errorSource);
+			considerAssignedTo(moduleInstance.getName() + '.' + port.getName(), errorSource);
 		}
 	}
 
-	private void handleAssignedToInternal(@NotNull String signalName, @NotNull PsiElement errorSource) {
+	private void considerAssignedTo(@NotNull String signalName, @NotNull PsiElement errorSource) {
 		if (previouslyAssignedSignals.contains(signalName)) {
 			errorHandler.onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
 		}

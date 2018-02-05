@@ -171,7 +171,7 @@ public final class DefinitionProcessor {
 					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
 					continue;
 				}
-				portConnections.put(portName, new PortConnection(portName, portNameElement, port.getDirection(), port.getDataType(), rawPortConnection.getExpression()));
+				portConnections.put(portName, new PortConnection(port, portNameElement, rawPortConnection.getExpression()));
 			}
 
 			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(ports), ImmutableMap.copyOf(portConnections)));

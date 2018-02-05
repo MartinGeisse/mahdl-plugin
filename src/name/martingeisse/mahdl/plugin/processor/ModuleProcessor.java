@@ -4,7 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.processor;
 
-import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -43,7 +42,7 @@ public final class ModuleProcessor {
 	private ExpressionProcessor expressionProcessor;
 	private DefinitionProcessor definitionProcessor;
 
-	private InconsistentAssignmentDetector inconsistentAssignmentDetector;
+	private AssignmentValidator assignmentValidator;
 
 	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
@@ -102,12 +101,12 @@ public final class ModuleProcessor {
 		}
 
 		// this object detects duplicate or missing assignments
-		inconsistentAssignmentDetector = new InconsistentAssignmentDetector(errorHandler);
+		assignmentValidator = new AssignmentValidator(errorHandler);
 
 		// process named definitions
 		for (Named item : getDefinitions().values()) {
 			processDefinition(item);
-			inconsistentAssignmentDetector.finishSection();
+			assignmentValidator.finishSection();
 		}
 
 		// process do-blocks
@@ -117,11 +116,11 @@ public final class ModuleProcessor {
 			if (implementationItem instanceof ImplementationItem_DoBlock) {
 				processDoBlock((ImplementationItem_DoBlock) implementationItem);
 			}
-			inconsistentAssignmentDetector.finishSection();
+			assignmentValidator.finishSection();
 		}
 
 		// now check that all ports and signals without initializer have been assigned to
-		inconsistentAssignmentDetector.checkMissingAssignments(getDefinitions().values());
+		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
 		// TODO fold constant sub-expressions.
 		// This implicitly also removes all usages of defined constants, so any later processing stage doesn't have to
@@ -143,12 +142,13 @@ public final class ModuleProcessor {
 
 			// Inconsistencies in the initializer vs. other assignments:
 			// - ports cannot have an initializer
-			// - constants cannot be assigned to other than the initializer (checkLValue() ensures that already)
+			// - constants cannot be assigned to other than the initializer (the assignment validator ensures that
+			//   already while checking expressions)
 			// - signals must be checked here
 			// - for registers, the initializer does not conflict with other assignments
 			SignalLike signalLike = (SignalLike) item;
 			if (signalLike instanceof Signal && signalLike.getInitializer() != null) {
-				inconsistentAssignmentDetector.handleAssignedToSignalLike(signalLike, signalLike.getInitializer());
+				assignmentValidator.considerAssignedTo(signalLike, signalLike.getInitializer());
 			}
 
 		} else if (item instanceof ModuleInstance) {
@@ -158,11 +158,10 @@ public final class ModuleProcessor {
 			// process port assignments
 			for (PortConnection portConnection : moduleInstance.getPortConnections().values()) {
 				if (portConnection.getPort().getDirection() == PortDirection.IN) {
-					inconsistentAssignmentDetector.handleAssignedToInstancePort(moduleInstance,
+					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,
 						portConnection.getPort(), portConnection.getPortNameElement());
 				} else {
-					checkLValue(portConnection.getProcessedExpression(), true, false);
-					inconsistentAssignmentDetector.handleAssignedTo(portConnection.getProcessedExpression());
+					assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), true, false);
 				}
 			}
 
@@ -184,7 +183,7 @@ public final class ModuleProcessor {
 	private void processStatement(@NotNull Statement statement) {
 		if (statement instanceof Statement_Assignment) {
 			Statement_Assignment assignment = (Statement_Assignment) statement;
-			inconsistentAssignmentDetector.handleAssignment(assignment);
+			assignmentValidator.handleAssignment(assignment);
 			ProcessedDataType leftType = expressionTypeChecker.checkExpression(assignment.getLeftSide());
 			ProcessedDataType rightType = expressionTypeChecker.checkExpression(assignment.getRightSide());
 //			checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
@@ -221,75 +220,5 @@ public final class ModuleProcessor {
 		}
 	}
 
-	/**
-	 * Ensures that the specified left-side expression is assignable to. The flags control whether the left side
-	 * is allowed to be a continuous destination and/or or a clocked destination.
-	 * <p>
-	 * TODO merge into InconsistentAssignmentDetector and rename to AssignmentValidator
-	 */
-	private void checkLValue(@NotNull ProcessedExpression expression, boolean allowContinuous, boolean allowClocked) {
-		if (expression instanceof ProcessedConstantValue) {
-			errorHandler.onError(expression.getErrorSource(), "cannot assign to a constant");
-		} else if (expression instanceof SignalLikeReference) {
-			SignalLike signalLike = ((SignalLikeReference) expression).getDefinition();
-			PsiElement errorSource = expression.getErrorSource();
-			if (signalLike instanceof Port) {
-				PortDirection direction = ((Port) signalLike).getDirection();
-				if (direction != PortDirection.OUT) {
-					errorHandler.onError(errorSource, "input port " + signalLike.getName() + " cannot be assigned to");
-				} else if (!allowContinuous) {
-					errorHandler.onError(errorSource, "assignment to module port must be continuous");
-				}
-			} else if (signalLike instanceof Signal) {
-				if (!allowContinuous) {
-					errorHandler.onError(errorSource, "assignment to signal must be continuous");
-				}
-			} else if (signalLike instanceof Register) {
-				if (!allowClocked) {
-					errorHandler.onError(errorSource, "assignment to register must be clocked");
-				}
-			} else if (signalLike instanceof Constant) {
-				errorHandler.onError(errorSource, "cannot assign to constant");
-			}
-
-		} else if (expression instanceof ProcessedIndexSelection) {
-			checkLValue(((ProcessedIndexSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof ProcessedRangeSelection) {
-			checkLValue(((ProcessedRangeSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof ProcessedBinaryOperation) {
-			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation)expression;
-			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
-				checkLValue(binaryOperation.getLeftOperand(), allowContinuous, allowClocked);
-				checkLValue(binaryOperation.getRightOperand(), allowContinuous, allowClocked);
-			} else {
-				errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
-			}
-		} else if (expression instanceof InstancePortReference) {
-			InstancePortReference instancePortReference = (InstancePortReference) expression;
-			ModuleInstance moduleInstance = instancePortReference.getModuleInstance();
-			InstancePort port = instancePortReference.getPort();
-			if (port == null) {
-				// TODO report this during expression processing
-			}
-			getDefinitions().get().get
-
-
-			handleAssignedToInstancePort(typed.getModuleInstance().getName(), typed.getPortName(), typed.getErrorSource());
-
-
-			if (!allowContinuous) {
-				errorHandler.onError(expression.getErrorSource(), "assignment to instance port must be continuous");
-			}
-
-		} else if (!(expression instanceof UnknownExpression)) {
-			errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
-		}
-
-
-
-
-
-
-	}
 
 }
