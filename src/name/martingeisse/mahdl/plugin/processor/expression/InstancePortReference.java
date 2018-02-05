@@ -11,12 +11,12 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 /**
  *
  */
-public class ProcessedInstancePort extends ProcessedExpression {
+public class InstancePortReference extends ProcessedExpression {
 
 	private final ModuleInstance moduleInstance;
 	private final String portName;
 
-	public ProcessedInstancePort(PsiElement errorSource, ProcessedDataType dataType, ModuleInstance moduleInstance, String portName) {
+	public InstancePortReference(PsiElement errorSource, ProcessedDataType dataType, ModuleInstance moduleInstance, String portName) {
 		super(errorSource, dataType);
 		this.moduleInstance = moduleInstance;
 		this.portName = portName;

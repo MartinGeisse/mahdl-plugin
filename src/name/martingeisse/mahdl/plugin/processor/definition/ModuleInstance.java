@@ -17,14 +17,17 @@ public final class ModuleInstance extends Named {
 
 	private final ImplementationItem_ModuleInstance moduleInstanceElement;
 	private final Module moduleElement;
+	private final ImmutableMap<String, InstancePort> ports;
 	private final ImmutableMap<String, PortConnection> portConnections;
 
 	public ModuleInstance(@NotNull ImplementationItem_ModuleInstance moduleInstanceElement,
 						  @NotNull Module moduleElement,
+						  @NotNull ImmutableMap<String, InstancePort> ports,
 						  @NotNull ImmutableMap<String, PortConnection> portConnections) {
 		super(moduleInstanceElement.getInstanceName());
 		this.moduleInstanceElement = moduleInstanceElement;
 		this.moduleElement = moduleElement;
+		this.ports = ports;
 		this.portConnections = portConnections;
 	}
 
@@ -35,6 +38,10 @@ public final class ModuleInstance extends Named {
 
 	public Module getModuleElement() {
 		return moduleElement;
+	}
+
+	public ImmutableMap<String, InstancePort> getPorts() {
+		return ports;
 	}
 
 	public ImmutableMap<String, PortConnection> getPortConnections() {

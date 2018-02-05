@@ -137,7 +137,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		if (dataType instanceof ProcessedDataType.Unknown) {
 			return error(expression.getPortName(), "port data type is broken");
 		} else {
-			return new ProcessedInstancePort(expression, dataType, moduleInstance, portName);
+			return new InstancePortReference(expression, dataType, moduleInstance, portName);
 		}
 
 	}

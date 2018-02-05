@@ -140,14 +140,11 @@ public final class DefinitionProcessor {
 			}
 
 			// build a map of the port definitions from the module definition
-			Map<String, PortDirection> portNameToDirection = new HashMap<>();
-			Map<String, ProcessedDataType> portNameToProcessedDataType = new HashMap<>();
+			Map<String, InstancePort> ports = new HashMap<>();
 			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 					String portName = portDefinition.getName();
 					if (portName != null) {
-
-						// process direction
 						PortDirection direction;
 						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
 							direction = PortDirection.IN;
@@ -157,13 +154,9 @@ public final class DefinitionProcessor {
 							errorHandler.onError(portDefinitionGroup.getDirection(), "unknown direction");
 							continue;
 						}
-						portNameToDirection.put(portName, direction);
-
-						// process data type
 						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
 						ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
-						portNameToProcessedDataType.put(portName, processedDataType);
-
+						ports.put(portName, new InstancePort(portName, direction, processedDataType));
 					}
 				}
 			}
@@ -173,20 +166,15 @@ public final class DefinitionProcessor {
 			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection rawPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
 				LeafPsiElement portNameElement = rawPortConnection.getPortName().getIdentifier();
 				String portName = portNameElement.getText();
-				PortDirection direction = portNameToDirection.get(portName);
-				if (direction == null) {
+				InstancePort port = ports.get(portName);
+				if (port == null) {
 					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
 					continue;
 				}
-				ProcessedDataType portType = portNameToProcessedDataType.get(portName);
-				if (portType == null) {
-					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "could not determine data type for port '" + portName + "'");
-					portType = ProcessedDataType.Unknown.INSTANCE;
-				}
-				portConnections.put(portName, new PortConnection(portName, portNameElement, direction, portType, rawPortConnection.getExpression()));
+				portConnections.put(portName, new PortConnection(portName, portNameElement, port.getDirection(), port.getDataType(), rawPortConnection.getExpression()));
 			}
 
-			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(portConnections)));
+			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(ports), ImmutableMap.copyOf(portConnections)));
 		}
 	}
 

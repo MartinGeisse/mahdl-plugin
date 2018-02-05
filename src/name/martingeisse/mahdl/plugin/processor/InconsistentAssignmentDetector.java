@@ -122,9 +122,9 @@ public final class InconsistentAssignmentDetector {
 				// TODO this probably generated redundant error messages since checkLValue() also does the same
 				errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 			}
-		} else if (destination instanceof ProcessedInstancePort) {
-			ProcessedInstancePort typed = (ProcessedInstancePort) destination;
-			handleAssignedToInstancePort(typed.getModuleInstance().getName(), typed.getPortName(), typed.getErrorSource());
+		} else if (destination instanceof InstancePortReference) {
+			InstancePortReference instancePortReference = (InstancePortReference) destination;
+			handleAssignedToInstancePort(instancePortReference.getModuleInstance().getName(), instancePortReference.getPortName(), instancePortReference.getErrorSource());
 		} else if (destination != null && !(destination instanceof UnknownExpression)) {
 			// TODO this probably generated redundant error messages since checkLValue() also does the same
 			errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");

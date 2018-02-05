@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.processor;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -229,50 +228,59 @@ public final class ModuleProcessor {
 	 * TODO move to DefinitionProcessor as part of processing module instances and do-blocks?
 	 */
 	private void checkLValue(@NotNull ProcessedExpression expression, boolean allowContinuous, boolean allowClocked) {
-
-
-
-
-
 		if (expression instanceof ProcessedConstantValue) {
 			errorHandler.onError(expression.getErrorSource(), "cannot assign to a constant");
 		} else if (expression instanceof SignalLikeReference) {
-
 			SignalLike signalLike = ((SignalLikeReference) expression).getDefinition();
+			PsiElement errorSource = expression.getErrorSource();
 			if (signalLike instanceof Port) {
-				PortDirection direction = signalLike.getdirec
-				if (!(direction instanceof PortDirection_Out)) {
-					errorHandler.onError(expression, "input port " + signalLike.getName() + " cannot be assigned to");
+				PortDirection direction = ((Port) signalLike).getDirection();
+				if (direction != PortDirection.OUT) {
+					errorHandler.onError(errorSource, "input port " + signalLike.getName() + " cannot be assigned to");
 				} else if (!allowContinuous) {
-					errorHandler.onError(expression, "continuous assignment not allowed in this context");
+					errorHandler.onError(errorSource, "assignment to module port must be continuous");
 				}
 			} else if (signalLike instanceof Signal) {
 				if (!allowContinuous) {
-					errorHandler.onError(expression, "continuous assignment not allowed in this context");
+					errorHandler.onError(errorSource, "assignment to signal must be continuous");
 				}
 			} else if (signalLike instanceof Register) {
 				if (!allowClocked) {
-					errorHandler.onError(expression, "clocked assignment not allowed in this context");
+					errorHandler.onError(errorSource, "assignment to register must be clocked");
 				}
 			} else if (signalLike instanceof Constant) {
-				errorHandler.onError(expression, "cannot assign to constant");
+				errorHandler.onError(errorSource, "cannot assign to constant");
 			}
 
 		} else if (expression instanceof ProcessedIndexSelection) {
-			handleAssignedTo(((ProcessedIndexSelection) expression).getContainer());
+			checkLValue(((ProcessedIndexSelection) expression).getContainer(), allowContinuous, allowClocked);
 		} else if (expression instanceof ProcessedRangeSelection) {
-			handleAssignedTo(((ProcessedRangeSelection) expression).getContainer());
+			checkLValue(((ProcessedRangeSelection) expression).getContainer(), allowContinuous, allowClocked);
 		} else if (expression instanceof ProcessedBinaryOperation) {
 			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation)expression;
 			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
-				handleAssignedTo(binaryOperation.getLeftOperand());
-				handleAssignedTo(binaryOperation.getRightOperand());
+				checkLValue(binaryOperation.getLeftOperand(), allowContinuous, allowClocked);
+				checkLValue(binaryOperation.getRightOperand(), allowContinuous, allowClocked);
 			} else {
 				errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
 			}
-		} else if (expression instanceof ProcessedInstancePort) {
-			ProcessedInstancePort typed = (ProcessedInstancePort) expression;
+		} else if (expression instanceof InstancePortReference) {
+			InstancePortReference instancePortReference = (InstancePortReference) expression;
+			ModuleInstance moduleInstance = instancePortReference.getModuleInstance();
+			InstancePort port = moduleInstance.getPorts().get(instancePortReference.getPortName());
+			if (port == null) {
+				// TODO report this during expression processing
+			}
+			getDefinitions().get().get
+
+
 			handleAssignedToInstancePort(typed.getModuleInstance().getName(), typed.getPortName(), typed.getErrorSource());
+
+
+			if (!allowContinuous) {
+				errorHandler.onError(expression.getErrorSource(), "assignment to instance port must be continuous");
+			}
+
 		} else if (!(expression instanceof UnknownExpression)) {
 			errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
 		}
@@ -282,21 +290,6 @@ public final class ModuleProcessor {
 
 
 
-		if (expression instanceof Expression_IndexSelection) {
-			checkLValue(((Expression_IndexSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_RangeSelection) {
-			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_InstancePort) {
-			Expression_InstancePort instancePortExpression = (Expression_InstancePort) expression;
-			String instanceName = instancePortExpression.getInstanceName().getIdentifier().getText();
-			Named untypedInstanceDefinition = getDefinitions().get(instanceName);
-
-			// TODO
-		} else if (expression instanceof Expression_BinaryConcat) {
-			Expression_BinaryConcat concat = (Expression_BinaryConcat) expression;
-			checkLValue(concat.getLeftOperand(), allowContinuous, allowClocked);
-			checkLValue(concat.getRightOperand(), allowContinuous, allowClocked);
-		}
 	}
 
 }
