@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
@@ -70,9 +71,7 @@ public final class DefinitionProcessor {
 	 * <p>
 	 * Usage note: This method must first be called for all constants in the order they appear in the module, then for
 	 * all non-constants (in any order). The former ensures that each constant is available for all constants appearing
-	 * later. The latter ensures that the type specifiers for non-constants can use constants defined later (TODO is
-	 * this is a good idea? probably -- we don't want to enforce that all constants are defined at the top; we only
-	 * demand the mutual ordering of constants because it doesn't work otherwise)
+	 * later. The latter ensures that the type specifiers for non-constants can use constants defined later.
 	 */
 	public void process(ImplementationItem implementationItem) {
 		if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
@@ -172,7 +171,8 @@ public final class DefinitionProcessor {
 			// build port connections
 			Map<String, PortConnection> portConnections = new HashMap<>();
 			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection rawPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
-				String portName = rawPortConnection.getName();
+				LeafPsiElement portNameElement = rawPortConnection.getPortName().getIdentifier();
+				String portName = portNameElement.getText();
 				PortDirection direction = portNameToDirection.get(portName);
 				if (direction == null) {
 					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
@@ -183,7 +183,7 @@ public final class DefinitionProcessor {
 					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "could not determine data type for port '" + portName + "'");
 					portType = ProcessedDataType.Unknown.INSTANCE;
 				}
-				portConnections.put(portName, new PortConnection(portName, direction, portType, rawPortConnection.getExpression()));
+				portConnections.put(portName, new PortConnection(portName, portNameElement, direction, portType, rawPortConnection.getExpression()));
 			}
 
 			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(portConnections)));

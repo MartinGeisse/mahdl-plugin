@@ -12,9 +12,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
 import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
-import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
-import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessorImpl;
-import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
+import name.martingeisse.mahdl.plugin.processor.expression.*;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -230,33 +228,61 @@ public final class ModuleProcessor {
 	 * <p>
 	 * TODO move to DefinitionProcessor as part of processing module instances and do-blocks?
 	 */
-	private void checkLValue(@NotNull Expression expression, boolean allowContinuous, boolean allowClocked) {
-		if (expression instanceof Expression_Identifier) {
-			LeafPsiElement identifierElement = ((Expression_Identifier) expression).getIdentifier();
-			String identifierText = identifierElement.getText();
-			Named definition = getDefinitions().get(identifierText);
-			if (definition != null) {
-				// undefined symbols are already marked by the ExpressionTypeChecker
-				if (definition instanceof Port) {
-					PortDirection direction = ((Port) definition).getDirectionElement();
-					if (!(direction instanceof PortDirection_Out)) {
-						errorHandler.onError(expression, "input port " + definition.getName() + " cannot be assigned to");
-					} else if (!allowContinuous) {
-						errorHandler.onError(expression, "continuous assignment not allowed in this context");
-					}
-				} else if (definition instanceof Signal) {
-					if (!allowContinuous) {
-						errorHandler.onError(expression, "continuous assignment not allowed in this context");
-					}
-				} else if (definition instanceof Register) {
-					if (!allowClocked) {
-						errorHandler.onError(expression, "clocked assignment not allowed in this context");
-					}
-				} else if (definition instanceof Constant) {
-					errorHandler.onError(expression, "cannot assign to constant");
+	private void checkLValue(@NotNull ProcessedExpression expression, boolean allowContinuous, boolean allowClocked) {
+
+
+
+
+
+		if (expression instanceof ProcessedConstantValue) {
+			errorHandler.onError(expression.getErrorSource(), "cannot assign to a constant");
+		} else if (expression instanceof SignalLikeReference) {
+
+			SignalLike signalLike = ((SignalLikeReference) expression).getDefinition();
+			if (signalLike instanceof Port) {
+				PortDirection direction = signalLike.getdirec
+				if (!(direction instanceof PortDirection_Out)) {
+					errorHandler.onError(expression, "input port " + signalLike.getName() + " cannot be assigned to");
+				} else if (!allowContinuous) {
+					errorHandler.onError(expression, "continuous assignment not allowed in this context");
 				}
+			} else if (signalLike instanceof Signal) {
+				if (!allowContinuous) {
+					errorHandler.onError(expression, "continuous assignment not allowed in this context");
+				}
+			} else if (signalLike instanceof Register) {
+				if (!allowClocked) {
+					errorHandler.onError(expression, "clocked assignment not allowed in this context");
+				}
+			} else if (signalLike instanceof Constant) {
+				errorHandler.onError(expression, "cannot assign to constant");
 			}
-		} else if (expression instanceof Expression_IndexSelection) {
+
+		} else if (expression instanceof ProcessedIndexSelection) {
+			handleAssignedTo(((ProcessedIndexSelection) expression).getContainer());
+		} else if (expression instanceof ProcessedRangeSelection) {
+			handleAssignedTo(((ProcessedRangeSelection) expression).getContainer());
+		} else if (expression instanceof ProcessedBinaryOperation) {
+			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation)expression;
+			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
+				handleAssignedTo(binaryOperation.getLeftOperand());
+				handleAssignedTo(binaryOperation.getRightOperand());
+			} else {
+				errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
+			}
+		} else if (expression instanceof ProcessedInstancePort) {
+			ProcessedInstancePort typed = (ProcessedInstancePort) expression;
+			handleAssignedToInstancePort(typed.getModuleInstance().getName(), typed.getPortName(), typed.getErrorSource());
+		} else if (!(expression instanceof UnknownExpression)) {
+			errorHandler.onError(expression.getErrorSource(), "expression cannot be assigned to");
+		}
+
+
+
+
+
+
+		if (expression instanceof Expression_IndexSelection) {
 			checkLValue(((Expression_IndexSelection) expression).getContainer(), allowContinuous, allowClocked);
 		} else if (expression instanceof Expression_RangeSelection) {
 			checkLValue(((Expression_RangeSelection) expression).getContainer(), allowContinuous, allowClocked);
@@ -270,10 +296,6 @@ public final class ModuleProcessor {
 			Expression_BinaryConcat concat = (Expression_BinaryConcat) expression;
 			checkLValue(concat.getLeftOperand(), allowContinuous, allowClocked);
 			checkLValue(concat.getRightOperand(), allowContinuous, allowClocked);
-		} else if (expression instanceof Expression_Parenthesized) {
-			checkLValue(((Expression_Parenthesized) expression).getExpression(), allowContinuous, allowClocked);
-		} else {
-			errorHandler.onError(expression, "expression cannot be assigned to");
 		}
 	}
 

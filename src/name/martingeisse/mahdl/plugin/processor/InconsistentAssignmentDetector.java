@@ -75,6 +75,7 @@ public final class InconsistentAssignmentDetector {
 		handleAssignedTo(assignment.getLeftSide());
 	}
 
+	// TODO maybe unused -- remove?
 	public void handleAssignedTo(@Nullable Expression destination) {
 		if (destination instanceof Expression_Identifier) {
 			LeafPsiElement signalNameElement = ((Expression_Identifier) destination).getIdentifier();
@@ -103,6 +104,7 @@ public final class InconsistentAssignmentDetector {
 
 	public void handleAssignedTo(@Nullable ProcessedExpression destination) {
 		if (destination instanceof ProcessedConstantValue) {
+			// TODO this probably generated redundant error messages since checkLValue() also does the same
 			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
 		} else if (destination instanceof SignalLikeReference) {
 			SignalLike signalLike = ((SignalLikeReference) destination).getDefinition();
