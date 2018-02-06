@@ -38,8 +38,8 @@ public final class AssignmentValidator {
 
 	public void checkMissingAssignments(@NotNull Collection<Named> definitions) {
 		for (Named definition : definitions) {
-			if (definition instanceof Port) {
-				Port port = (Port) definition;
+			if (definition instanceof ModulePort) {
+				ModulePort port = (ModulePort) definition;
 				if (port.getDirectionElement() instanceof PortDirection_Out) {
 					if (port.getInitializer() == null && !previouslyAssignedSignals.contains(port.getName())) {
 						errorHandler.onError(port.getNameElement(), "missing assignment for port '" + port.getName() + "'");
@@ -81,8 +81,8 @@ public final class AssignmentValidator {
 
 			SignalLike signalLike = ((SignalLikeReference) destination).getDefinition();
 			PsiElement errorSource = destination.getErrorSource();
-			if (signalLike instanceof Port) {
-				PortDirection direction = ((Port) signalLike).getDirection();
+			if (signalLike instanceof ModulePort) {
+				PortDirection direction = ((ModulePort) signalLike).getDirection();
 				if (direction != PortDirection.OUT) {
 					errorHandler.onError(errorSource, "input port " + signalLike.getName() + " cannot be assigned to");
 				} else if (!allowContinuous) {

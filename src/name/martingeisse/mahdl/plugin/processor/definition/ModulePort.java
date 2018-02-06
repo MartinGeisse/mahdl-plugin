@@ -14,15 +14,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  *
  */
-public final class Port extends SignalLike {
+public final class ModulePort extends SignalLike {
 
 	private final name.martingeisse.mahdl.plugin.input.psi.PortDirection directionElement;
 	private final PortDirection direction;
 
-	public Port(@NotNull PsiElement nameElement,
-				@NotNull name.martingeisse.mahdl.plugin.input.psi.PortDirection directionElement,
-				@NotNull DataType dataTypeElement,
-				@NotNull ProcessedDataType processedDataType) {
+	public ModulePort(@NotNull PsiElement nameElement,
+					  @NotNull name.martingeisse.mahdl.plugin.input.psi.PortDirection directionElement,
+					  @NotNull DataType dataTypeElement,
+					  @NotNull ProcessedDataType processedDataType) {
 		super(nameElement, dataTypeElement, processedDataType, null);
 		this.directionElement = directionElement;
 		if (directionElement instanceof PortDirection_In) {

@@ -52,7 +52,7 @@ public final class DefinitionProcessor {
 					errorHandler.onError(dataType, family.getDisplayString() + " type not allowed for ports");
 					processedDataType = ProcessedDataType.Unknown.INSTANCE;
 				}
-				add(new Port(portDefinition, portDefinitionGroup.getDirection(), dataType, processedDataType));
+				add(new ModulePort(portDefinition, portDefinitionGroup.getDirection(), dataType, processedDataType));
 			}
 		}
 	}
