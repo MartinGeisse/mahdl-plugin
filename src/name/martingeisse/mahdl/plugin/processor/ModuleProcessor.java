@@ -161,7 +161,7 @@ public final class ModuleProcessor {
 					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,
 						portConnection.getPort(), portConnection.getPortNameElement());
 				} else {
-					assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), true, false);
+					assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), AssignmentValidator.TriggerKind.CONTINUOUS);
 				}
 			}
 

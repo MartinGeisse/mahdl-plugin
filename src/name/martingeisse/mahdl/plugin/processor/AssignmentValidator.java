@@ -72,7 +72,7 @@ public final class AssignmentValidator {
 		}
 	}
 
-	public void validateAssignmentTo(@Nullable ProcessedExpression destination, boolean allowContinuous, boolean allowClocked) {
+	public void validateAssignmentTo(@Nullable ProcessedExpression destination, TriggerKind triggerKind) {
 		if (destination instanceof ProcessedConstantValue) {
 
 			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
@@ -85,15 +85,15 @@ public final class AssignmentValidator {
 				PortDirection direction = ((ModulePort) signalLike).getDirection();
 				if (direction != PortDirection.OUT) {
 					errorHandler.onError(errorSource, "input port " + signalLike.getName() + " cannot be assigned to");
-				} else if (!allowContinuous) {
+				} else if (triggerKind != TriggerKind.CONTINUOUS) {
 					errorHandler.onError(errorSource, "assignment to module port must be continuous");
 				}
 			} else if (signalLike instanceof Signal) {
-				if (!allowContinuous) {
+				if (triggerKind != TriggerKind.CONTINUOUS) {
 					errorHandler.onError(errorSource, "assignment to signal must be continuous");
 				}
 			} else if (signalLike instanceof Register) {
-				if (!allowClocked) {
+				if (triggerKind != TriggerKind.CLOCKED) {
 					errorHandler.onError(errorSource, "assignment to register must be clocked");
 				}
 			} else if (signalLike instanceof Constant) {
@@ -103,18 +103,18 @@ public final class AssignmentValidator {
 
 		} else if (destination instanceof ProcessedIndexSelection) {
 
-			validateAssignmentTo(((ProcessedIndexSelection) destination).getContainer(), allowContinuous, allowClocked);
+			validateAssignmentTo(((ProcessedIndexSelection) destination).getContainer(), triggerKind);
 
 		} else if (destination instanceof ProcessedRangeSelection) {
 
-			validateAssignmentTo(((ProcessedRangeSelection) destination).getContainer(), allowContinuous, allowClocked);
+			validateAssignmentTo(((ProcessedRangeSelection) destination).getContainer(), triggerKind);
 
 		} else if (destination instanceof ProcessedBinaryOperation) {
 
 			ProcessedBinaryOperation binaryOperation = (ProcessedBinaryOperation) destination;
 			if (binaryOperation.getOperator() == ProcessedBinaryOperator.VECTOR_CONCAT) {
-				validateAssignmentTo(binaryOperation.getLeftOperand(), allowContinuous, allowClocked);
-				validateAssignmentTo(binaryOperation.getRightOperand(), allowContinuous, allowClocked);
+				validateAssignmentTo(binaryOperation.getLeftOperand(), triggerKind);
+				validateAssignmentTo(binaryOperation.getRightOperand(), triggerKind);
 			} else {
 				errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 			}
@@ -122,7 +122,7 @@ public final class AssignmentValidator {
 		} else if (destination instanceof InstancePortReference) {
 
 			InstancePortReference instancePortReference = (InstancePortReference) destination;
-			if (!allowContinuous) {
+			if (triggerKind != TriggerKind.CONTINUOUS) {
 				errorHandler.onError(destination.getErrorSource(), "assignment to instance port must be continuous");
 			}
 			validateAssignmentToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
@@ -161,6 +161,10 @@ public final class AssignmentValidator {
 			errorHandler.onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
 		}
 		newlyAssignedSignals.add(signalName);
+	}
+
+	public enum TriggerKind {
+		CONTINUOUS, CLOCKED
 	}
 
 }
