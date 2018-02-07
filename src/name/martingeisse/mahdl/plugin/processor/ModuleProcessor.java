@@ -10,13 +10,16 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
 import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
-import name.martingeisse.mahdl.plugin.processor.expression.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
+import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessorImpl;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
+import name.martingeisse.mahdl.plugin.processor.statement.StatementProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
-import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,6 +46,8 @@ public final class ModuleProcessor {
 	private DefinitionProcessor definitionProcessor;
 
 	private AssignmentValidator assignmentValidator;
+	private StatementProcessor statementProcessor;
+	private List<ProcessedDoBlock> processedDoBlocks;
 
 	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
@@ -110,11 +115,19 @@ public final class ModuleProcessor {
 		}
 
 		// process do-blocks
+		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor);
+		processedDoBlocks = new ArrayList<>();
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
 			// because assigning to a signal multiple times within the same do-block is allowed
 			if (implementationItem instanceof ImplementationItem_DoBlock) {
+				ProcessedDoBlock doBlock = statementProcessor.process((ImplementationItem_DoBlock) implementationItem);
+
+				// TODO
 				processDoBlock((ImplementationItem_DoBlock) implementationItem);
+
+				// TODO assignmentValidator
+
 			}
 			assignmentValidator.finishSection();
 		}
@@ -167,58 +180,5 @@ public final class ModuleProcessor {
 
 		}
 	}
-
-	private void processDoBlock(@NotNull ImplementationItem_DoBlock doBlock) {
-		DoBlockTrigger trigger = doBlock.getTrigger();
-		if (trigger instanceof DoBlockTrigger_Clocked) {
-			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
-			ProcessedDataType clockExpressionType = expressionTypeChecker.checkExpression(clockExpression);
-			if (clockExpressionType.getFamily() != ProcessedDataType.Family.BIT) {
-				errorHandler.onError(clockExpression, "cannot use an expression of type " + clockExpressionType + " as clock");
-			}
-		}
-		processStatement(doBlock.getStatement());
-	}
-
-	private void processStatement(@NotNull Statement statement) {
-		if (statement instanceof Statement_Assignment) {
-			Statement_Assignment assignment = (Statement_Assignment) statement;
-			assignmentValidator.handleAssignment(assignment);
-			ProcessedDataType leftType = expressionTypeChecker.checkExpression(assignment.getLeftSide());
-			ProcessedDataType rightType = expressionTypeChecker.checkExpression(assignment.getRightSide());
-//			checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
-			// TODO assign to signal / register in comb / clocked context
-//			checkLValue(assignment.getLeftSide(), true, true);
-		} else if (statement instanceof Statement_Block) {
-			Statement_Block block = (Statement_Block) statement;
-			for (Statement subStatement : block.getBody().getAll()) {
-				processStatement(subStatement);
-			}
-		} else if (statement instanceof Statement_IfThen) {
-			Statement_IfThen ifThenStatement = (Statement_IfThen) statement;
-			processIfStatement(ifThenStatement.getCondition(), ifThenStatement.getThenBranch(), null);
-		} else if (statement instanceof Statement_IfThenElse) {
-			Statement_IfThenElse ifThenElseStatement = (Statement_IfThenElse) statement;
-			processIfStatement(ifThenElseStatement.getCondition(), ifThenElseStatement.getThenBranch(), ifThenElseStatement.getElseBranch());
-		} else if (statement instanceof Statement_Switch) {
-			// TODO
-			throw new RuntimeException("switch statements not implemented yet");
-		} else if (statement instanceof Statement_Break) {
-			// TODO
-			throw new RuntimeException("break statements not implemented yet");
-		}
-	}
-
-	private void processIfStatement(@NotNull Expression condition, @NotNull Statement thenBranch, @Nullable Statement elseBranch) {
-		ProcessedExpression processedCondition = expressionProcessor.process(condition);
-		processStatement(thenBranch);
-		if (elseBranch != null) {
-			processStatement(elseBranch);
-		}
-		if (!(processedCondition.getDataType() instanceof ProcessedDataType.Unknown) && !(processedCondition.getDataType() instanceof ProcessedDataType.Bit)) {
-			errorHandler.onError(condition, "condition must be of type bit");
-		}
-	}
-
 
 }

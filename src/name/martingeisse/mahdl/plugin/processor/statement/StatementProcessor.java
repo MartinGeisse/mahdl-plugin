@@ -6,6 +6,7 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,7 +31,8 @@ public final class StatementProcessor {
 		if (trigger instanceof DoBlockTrigger_Combinatorial) {
 			clock = null;
 		} else if (trigger instanceof DoBlockTrigger_Clocked) {
-			clock = expressionProcessor.process(((DoBlockTrigger_Clocked) trigger).getClockExpression());
+			Expression clockExpression = ((DoBlockTrigger_Clocked) trigger).getClockExpression();
+			clock = expressionProcessor.process(clockExpression, ProcessedDataType.Bit.INSTANCE);
 		} else {
 			error(trigger, "unknown trigger type");
 			return null;
@@ -50,6 +52,11 @@ public final class StatementProcessor {
 			return new ProcessedBlock(ImmutableList.copyOf(processedBodyStatements));
 
 		} else if (statement instanceof Statement_Assignment) {
+
+			// TODO assignmentValidator.handleAssignment(assignment);
+//			TODO checkRuntimeAssignment(assignment.getRightSide(), leftType, rightType);
+//			TODO checkLValue(assignment.getLeftSide(), true, true);
+			// TODO assign to signal / register in comb / clocked context
 
 			Statement_Assignment assignment = (Statement_Assignment) statement;
 			ProcessedExpression leftHandSide = expressionProcessor.process(assignment.getLeftSide());
@@ -81,7 +88,7 @@ public final class StatementProcessor {
 	}
 
 	private ProcessedIf processIfStatement(Expression condition, Statement thenBranch, Statement elseBranch) {
-		ProcessedExpression processedCondition = expressionProcessor.process(condition);
+		ProcessedExpression processedCondition = expressionProcessor.process(condition, ProcessedDataType.Bit.INSTANCE);
 		ProcessedStatement processedThenBranch = process(thenBranch);
 		ProcessedStatement processedElseBranch;
 		if (elseBranch == null) {
