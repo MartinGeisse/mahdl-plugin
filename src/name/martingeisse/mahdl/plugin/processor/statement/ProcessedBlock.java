@@ -1,6 +1,7 @@
 package name.martingeisse.mahdl.plugin.processor.statement;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 
 /**
@@ -10,7 +11,8 @@ public final class ProcessedBlock extends ProcessedStatement {
 
 	private final ImmutableList<ProcessedStatement> statements;
 
-	public ProcessedBlock(ImmutableList<ProcessedStatement> statements) {
+	public ProcessedBlock(PsiElement errorSource, ImmutableList<ProcessedStatement> statements) {
+		super(errorSource);
 		this.statements = statements;
 	}
 

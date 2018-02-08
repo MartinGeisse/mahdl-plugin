@@ -115,19 +115,14 @@ public final class ModuleProcessor {
 		}
 
 		// process do-blocks
-		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor);
+		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor, assignmentValidator);
 		processedDoBlocks = new ArrayList<>();
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			// we collect all newly assigned signals in a separate set and add them at the end of the current do-block
-			// because assigning to a signal multiple times within the same do-block is allowed
+			// We collect all newly assigned signals in a separate set and add them at the end of the current do-block
+			// because assigning to a signal multiple times within the same do-block is allowed. Note that the call
+			// to the AssignmentValidator is done by the StatementProcessor, so we don't have to call it here.
 			if (implementationItem instanceof ImplementationItem_DoBlock) {
-				ProcessedDoBlock doBlock = statementProcessor.process((ImplementationItem_DoBlock) implementationItem);
-
-				// TODO
-				processDoBlock((ImplementationItem_DoBlock) implementationItem);
-
-				// TODO assignmentValidator
-
+				processedDoBlocks.add(statementProcessor.process((ImplementationItem_DoBlock) implementationItem));
 			}
 			assignmentValidator.finishSection();
 		}
@@ -165,10 +160,9 @@ public final class ModuleProcessor {
 			}
 
 		} else if (item instanceof ModuleInstance) {
-			ModuleInstance moduleInstance = (ModuleInstance) item;
-			ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
 
 			// process port assignments
+			ModuleInstance moduleInstance = (ModuleInstance) item;
 			for (PortConnection portConnection : moduleInstance.getPortConnections().values()) {
 				if (portConnection.getPort().getDirection() == PortDirection.IN) {
 					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,

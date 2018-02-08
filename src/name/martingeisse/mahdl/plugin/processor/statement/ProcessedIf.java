@@ -1,5 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.statement;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 
 /**
@@ -11,7 +12,8 @@ public final class ProcessedIf extends ProcessedStatement {
 	private final ProcessedStatement thenBranch;
 	private final ProcessedStatement elseBranch;
 
-	public ProcessedIf(ProcessedExpression condition, ProcessedStatement thenBranch, ProcessedStatement elseBranch) {
+	public ProcessedIf(PsiElement errorSource, ProcessedExpression condition, ProcessedStatement thenBranch, ProcessedStatement elseBranch) {
+		super(errorSource);
 		this.condition = condition;
 		this.thenBranch = thenBranch;
 		this.elseBranch = elseBranch;
