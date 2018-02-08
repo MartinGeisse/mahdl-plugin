@@ -2,9 +2,10 @@
  * Copyright (c) 2018 Martin Geisse
  * This file is distributed under the terms of the MIT license.
  */
-package name.martingeisse.mahdl.plugin.codegen_new;
+package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.io.PrintWriter;
@@ -13,16 +14,16 @@ import java.io.Writer;
 /**
  *
  */
-public class VerilogGenerator {
+public final class ModuleVerilogGenerator {
 
 	private final ModuleDefinition module;
 	private final PrintWriter out;
 
-	public VerilogGenerator(ModuleDefinition module, Writer out) {
+	public ModuleVerilogGenerator(ModuleDefinition module, Writer out) {
 		this(module, new PrintWriter(out));
 	}
 
-	public VerilogGenerator(ModuleDefinition module, PrintWriter out) {
+	public ModuleVerilogGenerator(ModuleDefinition module, PrintWriter out) {
 		this.module = module;
 		this.out = out;
 	}
@@ -72,9 +73,15 @@ public class VerilogGenerator {
 
 		// print continuous assignments
 		out.println();
-		// TODO
+		foreachDefinition(Signal.class, (signal, first) -> {
+			out.print("\t assign ");
+			out.print(signal.getName());
+			out.print(" = ");
+			// TODO
+			out.println(';');
+		});
 
-		// print register initializers (initial block)
+		// print register initializers (initial blocks)
 		out.println();
 		// TODO
 
@@ -85,6 +92,16 @@ public class VerilogGenerator {
 		// print module instances
 		out.println();
 		// TODO
+
+	}
+
+	private void printExpression(ProcessedExpression expression) {
+		StringBuilder builder = new StringBuilder();
+		assembleExpression(expression, builder);
+		out.print(builder);
+	}
+
+	private void assembleExpression(ProcessedExpression expression, StringBuilder builder) {
 
 	}
 
