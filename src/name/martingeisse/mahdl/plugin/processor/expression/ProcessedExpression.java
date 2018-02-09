@@ -61,7 +61,7 @@ public abstract class ProcessedExpression {
 
 	protected abstract ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context);
 
-	public static final class FormallyConstantEvaluationContext {
+	public static class FormallyConstantEvaluationContext {
 
 		private final ErrorHandler errorHandler;
 
@@ -73,37 +73,37 @@ public abstract class ProcessedExpression {
 			return errorHandler;
 		}
 
-		public final ConstantValue.Unknown error(PsiElement errorSource, String message) {
+		public ConstantValue.Unknown error(PsiElement errorSource, String message) {
 			errorHandler.onError(errorSource, message);
 			return ConstantValue.Unknown.INSTANCE;
 		}
 
-		public final ConstantValue.Unknown error(ProcessedExpression errorSource, String message) {
+		public ConstantValue.Unknown error(ProcessedExpression errorSource, String message) {
 			return error(errorSource.getErrorSource(), message);
 		}
 
-		public final ConstantValue.Unknown notConstant(PsiElement errorSource) {
+		public ConstantValue.Unknown notConstant(PsiElement errorSource) {
 			return error(errorSource, "expected a formally constant expression");
 		}
 
-		public final ConstantValue.Unknown notConstant(ProcessedExpression errorSource) {
+		public ConstantValue.Unknown notConstant(ProcessedExpression errorSource) {
 			return notConstant(errorSource.getErrorSource());
 		}
 
-		public final ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource, String message) {
+		public ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource, String message) {
 			return error(errorSource, "internal error: detected an inconsistency between static type check and constant evaluation" +
 				(message == null ? "" : (": " + message)));
 		}
 
-		public final ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource, String message) {
+		public ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource, String message) {
 			return evaluationInconsistency(errorSource.getErrorSource(), message);
 		}
 
-		public final ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource) {
+		public ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource) {
 			return evaluationInconsistency(errorSource, null);
 		}
 
-		public final ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource) {
+		public ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource) {
 			return evaluationInconsistency(errorSource.getErrorSource());
 		}
 

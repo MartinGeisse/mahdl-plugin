@@ -176,7 +176,7 @@ public abstract class ConstantValue {
 				throw new IllegalArgumentException("bit set length " + bits.length() + " is greater than the vector size " + size);
 			}
 			this.size = size;
-			this.bits = cloneBits ? (BitSet)bits.clone() : bits;
+			this.bits = cloneBits ? (BitSet) bits.clone() : bits;
 		}
 
 		public int getSize() {
@@ -189,13 +189,13 @@ public abstract class ConstantValue {
 		 */
 		@NotNull
 		public BitSet getBits() {
-			return (BitSet)bits.clone();
+			return (BitSet) bits.clone();
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof Vector) {
-				Vector other = (Vector)obj;
+				Vector other = (Vector) obj;
 				return size == other.size && bits.equals(other.bits);
 			}
 			return false;
@@ -231,9 +231,8 @@ public abstract class ConstantValue {
 		}
 
 		@NotNull
-		@Override
-		public String convertToString() {
-			StringBuilder builder = new StringBuilder().append(size).append('h');
+		public String getHexLiteral() {
+			StringBuilder builder = new StringBuilder();
 			int paddedLength = bits.length();
 			if (paddedLength % 4 != 0) {
 				paddedLength = paddedLength + 4 - paddedLength % 4;
@@ -241,9 +240,15 @@ public abstract class ConstantValue {
 			for (int index = paddedLength - 1; index >= 0; index -= 4) {
 				int digitValue = (bits.get(index) ? 8 : 0) + (bits.get(index - 1) ? 4 : 0) +
 					(bits.get(index - 2) ? 2 : 0) + (bits.get(index - 3) ? 1 : 0);
-				builder.append(digitValue < 10 ? ((char)('0' + digitValue)) : ((char)('a' + digitValue - 10)));
+				builder.append(digitValue < 10 ? ((char) ('0' + digitValue)) : ((char) ('a' + digitValue - 10)));
 			}
 			return builder.toString();
+		}
+
+		@NotNull
+		@Override
+		public String convertToString() {
+			return size + "h" + getHexLiteral();
 		}
 
 		@Override
@@ -288,13 +293,13 @@ public abstract class ConstantValue {
 
 		@NotNull
 		public BitSet getBits() {
-			return (BitSet)bits.clone();
+			return (BitSet) bits.clone();
 		}
 
 		@Override
 		public boolean equals(Object obj) {
 			if (obj instanceof Memory) {
-				Memory other = (Memory)obj;
+				Memory other = (Memory) obj;
 				return firstSize == other.firstSize && secondSize == other.secondSize && bits.equals(other.bits);
 			}
 			return false;
