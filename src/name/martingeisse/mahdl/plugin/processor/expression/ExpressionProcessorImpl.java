@@ -70,7 +70,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		for (ExpressionCaseItem caseItem : expression.getItems().getAll()) {
 			ProcessedExpression resultValueExpression;
 			if (caseItem instanceof ExpressionCaseItem_Value) {
-				ExpressionCaseItem_Value typedCaseItem = (ExpressionCaseItem_Value)caseItem;
+				ExpressionCaseItem_Value typedCaseItem = (ExpressionCaseItem_Value) caseItem;
 
 				// process selector value
 				ProcessedExpression selectorValueExpression = process(typedCaseItem.getSelectorValue());
@@ -82,7 +82,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 				if (!(selectorValue instanceof ConstantValue.Vector)) {
 					return error(caseItem, "internal error: selector is not a vector in spite of type conversion");
 				}
-				ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector)selectorValue;
+				ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector) selectorValue;
 
 				// result value expression gets handled below
 				resultValueExpression = process(typedCaseItem.getResultValue());
@@ -452,8 +452,25 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		}
 
 		// handle branches
-		// TODO handle bit literals here
+		branchTypeCheck:
 		if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
+
+			// recognize bit literals in either branch
+			if (thenBranch.getDataType() instanceof ProcessedDataType.Bit) {
+				ProcessedExpression elseBit = elseBranch.recognizeBitLiteral();
+				if (elseBit != null) {
+					elseBranch = elseBit;
+					break branchTypeCheck;
+				}
+			} else if (elseBranch.getDataType() instanceof ProcessedDataType.Bit) {
+				ProcessedExpression thenBit = thenBranch.recognizeBitLiteral();
+				if (thenBit != null) {
+					thenBranch = thenBit;
+					break branchTypeCheck;
+				}
+			}
+
+			// no bit literals -- recognize integer/vector combinations
 			if ((thenBranch.getDataType() instanceof ProcessedDataType.Vector) && (elseBranch.getDataType() instanceof ProcessedDataType.Integer)) {
 				int size = ((ProcessedDataType.Vector) thenBranch.getDataType()).getSize();
 				elseBranch = new TypeConversion.IntegerToVector(size, elseBranch);
@@ -464,6 +481,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 				error(elseBranch, "incompatible types in then/else branches: " + thenBranch.getDataType() + " vs. " + elseBranch.getDataType());
 				error = true;
 			}
+
 		}
 
 		// check for errors
