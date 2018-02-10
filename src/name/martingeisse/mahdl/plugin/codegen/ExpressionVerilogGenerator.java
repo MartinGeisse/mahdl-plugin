@@ -123,9 +123,6 @@ public final class ExpressionVerilogGenerator {
 	 */
 	public void generate(ProcessedExpression expression, StringBuilder builder, int nesting) {
 
-		ProcessedDataType dataType = expression.getDataType();
-		ProcessedDataType.Family typeFamily = dataType.getFamily();
-
 		// constant folding
 		ConstantValue value = fold(expression);
 		if (!(value instanceof ConstantValue.Unknown)) {
