@@ -117,14 +117,26 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			// now handle the result value expression
 			if (resultValueType == null) {
 				resultValueType = resultValueExpression.getDataType();
-			} else {
-				// TODO: what if the first case returns an integer and the second returns a vector? should be vector then,
-				// but we'd have to return to the first case and add conversion!
+			} else if (resultValueType instanceof ProcessedDataType.Integer) {
+				if ((resultValueExpression.getDataType() instanceof ProcessedDataType.Vector)) {
+					resultValueType = resultValueExpression.getDataType();
+				}
 			}
 
 		}
+
+		// try to convert all result value expressions to the common result value type
 		if (resultValueType == null) {
 			return error(expression, "internal error: could not determine result type of switch expression");
+		}
+		ImmutableList<ProcessedSwitchExpression.Case> unconvertedCases = ImmutableList.copyOf(processedCases);
+		processedCases.clear();
+		for (ProcessedSwitchExpression.Case aCase : unconvertedCases) {
+			ProcessedExpression converted = convertImplicitly(aCase.getResultValue(), resultValueType);
+			if (converted instanceof UnknownExpression) {
+				errorInCases = true;
+			}
+			processedCases.add(new ProcessedSwitchExpression.Case(aCase.getSelectorValue(), converted));
 		}
 
 		// in case of errors, don't return a swtch expression
