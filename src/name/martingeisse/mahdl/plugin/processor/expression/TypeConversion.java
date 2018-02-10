@@ -1,7 +1,3 @@
-/*
- * Copyright (c) 2018 Martin Geisse
- * This file is distributed under the terms of the MIT license.
- */
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
@@ -66,8 +62,7 @@ public abstract class TypeConversion extends ProcessedExpression {
 			}
 		}
 
-		@Override
-		public ProcessedDataType.Vector getDataType() {
+		public ProcessedDataType.Vector getVectorDataType() {
 			return (ProcessedDataType.Vector) super.getDataType();
 		}
 
@@ -100,8 +95,7 @@ public abstract class TypeConversion extends ProcessedExpression {
 			}
 		}
 
-		@Override
-		public ProcessedDataType.Vector getDataType() {
+		public ProcessedDataType.Vector getVectorDataType() {
 			return (ProcessedDataType.Vector) super.getDataType();
 		}
 
@@ -111,7 +105,7 @@ public abstract class TypeConversion extends ProcessedExpression {
 			if (integer == null) {
 				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
 			} else {
-				int size = getDataType().getSize();
+				int size = getVectorDataType().getSize();
 				BitSet bits = IntegerBitUtil.convertToBitSet(integer, size);
 				return new ConstantValue.Vector(size, bits);
 			}
@@ -135,8 +129,7 @@ public abstract class TypeConversion extends ProcessedExpression {
 			}
 		}
 
-		@Override
-		public ProcessedDataType.Integer getDataType() {
+		public ProcessedDataType.Integer getIntegerDataType() {
 			return (ProcessedDataType.Integer) super.getDataType();
 		}
 
