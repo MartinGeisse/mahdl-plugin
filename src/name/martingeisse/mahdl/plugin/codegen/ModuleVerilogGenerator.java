@@ -51,7 +51,8 @@ public final class ModuleVerilogGenerator {
 		out.println();
 		foreachDefinition(ModulePort.class, (port, first) -> {
 			out.print('\t');
-			out.print(port.getDirection() == PortDirection.IN ? "input" : "output");
+			// output ports are always assigned to in always-blocks
+			out.print(port.getDirection() == PortDirection.IN ? "input" : "output reg");
 			out.print(bitOrVectorSuffixToString(port.getProcessedDataType()));
 			out.print(' ');
 			out.print(port.getName());
@@ -61,13 +62,14 @@ public final class ModuleVerilogGenerator {
 		// print forward declarations
 		out.println();
 		foreachDefinition(SignalLike.class, (signalLike, first) -> {
-			out.print('\t');
 			if (signalLike instanceof Signal) {
-				out.print("wire");
-				// TODO not really -- depends on the way this is assigned. But we can always
-				// extract a complex assignment so a signal is always a wire -- maybe we should do that
+				if (signalLike.getInitializer() == null) {
+					out.print("\treg");
+				} else {
+					out.print("\twire");
+				}
 			} else if (signalLike instanceof Register) {
-				out.print("reg");
+				out.print("\treg");
 			} else {
 				return;
 			}
@@ -96,7 +98,7 @@ public final class ModuleVerilogGenerator {
 			StringBuilder builder = new StringBuilder();
 			foreachDefinition(Register.class, (register, first) -> {
 				if (register.getInitializer() != null) {
-					builder.append('\t');
+					builder.append("\t\t");
 					builder.append(register.getName());
 					builder.append(" <= ");
 					expressionVerilogGenerator.generate(register.getProcessedInitializer(), builder);
@@ -150,7 +152,7 @@ public final class ModuleVerilogGenerator {
 			out.println(builder);
 		}
 
-		out.println("end");
+		out.println("endmodule");
 	}
 
 	private void printExpression(ProcessedExpression expression) {
