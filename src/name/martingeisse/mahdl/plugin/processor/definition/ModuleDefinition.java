@@ -6,9 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_DoBlock;
-
-import java.util.Map;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
 
 /**
  *
@@ -17,9 +15,9 @@ public final class ModuleDefinition {
 
 	private final String name;
 	private final ImmutableMap<String, Named> definitions;
-	private final ImmutableList<ImplementationItem_DoBlock> doBlocks; // TODO ProcessedDoBlock
+	private final ImmutableList<ProcessedDoBlock> doBlocks;
 
-	public ModuleDefinition(String name, ImmutableMap<String, Named> definitions, ImmutableList<ImplementationItem_DoBlock> doBlocks) {
+	public ModuleDefinition(String name, ImmutableMap<String, Named> definitions, ImmutableList<ProcessedDoBlock> doBlocks) {
 		this.name = name;
 		this.definitions = definitions;
 		this.doBlocks = doBlocks;
@@ -33,7 +31,7 @@ public final class ModuleDefinition {
 		return definitions;
 	}
 
-	public ImmutableList<ImplementationItem_DoBlock> getDoBlocks() {
+	public ImmutableList<ProcessedDoBlock> getDoBlocks() {
 		return doBlocks;
 	}
 

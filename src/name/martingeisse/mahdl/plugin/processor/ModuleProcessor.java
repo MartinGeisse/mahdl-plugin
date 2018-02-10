@@ -4,6 +4,8 @@
  */
 package name.martingeisse.mahdl.plugin.processor;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -64,7 +66,7 @@ public final class ModuleProcessor {
 		return definitionProcessor.getDefinitions();
 	}
 
-	public void process() {
+	public ModuleDefinition process() {
 
 		// make sure the module name matches the file name
 		{
@@ -130,10 +132,7 @@ public final class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
-		// TODO fold constant sub-expressions.
-		// This implicitly also removes all usages of defined constants, so any later processing stage doesn't have to
-		// deal with them anymore (in type specifiers, they are already gone due to the way ProcessedDataType works).
-
+		return new ModuleDefinition(module.getName(), ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
 	}
 
 	private boolean isConstant(ImplementationItem item) {

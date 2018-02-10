@@ -14,6 +14,7 @@
     <inspection_tool class="Convert2Diamond" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Real Source" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="FieldCanBeLocal" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ManualArrayToCollectionCopy" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Real Source" level="WARNING" enabled="true" />
     </inspection_tool>
