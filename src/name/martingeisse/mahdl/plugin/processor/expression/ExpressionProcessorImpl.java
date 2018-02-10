@@ -19,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -35,17 +37,104 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 	}
 
 	public ProcessedExpression process(ExtendedExpression expression) {
-		if (expression instanceof ExtendedExpression_Normal) {
-			return process(((ExtendedExpression_Normal) expression).getExpression());
-		} else if (expression instanceof ExtendedExpression_Switch) {
-			return process((ExtendedExpression_Switch) expression);
-		} else {
-			return error(expression, "unknown expression type");
+		try {
+			if (expression instanceof ExtendedExpression_Normal) {
+				return process(((ExtendedExpression_Normal) expression).getExpression());
+			} else if (expression instanceof ExtendedExpression_Switch) {
+				return process((ExtendedExpression_Switch) expression);
+			} else {
+				return error(expression, "unknown expression type");
+			}
+		} catch (TypeErrorException e) {
+			return error(expression, "internal error during type-check");
 		}
 	}
 
-	private ProcessedExpression process(ExtendedExpression_Switch expression) {
-		return error(expression, "switch expressions not yet implemented"); // TODO
+	private ProcessedExpression process(ExtendedExpression_Switch expression) throws TypeErrorException {
+
+		ProcessedExpression selector = process(expression.getSelector());
+		boolean selectorOkay = (selector.getDataType() instanceof ProcessedDataType.Vector);
+		if (!selectorOkay) {
+			error(expression.getSelector(), "selector must be of vector type, found " + selector.getDataType());
+		}
+
+		if (expression.getItems().getAll().isEmpty()) {
+			return error(expression, "switch expression has no cases");
+		}
+
+		ProcessedDataType resultValueType = null;
+		boolean errorInCases = false;
+		Set<ConstantValue.Vector> foundSelectorValues = new HashSet<>();
+		List<ProcessedSwitchExpression.Case> processedCases = new ArrayList<>();
+		ProcessedExpression processedDefaultCase = null;
+		for (ExpressionCaseItem caseItem : expression.getItems().getAll()) {
+			ProcessedExpression resultValueExpression;
+			if (caseItem instanceof ExpressionCaseItem_Value) {
+				ExpressionCaseItem_Value typedCaseItem = (ExpressionCaseItem_Value)caseItem;
+
+				// process selector value
+				ProcessedExpression selectorValueExpression = process(typedCaseItem.getSelectorValue());
+				selectorValueExpression = convertImplicitly(selectorValueExpression, selector.getDataType());
+				ConstantValue selectorValue = evaluateLocalExpressionThatMustBeFormallyConstant(selectorValueExpression);
+				if (selectorValue instanceof ConstantValue.Unknown) {
+					errorInCases = true;
+				}
+				if (!(selectorValue instanceof ConstantValue.Vector)) {
+					return error(caseItem, "internal error: selector is not a vector in spite of type conversion");
+				}
+				ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector)selectorValue;
+
+				// result value expression gets handled below
+				resultValueExpression = process(typedCaseItem.getResultValue());
+
+				// remember this case and check for duplicate
+				if (foundSelectorValues.add(selectorVectorValue)) {
+					processedCases.add(new ProcessedSwitchExpression.Case(selectorVectorValue, resultValueExpression));
+				} else {
+					error(typedCaseItem.getSelectorValue(), "duplicate selector value");
+					errorInCases = true;
+				}
+
+			} else if (caseItem instanceof ExpressionCaseItem_Default) {
+
+				// result value expression gets handled below
+				resultValueExpression = process(((ExpressionCaseItem_Default) caseItem).getResultValue());
+
+				// remember default case and check for duplicate
+				if (processedDefaultCase != null) {
+					error(caseItem, "duplicate default case");
+					errorInCases = true;
+				} else {
+					processedDefaultCase = resultValueExpression;
+				}
+
+			} else {
+				error(caseItem, "unknown case item type");
+				errorInCases = true;
+				continue;
+			}
+
+			// now handle the result value expression
+			if (resultValueType == null) {
+				resultValueType = resultValueExpression.getDataType();
+			} else {
+				// TODO: what if the first case returns an integer and the second returns a vector? should be vector then,
+				// but we'd have to return to the first case and add conversion!
+			}
+
+		}
+		if (resultValueType == null) {
+			return error(expression, "internal error: could not determine result type of switch expression");
+		}
+
+		// in case of errors, don't return a swtch expression
+		if (!selectorOkay || errorInCases) {
+			return new UnknownExpression(expression);
+		}
+
+		// now build the switch expression
+		return new ProcessedSwitchExpression(expression, resultValueType, selector, ImmutableList.copyOf(processedCases), processedDefaultCase);
+
 	}
 
 	public ProcessedExpression process(Expression expression) {
