@@ -170,7 +170,6 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			} else if (expression instanceof Expression_FunctionCall) {
 				return process((Expression_FunctionCall) expression);
 			} else if (expression instanceof Expression_Parenthesized) {
-				// TODO handle bit literals in such a way that parenthesized expressions get unwrapped
 				return process(((Expression_Parenthesized) expression).getExpression());
 			} else {
 				return error(expression, "unknown expression type");
@@ -350,11 +349,21 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		}
 		ProcessedBinaryOperator operator = ProcessedBinaryOperator.from(expression);
 
-		// now, only logical operators can handle bit values, and only if both operands are bits.
-		// TODO handle bit literals here
+		// Now, only logical operators can handle bit values, and only if both operands are bits. We must be able to
+		// recognize bit literals for this, though, and we try that if either operand is already a bit.
 		if ((leftOperand.getDataType() instanceof ProcessedDataType.Bit) != (rightOperand.getDataType() instanceof ProcessedDataType.Bit)) {
-			return error(expression, "this operator cannot be used for " + leftOperand.getDataType().getFamily() +
-				" and " + rightOperand.getDataType().getFamily() + " operands");
+			ProcessedExpression leftBitLiteral = leftOperand.recognizeBitLiteral();
+			if (leftBitLiteral != null) {
+				leftOperand = leftBitLiteral;
+			}
+			ProcessedExpression rightBitLiteral = rightOperand.recognizeBitLiteral();
+			if (rightBitLiteral != null) {
+				rightOperand = rightBitLiteral;
+			}
+			if ((leftOperand.getDataType() instanceof ProcessedDataType.Bit) != (rightOperand.getDataType() instanceof ProcessedDataType.Bit)) {
+				return error(expression, "this operator cannot be used for " + leftOperand.getDataType().getFamily() +
+					" and " + rightOperand.getDataType().getFamily() + " operands");
+			}
 		}
 		if (leftOperand.getDataType() instanceof ProcessedDataType.Bit) {
 			return new ProcessedBinaryOperation(expression, leftOperand, rightOperand, operator);
@@ -434,14 +443,11 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		ProcessedExpression condition = process(expression.getCondition());
 		ProcessedExpression thenBranch = process(expression.getThenBranch());
 		ProcessedExpression elseBranch = process(expression.getElseBranch());
+		boolean error = false;
 
 		// handle condition
-		// TODO handle bit literals here
-		boolean error = false;
-		if (condition.getDataType() instanceof ProcessedDataType.Unknown) {
-			error = true;
-		} else if (!(condition.getDataType() instanceof ProcessedDataType.Bit)) {
-			error(condition, "condition must be of type bit");
+		condition = convertImplicitly(condition, ProcessedDataType.Bit.INSTANCE);
+		if (!(condition.getDataType() instanceof ProcessedDataType.Bit)) {
 			error = true;
 		}
 
