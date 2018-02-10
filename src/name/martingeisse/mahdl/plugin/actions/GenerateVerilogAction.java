@@ -12,12 +12,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
-import name.martingeisse.mahdl.plugin.codegen.VerilogGenerator;
+import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -38,7 +40,7 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 		console.print("Generating Verilog...", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
 
-	protected void execute(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console, @NotNull MahdlSourceFile sourceFile) throws Exception {
+	protected void execute(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console, @NotNull MahdlSourceFile actionTargetSourceFile) throws Exception {
 
 		// we need a project module to place output files in. Should this use ModuleRootManager?
 		Module projectModule = event.getDataContext().getData(LangDataKeys.MODULE);
@@ -48,55 +50,73 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 		}
 
 		// the file must contain a HDL module. This excludes files with fatal syntax errors, but not those with recoverable errors.
-		if (sourceFile.getModule() == null) {
+		if (actionTargetSourceFile.getModule() == null) {
 			console.print("Input file contains fatal syntax errors", ConsoleViewContentType.ERROR_OUTPUT);
 			return;
 		}
 
 		// do it!
-		StringWriter buffer = new StringWriter();
-		new VerilogGenerator(sourceFile.getModule(), buffer).run();
+		VirtualFile verilogFolder = createVerilogFolder(projectModule, console);
+		DesignVerilogGenerator.OutputConsumer outputConsumer = (moduleName, generatedCode) -> {
+			MutableObject<Exception> exceptionHolder = new MutableObject<>();
+			ApplicationManager.getApplication().runWriteAction(() -> {
+				try {
+					String fileName = moduleName + ".v";
+					VirtualFile outputFile = verilogFolder.findChild(fileName);
+					if (outputFile == null) {
+						outputFile = verilogFolder.createChildData(this, fileName);
+					} else if (outputFile.isDirectory()) {
+						throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
+					}
+					try (OutputStream outputStream = outputFile.getOutputStream(this)) {
+						try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+							outputStreamWriter.write(generatedCode);
+						}
+					}
+				} catch (IOException e) {
+					exceptionHolder.setValue(e);
+				}
+			});
+			if (exceptionHolder.getValue() != null) {
+				throw exceptionHolder.getValue();
+			}
+		};
+		new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer).generate();
+		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
+	}
+
+	// can be called from any thread
+	private VirtualFile createVerilogFolder(@NotNull Module projectModule, @NotNull ConsoleViewImpl console) throws Exception {
 		MutableObject<Exception> exceptionHolder = new MutableObject<>();
+		MutableObject<VirtualFile> verilogFolderHolder = new MutableObject<>();
 		ApplicationManager.getApplication().runWriteAction(() -> {
 			try {
-
-				// create the output folder and resource folder
-				VirtualFile moduleFolder = projectModule.getModuleFile().getParent();
-				final VirtualFile existingOutputFolder = moduleFolder.findChild("verilog");
-				final VirtualFile outputFolder;
-				if (existingOutputFolder == null) {
+				VirtualFile projectModuleFile = projectModule.getModuleFile();
+				if (projectModuleFile == null) {
+					throw new UserMessageException("could not locate project module folder");
+				}
+				VirtualFile projectModuleFolder = projectModuleFile.getParent();
+				final VirtualFile existingVerilogFolder = projectModuleFolder.findChild("verilog");
+				final VirtualFile verilogFolder;
+				if (existingVerilogFolder == null) {
 					try {
-						outputFolder = moduleFolder.createChildDirectory(this, "verilog");
+						verilogFolder = projectModuleFolder.createChildDirectory(this, "verilog");
 					} catch (IOException e) {
 						console.print("Could not create 'verilog' folder: " + e, ConsoleViewContentType.ERROR_OUTPUT);
 						return;
 					}
 				} else {
-					outputFolder = existingOutputFolder;
+					verilogFolder = existingVerilogFolder;
 				}
-
-				String fileName = sourceFile.getModule().getModuleName().getText() + ".v";
-				VirtualFile outputFile = outputFolder.findChild(fileName);
-				if (outputFile == null) {
-					outputFile = outputFolder.createChildData(this, fileName);
-				} else if (outputFile.isDirectory()) {
-					throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
-				}
-				try (OutputStream outputStream = outputFile.getOutputStream(this)) {
-					try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-						outputStreamWriter.write(buffer.toString());
-					}
-				}
-
-			} catch (IOException e) {
+				verilogFolderHolder.setValue(verilogFolder);
+			} catch (Exception e) {
 				exceptionHolder.setValue(e);
 			}
 		});
 		if (exceptionHolder.getValue() != null) {
 			throw exceptionHolder.getValue();
 		}
-
-		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
+		return verilogFolderHolder.getValue();
 	}
 
 }
