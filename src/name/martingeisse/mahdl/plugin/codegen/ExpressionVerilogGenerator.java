@@ -28,7 +28,8 @@ public final class ExpressionVerilogGenerator {
 		So don't try to tweak nesting just because you wrongly think it is about syntax.
 	 */
 	public static final int NESTING_TOPLEVEL = 0;
-	public static final int NESTING_INSIDE_SWITCH = 1;
+	public static final int NESTING_INSIDE_SWITCH = 1; // TODO switch expressions cannot be generated as such anyway,
+		// so this nesting level is useless. Handle switch expressions, then remove this level (use toplevel instead)
 	public static final int NESTING_INSIDE_OPERATION = 2;
 	public static final int NESTING_INSIDE_SELECTION = 3;
 	public static final int NESTING_IDENTIFIER_ONLY = 4;
