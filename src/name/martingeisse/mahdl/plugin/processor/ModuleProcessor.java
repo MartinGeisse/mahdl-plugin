@@ -43,7 +43,6 @@ public final class ModuleProcessor {
 	private final ErrorHandler errorHandler;
 
 	private DataTypeProcessor dataTypeProcessor;
-	private DataTypeProcessor actualDataTypeProcessor;
 	private ExpressionProcessor expressionProcessor;
 	private DefinitionProcessor definitionProcessor;
 
@@ -57,12 +56,7 @@ public final class ModuleProcessor {
 	}
 
 	@NotNull
-	public Module getModule() {
-		return module;
-	}
-
-	@NotNull
-	public Map<String, Named> getDefinitions() {
+	private Map<String, Named> getDefinitions() {
 		return definitionProcessor.getDefinitions();
 	}
 
@@ -83,10 +77,10 @@ public final class ModuleProcessor {
 
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
 		// a mutual dependency between the type system, constant evaluation and expression processing. Note the
-		// distinction between dataTypeProcessor and actualDataTypeProcessor used to break the dependency cycle.
-		dataTypeProcessor = (dataType, reportErrors) -> actualDataTypeProcessor.processDataType(dataType, reportErrors);
-		expressionProcessor = new ExpressionProcessorImpl(errorHandler, name -> getDefinitions().get(name), dataTypeProcessor);
-		actualDataTypeProcessor = new DataTypeProcessorImpl(errorHandler, expressionProcessor);
+		// LocalDefinitionResolver parameter to the ExpressionProcessorImpl calling getDefinitions() on the fly,
+		// not in advance, to break the dependency cycle.
+		expressionProcessor = new ExpressionProcessorImpl(errorHandler, name -> getDefinitions().get(name));
+		dataTypeProcessor = new DataTypeProcessorImpl(errorHandler, expressionProcessor);
 		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor, expressionProcessor);
 
 		// process module definitions
@@ -132,7 +126,7 @@ public final class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
-		return new ModuleDefinition(module.getName(), ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
+		return new ModuleDefinition(module.getModuleName().getText(), ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
 	}
 
 	private boolean isConstant(ImplementationItem item) {

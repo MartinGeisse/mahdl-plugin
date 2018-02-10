@@ -125,7 +125,6 @@ public final class AssignmentValidator {
 			if (triggerKind != TriggerKind.CONTINUOUS) {
 				errorHandler.onError(destination.getErrorSource(), "assignment to instance port must be continuous");
 			}
-			// TODO port can be null if not found
 			validateAssignmentToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
 				instancePortReference.getErrorSource());
 

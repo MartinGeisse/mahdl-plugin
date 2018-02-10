@@ -11,7 +11,7 @@ import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
- *
+ * TODO review this package!
  */
 public interface ExpressionProcessor {
 

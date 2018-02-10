@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO switch / break
  */
 public final class StatementProcessor {
 
@@ -117,14 +117,6 @@ public final class StatementProcessor {
 	private UnknownStatement error(@NotNull PsiElement errorSource, @NotNull String message) {
 		errorHandler.onError(errorSource, message);
 		return new UnknownStatement(errorSource);
-	}
-
-	/**
-	 * the same note as for the other error method above applies to this one
-	 */
-	@NotNull
-	private UnknownStatement error(@NotNull ProcessedExpression processedExpression, @NotNull String message) {
-		return error(processedExpression.getErrorSource(), message);
 	}
 
 }

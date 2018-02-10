@@ -7,14 +7,12 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
-import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
-import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
@@ -30,12 +28,10 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 
 	private final ErrorHandler errorHandler;
 	private final LocalDefinitionResolver localDefinitionResolver;
-	private final DataTypeProcessor dataTypeProcessor;
 
-	public ExpressionProcessorImpl(ErrorHandler errorHandler, LocalDefinitionResolver localDefinitionResolver, DataTypeProcessor dataTypeProcessor) {
+	public ExpressionProcessorImpl(ErrorHandler errorHandler, LocalDefinitionResolver localDefinitionResolver) {
 		this.errorHandler = errorHandler;
 		this.localDefinitionResolver = localDefinitionResolver;
-		this.dataTypeProcessor = dataTypeProcessor;
 	}
 
 	public ProcessedExpression process(ExtendedExpression expression) {
