@@ -88,6 +88,9 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_SeparatedList_Expression_COMMA) {
                 return new ListNode<Expression>(node, TokenSet.create(Symbols.expression_Literal, Symbols.expression_Identifier, Symbols.expression_InstancePort, Symbols.expression_IndexSelection, Symbols.expression_RangeSelection, Symbols.expression_Parenthesized, Symbols.expression_FunctionCall, Symbols.expression_UnaryNot, Symbols.expression_UnaryPlus, Symbols.expression_UnaryMinus, Symbols.expression_BinaryPlus, Symbols.expression_BinaryMinus, Symbols.expression_BinaryTimes, Symbols.expression_BinaryDividedBy, Symbols.expression_BinaryRemainder, Symbols.expression_BinaryEqual, Symbols.expression_BinaryNotEqual, Symbols.expression_BinaryGreaterThan, Symbols.expression_BinaryGreaterThanOrEqual, Symbols.expression_BinaryLessThan, Symbols.expression_BinaryLessThanOrEqual, Symbols.expression_BinaryAnd, Symbols.expression_BinaryOr, Symbols.expression_BinaryXor, Symbols.expression_BinaryShiftLeft, Symbols.expression_BinaryShiftRight, Symbols.expression_BinaryConcat, Symbols.expression_Conditional), Expression.class);
             }
+                    if (type == Symbols.expressionCaseItem_AdditionalValue) {
+                return new ExpressionCaseItem_AdditionalValue(node);
+            }
                     if (type == Symbols.expressionCaseItem_Value) {
                 return new ExpressionCaseItem_Value(node);
             }
@@ -254,7 +257,7 @@ public class PsiFactory {
                 return new ExtendedExpression_Switch(node);
             }
                     if (type == Symbols.synthetic_List_ExpressionCaseItem) {
-                return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
+                return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_AdditionalValue, Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
             }
         		if (type == Symbols.__PARSED_FRAGMENT) {
 			return new ASTWrapperPsiElement(node);

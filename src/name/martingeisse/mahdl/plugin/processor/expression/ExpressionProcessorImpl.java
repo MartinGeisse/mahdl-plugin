@@ -65,40 +65,58 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		ProcessedDataType resultValueType = null;
 		boolean errorInCases = false;
 		Set<ConstantValue.Vector> foundSelectorValues = new HashSet<>();
+		List<Expression> currentCaseSelectorExpressions = new ArrayList<>();
 		List<ProcessedSwitchExpression.Case> processedCases = new ArrayList<>();
 		ProcessedExpression processedDefaultCase = null;
 		for (ExpressionCaseItem caseItem : expression.getItems().getAll()) {
 			ProcessedExpression resultValueExpression;
-			if (caseItem instanceof ExpressionCaseItem_Value) {
-				ExpressionCaseItem_Value typedCaseItem = (ExpressionCaseItem_Value) caseItem;
+			if (caseItem instanceof ExpressionCaseItem_AdditionalValue) {
 
-				// process selector value
-				ProcessedExpression selectorValueExpression = process(typedCaseItem.getSelectorValue());
-				selectorValueExpression = convertImplicitly(selectorValueExpression, selector.getDataType());
-				ConstantValue selectorValue = evaluateLocalExpressionThatMustBeFormallyConstant(selectorValueExpression);
-				if (selectorValue instanceof ConstantValue.Unknown) {
-					errorInCases = true;
-				}
-				if (!(selectorValue instanceof ConstantValue.Vector)) {
-					return error(caseItem, "internal error: selector is not a vector in spite of type conversion");
-				}
-				ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector) selectorValue;
+				currentCaseSelectorExpressions.add(((ExpressionCaseItem_AdditionalValue) caseItem).getSelectorValue());
+				continue;
+
+			} else if (caseItem instanceof ExpressionCaseItem_Value) {
+				ExpressionCaseItem_Value typedCaseItem = (ExpressionCaseItem_Value) caseItem;
 
 				// result value expression gets handled below
 				resultValueExpression = process(typedCaseItem.getResultValue());
 
-				// remember this case and check for duplicate
-				if (foundSelectorValues.add(selectorVectorValue)) {
-					processedCases.add(new ProcessedSwitchExpression.Case(selectorVectorValue, resultValueExpression));
-				} else {
-					error(typedCaseItem.getSelectorValue(), "duplicate selector value");
-					errorInCases = true;
+				// process selector values
+				currentCaseSelectorExpressions.add(typedCaseItem.getSelectorValue());
+				List<ConstantValue.Vector> caseSelectorValues = new ArrayList<>();
+				for (Expression currentCaseSelectorExpression : currentCaseSelectorExpressions) {
+					ProcessedExpression processedSelectorValueExpression = process(currentCaseSelectorExpression);
+					processedSelectorValueExpression = convertImplicitly(processedSelectorValueExpression, selector.getDataType());
+					ConstantValue selectorValue = evaluateLocalExpressionThatMustBeFormallyConstant(processedSelectorValueExpression);
+					if (selectorValue instanceof ConstantValue.Unknown) {
+						errorInCases = true;
+					}
+					if (!(selectorValue instanceof ConstantValue.Vector)) {
+						return error(caseItem, "internal error: selector is not a vector in spite of type conversion");
+					}
+					ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector) selectorValue;
+					if (foundSelectorValues.add(selectorVectorValue)) {
+						caseSelectorValues.add(selectorVectorValue);
+					} else {
+						error(typedCaseItem.getSelectorValue(), "duplicate selector value");
+						errorInCases = true;
+					}
 				}
+				processedCases.add(new ProcessedSwitchExpression.Case(caseSelectorValues, resultValueExpression));
+				currentCaseSelectorExpressions.clear();
 
 			} else if (caseItem instanceof ExpressionCaseItem_Default) {
 
 				// result value expression gets handled below
 				resultValueExpression = process(((ExpressionCaseItem_Default) caseItem).getResultValue());
+
+				// To simplify both the grammar and processing, no additional case labels can be prepended to the
+				// default case. They would not have any effect anyway. Use comments to indicate any remarks
+				// about selector values handled by the default case.
+				if (!(currentCaseSelectorExpressions.isEmpty())) {
+					error(currentCaseSelectorExpressions.get(0), "cannot add case labels to the default case");
+					currentCaseSelectorExpressions.clear();
+				}
 
 				// remember default case and check for duplicate
 				if (processedDefaultCase != null) {
@@ -124,6 +142,9 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			}
 
 		}
+		if (!currentCaseSelectorExpressions.isEmpty()) {
+			error(currentCaseSelectorExpressions.get(0), "case without result");
+		}
 
 		// try to convert all result value expressions to the common result value type
 		if (resultValueType == null) {
@@ -136,7 +157,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			if (converted instanceof UnknownExpression) {
 				errorInCases = true;
 			}
-			processedCases.add(new ProcessedSwitchExpression.Case(aCase.getSelectorValue(), converted));
+			processedCases.add(new ProcessedSwitchExpression.Case(aCase.getSelectorValues(), converted));
 		}
 
 		// in case of errors, don't return a swtch expression

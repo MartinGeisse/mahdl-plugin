@@ -158,6 +158,7 @@ extendedExpression ::= {
 }
 
 expressionCaseItem ::= {
+	additionalValue ::= KW_CASE expression:selectorValue COLON;
 	value ::= KW_CASE expression:selectorValue COLON extendedExpression:resultValue;
 	default ::= KW_DEFAULT COLON extendedExpression:resultValue;
 }

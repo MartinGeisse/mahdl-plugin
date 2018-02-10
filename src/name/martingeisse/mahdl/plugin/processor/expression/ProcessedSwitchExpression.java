@@ -10,6 +10,8 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  *
  */
@@ -32,8 +34,10 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 		super(errorSource, dataType);
 
 		for (Case aCase : cases) {
-			if (!aCase.getSelectorValue().getDataType().equals(selector.getDataType())) {
-				throw new TypeErrorException();
+			for (ConstantValue caseSelectorValue : aCase.getSelectorValues()) {
+				if (!caseSelectorValue.getDataType().equals(selector.getDataType())) {
+					throw new TypeErrorException();
+				}
 			}
 			if (!aCase.getResultValue().getDataType().equals(dataType)) {
 				throw new TypeErrorException();
@@ -70,8 +74,10 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 			return selectorValue;
 		}
 		for (Case aCase : cases) {
-			if (selectorValue.equals(aCase.getSelectorValue())) {
-				return aCase.getResultValue().evaluateFormallyConstant(context);
+			for (ConstantValue caseSelectorValue : aCase.getSelectorValues()) {
+				if (selectorValue.equals(caseSelectorValue)) {
+					return aCase.getResultValue().evaluateFormallyConstant(context);
+				}
 			}
 		}
 		if (defaultBranch == null) {
@@ -83,19 +89,19 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 	public static final class Case {
 
 		@NotNull
-		private final ConstantValue.Vector selectorValue;
+		private final List<ConstantValue.Vector> selectorValues;
 
 		@NotNull
 		private final ProcessedExpression resultValue;
 
-		public Case(@NotNull ConstantValue.Vector selectorValue, @NotNull ProcessedExpression resultValue) {
-			this.selectorValue = selectorValue;
+		public Case(@NotNull List<ConstantValue.Vector> selectorValues, @NotNull ProcessedExpression resultValue) {
+			this.selectorValues = selectorValues;
 			this.resultValue = resultValue;
 		}
 
 		@NotNull
-		public ConstantValue.Vector getSelectorValue() {
-			return selectorValue;
+		public List<ConstantValue.Vector> getSelectorValues() {
+			return selectorValues;
 		}
 
 		@NotNull

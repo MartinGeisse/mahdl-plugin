@@ -74,6 +74,7 @@ public class Symbols {
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
 	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
+	public static final MahdlElementType expressionCaseItem_AdditionalValue = new MahdlElementType("expressionCaseItem_AdditionalValue");
 	public static final MahdlElementType expressionCaseItem_Default = new MahdlElementType("expressionCaseItem_Default");
 	public static final MahdlElementType expressionCaseItem_Value = new MahdlElementType("expressionCaseItem_Value");
 	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
