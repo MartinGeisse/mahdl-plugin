@@ -10,6 +10,11 @@ import org.jetbrains.annotations.NotNull;
 public interface DataTypeProcessor {
 
 	@NotNull
-	public ProcessedDataType processDataType(@NotNull DataType dataType);
+	default ProcessedDataType processDataType(@NotNull DataType dataType) {
+		return processDataType(dataType, true);
+	}
+
+	@NotNull
+	ProcessedDataType processDataType(@NotNull DataType dataType, boolean reportErrors);
 
 }

@@ -10,35 +10,47 @@ import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  *
  */
 public final class PortConnection {
 
+	@NotNull
 	private final InstancePort port;
+
+	@NotNull
 	private final PsiElement portNameElement;
+
+	@NotNull
 	private final ExtendedExpression expressionElement;
+
+	@Nullable
 	private ProcessedExpression processedExpression;
 
-	public PortConnection(InstancePort port, PsiElement portNameElement, ExtendedExpression expressionElement) {
+	public PortConnection(@NotNull InstancePort port, @NotNull PsiElement portNameElement, @NotNull ExtendedExpression expressionElement) {
 		this.port = port;
 		this.portNameElement = portNameElement;
 		this.expressionElement = expressionElement;
 	}
 
+	@NotNull
 	public InstancePort getPort() {
 		return port;
 	}
 
+	@NotNull
 	public PsiElement getPortNameElement() {
 		return portNameElement;
 	}
 
+	@NotNull
 	public ExtendedExpression getExpressionElement() {
 		return expressionElement;
 	}
 
+	@Nullable
 	public ProcessedExpression getProcessedExpression() {
 		return processedExpression;
 	}

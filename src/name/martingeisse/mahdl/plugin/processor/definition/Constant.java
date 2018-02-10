@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class Constant extends SignalLike {
 
+	@Nullable
 	private ConstantValue value;
 
 	// note: the initializer can be null in case of errors in the code
@@ -28,7 +29,7 @@ public final class Constant extends SignalLike {
 		super(nameElement, dataTypeElement, processedDataType, initializer);
 	}
 
-	public void evaluate(ProcessedExpression.FormallyConstantEvaluationContext context) {
+	public void evaluate(@NotNull ProcessedExpression.FormallyConstantEvaluationContext context) {
 		if (getProcessedInitializer() == null) {
 			this.value = ConstantValue.Unknown.INSTANCE;
 		} else {
@@ -36,7 +37,7 @@ public final class Constant extends SignalLike {
 		}
 	}
 
-	@NotNull
+	@Nullable
 	public ConstantValue getValue() {
 		return value;
 	}

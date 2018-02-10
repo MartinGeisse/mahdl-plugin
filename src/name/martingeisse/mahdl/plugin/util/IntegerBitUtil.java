@@ -20,8 +20,6 @@ public final class IntegerBitUtil {
 
 	/**
 	 * Returns a BitSet with the (size) lowest bits from the two's complement representation of the specified value.
-	 *
-	 * TODO test if this works correctly for negative values! The definition is OK, but the implementation is untested!
 	 */
 	@NotNull
 	public static BitSet convertToBitSet(@NotNull BigInteger value, int size) {

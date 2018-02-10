@@ -69,35 +69,15 @@ public final class PsiUtil {
 
 	@Nullable
 	public static VirtualFile getSourceRoot(@NotNull PsiElement psiElement) {
-
-//		com.intellij.openapi.module.Module ideModule = ModuleUtil.findModuleForPsiElement(moduleName);
-//		if (ideModule == null) {
-//			return null;
-//		}
-
-
 		PsiFile originPsiFile = psiElement.getContainingFile();
 		if (originPsiFile == null) {
-			return null;
-		}
-		Project project = originPsiFile.getProject();
-		if (project == null) {
 			return null;
 		}
 		VirtualFile originVirtualFile = originPsiFile.getVirtualFile();
 		if (originVirtualFile == null) {
 			return null;
 		}
-//		com.intellij.openapi.module.Module ideModule = ModuleUtil.findModuleForFile(virtualFile, project);
-//		if (ideModule == null) {
-//			return null;
-//		}
-//		ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(ideModule);
-//		if (moduleRootManager == null) {
-//			return null;
-//		}
-
-		return ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(originVirtualFile);
+		return ProjectRootManager.getInstance(originPsiFile.getProject()).getFileIndex().getSourceRootForFile(originVirtualFile);
 	}
 
 	//

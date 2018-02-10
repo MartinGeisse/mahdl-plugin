@@ -16,7 +16,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ModulePort extends SignalLike {
 
+	@NotNull
 	private final name.martingeisse.mahdl.plugin.input.psi.PortDirection directionElement;
+
+	@NotNull
 	private final PortDirection direction;
 
 	public ModulePort(@NotNull PsiElement nameElement,
@@ -39,6 +42,7 @@ public final class ModulePort extends SignalLike {
 		return directionElement;
 	}
 
+	@NotNull
 	public PortDirection getDirection() {
 		return direction;
 	}

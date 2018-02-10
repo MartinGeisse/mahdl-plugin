@@ -19,9 +19,16 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class SignalLike extends Named {
 
+	@NotNull
 	private final DataType dataTypeElement;
+
+	@NotNull
 	private final ProcessedDataType processedDataType;
+
+	@Nullable
 	private final ExtendedExpression initializer;
+
+	@Nullable
 	private ProcessedExpression processedInitializer;
 
 	public SignalLike(@NotNull PsiElement nameElement,

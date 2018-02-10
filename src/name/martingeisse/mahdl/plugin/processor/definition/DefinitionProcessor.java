@@ -23,9 +23,16 @@ import java.util.Map;
  */
 public final class DefinitionProcessor {
 
+	@NotNull
 	private final ErrorHandler errorHandler;
+
+	@NotNull
 	private final DataTypeProcessor dataTypeProcessor;
+
+	@NotNull
 	private final ExpressionProcessor expressionProcessor;
+
+	@NotNull
 	private final Map<String, Named> definitions;
 
 	public DefinitionProcessor(@NotNull ErrorHandler errorHandler,
@@ -42,7 +49,7 @@ public final class DefinitionProcessor {
 		return definitions;
 	}
 
-	public void processPorts(ListNode<PortDefinitionGroup> psiPortList) {
+	public void processPorts(@NotNull ListNode<PortDefinitionGroup> psiPortList) {
 		for (PortDefinitionGroup portDefinitionGroup : psiPortList.getAll()) {
 			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 				DataType dataType = portDefinitionGroup.getDataType();
@@ -73,7 +80,7 @@ public final class DefinitionProcessor {
 	 * all non-constants (in any order). The former ensures that each constant is available for all constants appearing
 	 * later. The latter ensures that the type specifiers for non-constants can use constants defined later.
 	 */
-	public void process(ImplementationItem implementationItem) {
+	public void process(@NotNull ImplementationItem implementationItem) {
 		if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
 			ImplementationItem_SignalLikeDefinitionGroup signalLike = (ImplementationItem_SignalLikeDefinitionGroup) implementationItem;
 			SignalLikeKind kind = signalLike.getKind();
@@ -134,6 +141,8 @@ public final class DefinitionProcessor {
 				if (untypedResolvedModule instanceof Module) {
 					resolvedModule = (Module) untypedResolvedModule;
 				} else {
+					// TODO: consider adding an "unknown definition" if this happens to suppress follow-up errors from
+					// instance port references about the instance missing
 					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
 					return;
 				}
@@ -154,8 +163,8 @@ public final class DefinitionProcessor {
 							errorHandler.onError(portDefinitionGroup.getDirection(), "unknown direction");
 							continue;
 						}
-						// TODO what happens if this detects an undefined type in the port? We can't place annotations in another file, right?
-						ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
+						// do not report errors in foreign modules
+						ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType(), false);
 						ports.put(portName, new InstancePort(portName, direction, processedDataType));
 					}
 				}

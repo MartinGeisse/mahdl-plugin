@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
@@ -120,29 +121,14 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			}
 		}
 
-		// resolve the port refeference
+		// resolve the port reference
 		String portName = expression.getPortName().getIdentifier().getText();
-		PortDefinition portDefinition;
-		{
-			ModuleInstancePortReference reference = (ModuleInstancePortReference) expression.getPortName().getReference();
-			portDefinition = reference.resolvePortDefinitionOnly();
-			if (portDefinition == null) {
-				return error(expression.getPortName(), "cannot resolve port " + portName + " in instance " + moduleInstance.getName());
-			}
+		InstancePort port = moduleInstance.getPorts().get(portName);
+		if (port == null) {
+			return error(expression, "cannot resolve port '" + portName + "' of instance '" + moduleInstance.getName() +
+				"' of module '" + moduleInstance.getModuleElement().getName() + "'");
 		}
-
-		// determine the port's type
-		PortDefinitionGroup portDefinitionGroup = PsiUtil.getAncestor(portDefinition, PortDefinitionGroup.class);
-		if (portDefinitionGroup == null) {
-			return error(expression.getPortName(), "port definition is broken");
-		}
-		// TODO How will the annotation holder react to an annotation being placed in the wrong file?
-		ProcessedDataType dataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType());
-		if (dataType instanceof ProcessedDataType.Unknown) {
-			return error(expression.getPortName(), "port data type is broken");
-		} else {
-			return new InstancePortReference(expression, dataType, moduleInstance, portName);
-		}
+		return new InstancePortReference(expression, moduleInstance, port);
 
 	}
 

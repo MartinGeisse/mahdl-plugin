@@ -15,9 +15,16 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ModuleInstance extends Named {
 
+	@NotNull
 	private final ImplementationItem_ModuleInstance moduleInstanceElement;
+
+	@NotNull
 	private final Module moduleElement;
+
+	@NotNull
 	private final ImmutableMap<String, InstancePort> ports;
+
+	@NotNull
 	private final ImmutableMap<String, PortConnection> portConnections;
 
 	public ModuleInstance(@NotNull ImplementationItem_ModuleInstance moduleInstanceElement,
@@ -36,14 +43,17 @@ public final class ModuleInstance extends Named {
 		return moduleInstanceElement;
 	}
 
+	@NotNull
 	public Module getModuleElement() {
 		return moduleElement;
 	}
 
+	@NotNull
 	public ImmutableMap<String, InstancePort> getPorts() {
 		return ports;
 	}
 
+	@NotNull
 	public ImmutableMap<String, PortConnection> getPortConnections() {
 		return portConnections;
 	}

@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class Named {
 
+	@NotNull
 	private final PsiElement nameElement;
 
 	public Named(@NotNull PsiElement nameElement) {
@@ -29,6 +30,6 @@ public abstract class Named {
 		return nameElement.getText();
 	}
 
-	public abstract void processExpressions(@NotNull  ExpressionProcessor expressionProcessor);
+	public abstract void processExpressions(@NotNull ExpressionProcessor expressionProcessor);
 
 }

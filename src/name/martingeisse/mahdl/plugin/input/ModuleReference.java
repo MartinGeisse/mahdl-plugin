@@ -50,6 +50,9 @@ public class ModuleReference implements PsiReference {
 	public PsiElement resolve() {
 
 		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
+		if (sourceRoot == null) {
+			return null;
+		}
 		String[] segments = PsiUtil.parseQualifiedModuleName(moduleName);
 		VirtualFile targetVirtualFile = sourceRoot;
 		for (int i = 0; i < segments.length - 1; i++) {
@@ -138,7 +141,7 @@ public class ModuleReference implements PsiReference {
 	}
 
 	private void findModules(@Nullable String prefix, @NotNull VirtualFile folder, @NotNull List<Object> variants) {
-		for (VirtualFile child : folder.getChildren()) {
+		for (VirtualFile child : folder.getChildren()) { // TODO warning
 			String childName = child.getName();
 			if (child.isDirectory() && childName.indexOf('.') < 0) {
 				String childPrefix = (prefix == null ? childName : (prefix + '.' + childName));

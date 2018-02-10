@@ -7,36 +7,39 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
-import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
  */
 public class InstancePortReference extends ProcessedExpression {
 
+	@NotNull
 	private final ModuleInstance moduleInstance;
-	private final String portName;
 
-	public InstancePortReference(PsiElement errorSource, ProcessedDataType dataType, ModuleInstance moduleInstance, String portName) {
-		super(errorSource, dataType);
+	@NotNull
+	private final InstancePort port;
+
+	public InstancePortReference(@NotNull PsiElement errorSource,
+								 @NotNull ModuleInstance moduleInstance,
+								 @NotNull InstancePort port) {
+		super(errorSource, port.getDataType());
 		this.moduleInstance = moduleInstance;
-		this.portName = portName;
+		this.port = port;
 	}
 
+	@NotNull
 	public ModuleInstance getModuleInstance() {
 		return moduleInstance;
 	}
 
-	public String getPortName() {
-		return portName;
-	}
-
+	@NotNull
 	public InstancePort getPort() {
-		return moduleInstance.getPorts().get(portName);
+		return port;
 	}
 
 	@Override
-	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		return context.notConstant(this);
 	}
 

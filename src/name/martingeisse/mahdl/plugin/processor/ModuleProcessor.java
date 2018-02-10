@@ -84,7 +84,7 @@ public final class ModuleProcessor {
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
 		// a mutual dependency between the type system, constant evaluation and expression processing. Note the
 		// distinction between dataTypeProcessor and actualDataTypeProcessor used to break the dependency cycle.
-		dataTypeProcessor = t -> actualDataTypeProcessor.processDataType(t);
+		dataTypeProcessor = (dataType, reportErrors) -> actualDataTypeProcessor.processDataType(dataType, reportErrors);
 		expressionProcessor = new ExpressionProcessorImpl(errorHandler, name -> getDefinitions().get(name), dataTypeProcessor);
 		actualDataTypeProcessor = new DataTypeProcessorImpl(errorHandler, expressionProcessor);
 		definitionProcessor = new DefinitionProcessor(errorHandler, dataTypeProcessor, expressionProcessor);
