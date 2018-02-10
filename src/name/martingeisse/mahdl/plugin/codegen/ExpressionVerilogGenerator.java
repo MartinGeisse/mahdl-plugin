@@ -208,7 +208,7 @@ public final class ExpressionVerilogGenerator {
 					throw new ModuleCannotGenerateCodeException("cannot handle binary operator " + operator);
 				}
 				generate(operation.getLeftOperand(), builder, NESTING_INSIDE_OPERATION);
-				builder.append(symbol);
+				builder.append(' ').append(symbol).append(' ');
 				generate(operation.getRightOperand(), builder, NESTING_INSIDE_OPERATION);
 			}
 

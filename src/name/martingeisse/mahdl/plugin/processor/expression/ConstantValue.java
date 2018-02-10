@@ -234,6 +234,9 @@ public abstract class ConstantValue {
 		public String getHexLiteral() {
 			StringBuilder builder = new StringBuilder();
 			int paddedLength = bits.length();
+			if (paddedLength < 1) {
+				return "0";
+			}
 			if (paddedLength % 4 != 0) {
 				paddedLength = paddedLength + 4 - paddedLength % 4;
 			}

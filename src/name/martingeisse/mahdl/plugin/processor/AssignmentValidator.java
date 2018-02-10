@@ -158,7 +158,7 @@ public final class AssignmentValidator {
 
 	private void considerAssignedTo(@NotNull String signalName, @NotNull PsiElement errorSource) {
 		if (previouslyAssignedSignals.contains(signalName)) {
-			errorHandler.onError(errorSource, "signal " + signalName + " was already assigned to in another do-block");
+			errorHandler.onError(errorSource, "'" + signalName + "' was already assigned to in another do-block");
 		}
 		newlyAssignedSignals.add(signalName);
 	}

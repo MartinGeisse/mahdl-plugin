@@ -30,7 +30,7 @@ public final class SignalLikeReference extends ProcessedExpression {
 		if (definition instanceof Constant) {
 			return ((Constant) definition).getValue();
 		} else {
-			return context.error(this, "'" + name + "' is not a constant");
+			return context.notConstant(this);
 		}
 	}
 

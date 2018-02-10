@@ -40,7 +40,7 @@ public final class ModuleVerilogGenerator {
 		out.println();
 		out.print("module " + module.getName() + "(");
 		foreachDefinition(ModulePort.class, (port, first) -> {
-			if (first) {
+			if (!first) {
 				out.print(", ");
 			}
 			out.print(port.getName());
@@ -105,8 +105,8 @@ public final class ModuleVerilogGenerator {
 			});
 			out.println();
 			out.println("\tinitial begin");
-			out.println(builder);
-			out.println("end");
+			out.print(builder);
+			out.println("\tend");
 		}
 
 		// print do-blocks
@@ -150,6 +150,7 @@ public final class ModuleVerilogGenerator {
 			out.println(builder);
 		}
 
+		out.println("end");
 	}
 
 	private void printExpression(ProcessedExpression expression) {
