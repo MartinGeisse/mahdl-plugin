@@ -87,7 +87,8 @@ public final class ExpressionVerilogGenerator {
 		// primary
 		builder.put(InstancePortReference.class, NESTING_IDENTIFIER_ONLY);
 
-		// TODO TypeConversion.BitToVector
+		// invisible -- these can be NESTING_IDENTIFIER_ONLY because no code gets generated for them
+		builder.put(TypeConversion.BitToVector.class, NESTING_IDENTIFIER_ONLY);
 
 		EXTRACTION_NEEDED_NESTING_LEVELS = builder.build();
 	}
@@ -166,7 +167,7 @@ public final class ExpressionVerilogGenerator {
 
 			InstancePortReference instancePortReference = (InstancePortReference)expression;
 			builder.append(instancePortReference.getModuleInstance().getName());
-			builder.append('.').append(instancePortReference.getPortName());
+			builder.append('.').append(instancePortReference.getPort().getName());
 
 		} else if (expression instanceof ProcessedIndexSelection) {
 
@@ -232,8 +233,8 @@ public final class ExpressionVerilogGenerator {
 		} else if (expression instanceof TypeConversion) {
 
 			if (expression instanceof TypeConversion.BitToVector) {
-				// TODO is this implicit in all cases in Verilog? What about nested expressions? If in doubt,
-				// extract this expression!
+				// this only happens as part of vector concatenation, and no code is needed for the conversion
+				generate(((TypeConversion.BitToVector) expression).getOperand(), builder, nesting);
 			} else {
 				throw new ModuleCannotGenerateCodeException("invalid run-time type conversion: " + expression);
 			}
