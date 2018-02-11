@@ -140,8 +140,9 @@ statement ::= {
 }
 
 statementCaseItem ::= {
-	value ::= KW_CASE expression:selectorValue COLON statement*:statements;
-	default ::= KW_DEFAULT COLON statement*:statements;
+	additionalValue ::= KW_CASE expression:selectorValue COLON;
+	value ::= KW_CASE expression:selectorValue COLON statement+:statements;
+	default ::= KW_DEFAULT COLON statement+:statements;
 }
 
 
