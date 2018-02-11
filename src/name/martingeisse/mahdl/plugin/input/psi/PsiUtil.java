@@ -60,7 +60,7 @@ public final class PsiUtil {
 
 	public static void foreachPsiNode(@NotNull PsiElement root, @NotNull Consumer<PsiElement> consumer) {
 		if (root instanceof ASTWrapperPsiElement) {
-			InternalPsiUtil.foreachChild((ASTWrapperPsiElement)root, child -> {
+			InternalPsiUtil.foreachChild((ASTWrapperPsiElement) root, child -> {
 				consumer.consume(child);
 				foreachPsiNode(child, consumer);
 			});
@@ -170,6 +170,11 @@ public final class PsiUtil {
 	//
 	// other
 	//
+
+	@NotNull
+	public static String canonicalizeQualifiedModuleName(@NotNull QualifiedModuleName name) {
+		return StringUtils.join(parseQualifiedModuleName(name), '.');
+	}
 
 	@NotNull
 	public static String[] parseQualifiedModuleName(@NotNull QualifiedModuleName name) {

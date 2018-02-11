@@ -141,9 +141,8 @@ public final class DefinitionProcessor {
 				if (untypedResolvedModule instanceof Module) {
 					resolvedModule = (Module) untypedResolvedModule;
 				} else {
-					// TODO: consider adding an "unknown definition" if this happens to suppress follow-up errors from
-					// instance port references about the instance missing
 					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
+					add(new ModuleInstanceWithMissingDefinition(moduleInstanceElement));
 					return;
 				}
 			}

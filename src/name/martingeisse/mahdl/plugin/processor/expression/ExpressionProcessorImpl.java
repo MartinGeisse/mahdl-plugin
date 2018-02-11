@@ -9,10 +9,7 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.StandardFunction;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
-import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
-import name.martingeisse.mahdl.plugin.processor.definition.Named;
-import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
+import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
@@ -215,7 +212,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			return error(expression, "cannot resolve symbol '" + name + "'");
 		} else if (definition instanceof SignalLike) {
 			return new SignalLikeReference(expression, (SignalLike) definition);
-		} else if (definition instanceof ModuleInstance) {
+		} else if (definition instanceof ModuleInstance || definition instanceof ModuleInstanceWithMissingDefinition) {
 			return error(expression, "cannot use a module instance directly in an expression");
 		} else {
 			return error(expression, "symbol '" + name + "' does not refer to a signal-like");
@@ -233,6 +230,10 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 				return error(expression.getInstanceName(), "cannot resolve symbol '" + instanceName + "'");
 			} else if (moduleInstanceCandidate instanceof ModuleInstance) {
 				moduleInstance = (ModuleInstance) moduleInstanceCandidate;
+			} else if (moduleInstanceCandidate instanceof ModuleInstanceWithMissingDefinition) {
+				ImplementationItem_ModuleInstance moduleInstanceElement = ((ModuleInstanceWithMissingDefinition) moduleInstanceCandidate).getModuleInstanceElement();
+				String moduleName = PsiUtil.canonicalizeQualifiedModuleName(moduleInstanceElement.getModuleName());
+				return error(expression.getInstanceName(), "missing module '" + moduleName + "' for instance '" + instanceName + "'");
 			} else {
 				return error(expression.getInstanceName(), instanceName + " is not a module instance");
 			}
