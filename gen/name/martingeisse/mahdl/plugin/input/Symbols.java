@@ -128,6 +128,7 @@ public class Symbols {
 	public static final MahdlElementType signalLikeKind_Constant = new MahdlElementType("signalLikeKind_Constant");
 	public static final MahdlElementType signalLikeKind_Register = new MahdlElementType("signalLikeKind_Register");
 	public static final MahdlElementType signalLikeKind_Signal = new MahdlElementType("signalLikeKind_Signal");
+	public static final MahdlElementType statementCaseItem_AdditionalValue = new MahdlElementType("statementCaseItem_AdditionalValue");
 	public static final MahdlElementType statementCaseItem_Default = new MahdlElementType("statementCaseItem_Default");
 	public static final MahdlElementType statementCaseItem_Value = new MahdlElementType("statementCaseItem_Value");
 	public static final MahdlElementType statement_Assignment = new MahdlElementType("statement_Assignment");
@@ -136,16 +137,17 @@ public class Symbols {
 	public static final MahdlElementType statement_IfThen = new MahdlElementType("statement_IfThen");
 	public static final MahdlElementType statement_IfThenElse = new MahdlElementType("statement_IfThenElse");
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");
-	public static final MahdlElementType synthetic_List_ExpressionCaseItem = new MahdlElementType("synthetic_List_ExpressionCaseItem");
+	public static final MahdlElementType synthetic_List_ExpressionCaseItem_Nonempty = new MahdlElementType("synthetic_List_ExpressionCaseItem_Nonempty");
 	public static final MahdlElementType synthetic_List_ImplementationItem = new MahdlElementType("synthetic_List_ImplementationItem");
 	public static final MahdlElementType synthetic_List_PortConnection = new MahdlElementType("synthetic_List_PortConnection");
 	public static final MahdlElementType synthetic_List_PortDefinitionGroup = new MahdlElementType("synthetic_List_PortDefinitionGroup");
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
-	public static final MahdlElementType synthetic_List_StatementCaseItem = new MahdlElementType("synthetic_List_StatementCaseItem");
-	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA");
-	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT");
-	public static final MahdlElementType synthetic_SeparatedList_PortDefinition_COMMA = new MahdlElementType("synthetic_SeparatedList_PortDefinition_COMMA");
-	public static final MahdlElementType synthetic_SeparatedList_SignalLikeDefinition_COMMA = new MahdlElementType("synthetic_SeparatedList_SignalLikeDefinition_COMMA");
+	public static final MahdlElementType synthetic_List_StatementCaseItem_Nonempty = new MahdlElementType("synthetic_List_StatementCaseItem_Nonempty");
+	public static final MahdlElementType synthetic_List_Statement_Nonempty = new MahdlElementType("synthetic_List_Statement_Nonempty");
+	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA_Nonempty");
+	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty");
+	public static final MahdlElementType synthetic_SeparatedList_PortDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_PortDefinition_COMMA_Nonempty");
+	public static final MahdlElementType synthetic_SeparatedList_SignalLikeDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_SignalLikeDefinition_COMMA_Nonempty");
 
 
 	//
