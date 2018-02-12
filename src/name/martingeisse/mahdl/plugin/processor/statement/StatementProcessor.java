@@ -81,7 +81,7 @@ public final class StatementProcessor {
 
 		} else if (statement instanceof Statement_Switch) {
 
-			return error(statement, "switch statements not implemented yet");
+			return process((Statement_Switch)statement);
 
 		} else if (statement instanceof Statement_Break) {
 
@@ -103,6 +103,10 @@ public final class StatementProcessor {
 			processedElseBranch = process(elseBranch, triggerKind);
 		}
 		return new ProcessedIf(errorSource, processedCondition, processedThenBranch, processedElseBranch);
+	}
+
+	private ProcessedSwitchStatement process(Statement_Switch switchStatement) {
+		// TODO Verilog has no break and uses comma for multi-selector-value cases. Sounds far more logical.
 	}
 
 	/**
