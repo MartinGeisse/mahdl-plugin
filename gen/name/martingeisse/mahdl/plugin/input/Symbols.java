@@ -17,7 +17,6 @@ public class Symbols {
 	public static final MahdlElementType IDENTIFIER = new MahdlElementType("IDENTIFIER");
 	public static final MahdlElementType INTEGER_LITERAL = new MahdlElementType("INTEGER_LITERAL");
 	public static final MahdlElementType KW_BIT = new MahdlElementType("KW_BIT");
-	public static final MahdlElementType KW_BREAK = new MahdlElementType("KW_BREAK");
 	public static final MahdlElementType KW_CASE = new MahdlElementType("KW_CASE");
 	public static final MahdlElementType KW_CONSTANT = new MahdlElementType("KW_CONSTANT");
 	public static final MahdlElementType KW_DEFAULT = new MahdlElementType("KW_DEFAULT");
@@ -74,7 +73,6 @@ public class Symbols {
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
 	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
-	public static final MahdlElementType expressionCaseItem_AdditionalValue = new MahdlElementType("expressionCaseItem_AdditionalValue");
 	public static final MahdlElementType expressionCaseItem_Default = new MahdlElementType("expressionCaseItem_Default");
 	public static final MahdlElementType expressionCaseItem_Value = new MahdlElementType("expressionCaseItem_Value");
 	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
@@ -128,12 +126,10 @@ public class Symbols {
 	public static final MahdlElementType signalLikeKind_Constant = new MahdlElementType("signalLikeKind_Constant");
 	public static final MahdlElementType signalLikeKind_Register = new MahdlElementType("signalLikeKind_Register");
 	public static final MahdlElementType signalLikeKind_Signal = new MahdlElementType("signalLikeKind_Signal");
-	public static final MahdlElementType statementCaseItem_AdditionalValue = new MahdlElementType("statementCaseItem_AdditionalValue");
 	public static final MahdlElementType statementCaseItem_Default = new MahdlElementType("statementCaseItem_Default");
 	public static final MahdlElementType statementCaseItem_Value = new MahdlElementType("statementCaseItem_Value");
 	public static final MahdlElementType statement_Assignment = new MahdlElementType("statement_Assignment");
 	public static final MahdlElementType statement_Block = new MahdlElementType("statement_Block");
-	public static final MahdlElementType statement_Break = new MahdlElementType("statement_Break");
 	public static final MahdlElementType statement_IfThen = new MahdlElementType("statement_IfThen");
 	public static final MahdlElementType statement_IfThenElse = new MahdlElementType("statement_IfThenElse");
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");

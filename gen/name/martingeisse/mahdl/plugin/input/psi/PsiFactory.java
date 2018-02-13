@@ -23,10 +23,10 @@ public class PsiFactory {
         IElementType type = node.getElementType();
 
                     if (type == Symbols.synthetic_List_Statement) {
-                return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
+                return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block), Statement.class);
             }
                     if (type == Symbols.synthetic_List_ExpressionCaseItem_Nonempty) {
-                return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_AdditionalValue, Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
+                return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
             }
                     if (type == Symbols.literal_Integer) {
                 return new Literal_Integer(node);
@@ -56,7 +56,7 @@ public class PsiFactory {
                 return new PortConnection(node);
             }
                     if (type == Symbols.synthetic_List_Statement_Nonempty) {
-                return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Break), Statement.class);
+                return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block), Statement.class);
             }
                     if (type == Symbols.signalLikeDefinition_WithoutInitializer) {
                 return new SignalLikeDefinition_WithoutInitializer(node);
@@ -79,17 +79,11 @@ public class PsiFactory {
                     if (type == Symbols.statement_Block) {
                 return new Statement_Block(node);
             }
-                    if (type == Symbols.statement_Break) {
-                return new Statement_Break(node);
-            }
                     if (type == Symbols.portDefinition) {
                 return new PortDefinition(node);
             }
                     if (type == Symbols.synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty) {
                 return new ListNode<LeafPsiElement>(node, TokenSet.create(Symbols.IDENTIFIER), LeafPsiElement.class);
-            }
-                    if (type == Symbols.expressionCaseItem_AdditionalValue) {
-                return new ExpressionCaseItem_AdditionalValue(node);
             }
                     if (type == Symbols.expressionCaseItem_Value) {
                 return new ExpressionCaseItem_Value(node);
@@ -218,7 +212,7 @@ public class PsiFactory {
                 return new ListNode<PortDefinitionGroup>(node, TokenSet.create(Symbols.portDefinitionGroup), PortDefinitionGroup.class);
             }
                     if (type == Symbols.synthetic_List_StatementCaseItem_Nonempty) {
-                return new ListNode<StatementCaseItem>(node, TokenSet.create(Symbols.statementCaseItem_AdditionalValue, Symbols.statementCaseItem_Value, Symbols.statementCaseItem_Default), StatementCaseItem.class);
+                return new ListNode<StatementCaseItem>(node, TokenSet.create(Symbols.statementCaseItem_Value, Symbols.statementCaseItem_Default), StatementCaseItem.class);
             }
                     if (type == Symbols.signalLikeKind_Constant) {
                 return new SignalLikeKind_Constant(node);
@@ -234,9 +228,6 @@ public class PsiFactory {
             }
                     if (type == Symbols.portDirection_Out) {
                 return new PortDirection_Out(node);
-            }
-                    if (type == Symbols.statementCaseItem_AdditionalValue) {
-                return new StatementCaseItem_AdditionalValue(node);
             }
                     if (type == Symbols.statementCaseItem_Value) {
                 return new StatementCaseItem_Value(node);

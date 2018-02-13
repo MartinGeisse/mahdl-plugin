@@ -22,7 +22,7 @@
 	KW_MODULE, KW_INTERFACE, KW_IN, KW_OUT,
 	KW_CONSTANT, KW_SIGNAL, KW_REGISTER,
 	KW_BIT, KW_VECTOR, KW_MEMORY, KW_INTEGER, KW_TEXT,
-	KW_DO, KW_IF, KW_ELSE, KW_SWITCH, KW_CASE, KW_DEFAULT, KW_BREAK,
+	KW_DO, KW_IF, KW_ELSE, KW_SWITCH, KW_CASE, KW_DEFAULT,
 
 	// literals
 	INTEGER_LITERAL, VECTOR_LITERAL, TEXT_LITERAL,
@@ -136,12 +136,10 @@ statement ::= {
 	ifThenElse ::= KW_IF OPENING_PARENTHESIS expression:condition CLOSING_PARENTHESIS statement:thenBranch KW_ELSE statement:elseBranch;
 	switch ::= KW_SWITCH OPENING_PARENTHESIS expression:selector CLOSING_PARENTHESIS OPENING_CURLY_BRACE statementCaseItem+:items CLOSING_CURLY_BRACE;
 	block ::= OPENING_CURLY_BRACE statement*:body CLOSING_CURLY_BRACE;
-	break ::= KW_BREAK SEMICOLON;
 }
 
 statementCaseItem ::= {
-	additionalValue ::= KW_CASE expression:selectorValue COLON;
-	value ::= KW_CASE expression:selectorValue COLON statement+:statements;
+	value ::= KW_CASE (expression, COMMA)+:selectorValues COLON statement+:statements;
 	default ::= KW_DEFAULT COLON statement+:statements;
 }
 
@@ -159,8 +157,7 @@ extendedExpression ::= {
 }
 
 expressionCaseItem ::= {
-	additionalValue ::= KW_CASE expression:selectorValue COLON;
-	value ::= KW_CASE expression:selectorValue COLON extendedExpression:resultValue;
+	value ::= KW_CASE (expression, COMMA)+:selectorValues COLON extendedExpression:resultValue;
 	default ::= KW_DEFAULT COLON extendedExpression:resultValue;
 }
 

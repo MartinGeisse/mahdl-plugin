@@ -27,8 +27,8 @@ public final class ExpressionCaseItem_Value extends ExpressionCaseItem  {
         super(node);
     }
 
-        public Expression getSelectorValue() {
-            return (Expression)InternalPsiUtil.getChild(this, 1);
+        public ListNode<Expression> getSelectorValues() {
+            return (ListNode<Expression>)InternalPsiUtil.getChild(this, 1);
         }
         public ExtendedExpression getResultValue() {
             return (ExtendedExpression)InternalPsiUtil.getChild(this, 3);

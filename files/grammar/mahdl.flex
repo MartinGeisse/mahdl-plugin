@@ -107,7 +107,6 @@ else { return Symbols.KW_ELSE; }
 switch { return Symbols.KW_SWITCH; }
 case { return Symbols.KW_CASE; }
 default { return Symbols.KW_DEFAULT; }
-break { return Symbols.KW_BREAK; }
 
 // literals
 {UnsignedInteger} { return Symbols.INTEGER_LITERAL; }

@@ -27,8 +27,8 @@ public final class StatementCaseItem_Value extends StatementCaseItem  {
         super(node);
     }
 
-        public Expression getSelectorValue() {
-            return (Expression)InternalPsiUtil.getChild(this, 1);
+        public ListNode<Expression> getSelectorValues() {
+            return (ListNode<Expression>)InternalPsiUtil.getChild(this, 1);
         }
         public ListNode<Statement> getStatements() {
             return (ListNode<Statement>)InternalPsiUtil.getChild(this, 3);
