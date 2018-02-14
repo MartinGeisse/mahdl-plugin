@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * TODO detect missing break statement
+ *
  */
 public final class ProcessedSwitchStatement extends ProcessedStatement {
 
