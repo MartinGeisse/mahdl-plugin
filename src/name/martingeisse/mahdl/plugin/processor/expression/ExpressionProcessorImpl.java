@@ -75,16 +75,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 				// process selector values
 				List<ConstantValue.Vector> caseSelectorValues = new ArrayList<>();
 				for (Expression currentCaseSelectorExpression : typedCaseItem.getSelectorValues().getAll()) {
-					ProcessedExpression processedSelectorValueExpression = process(currentCaseSelectorExpression);
-					processedSelectorValueExpression = convertImplicitly(processedSelectorValueExpression, selector.getDataType());
-					ConstantValue selectorValue = evaluateLocalExpressionThatMustBeFormallyConstant(processedSelectorValueExpression);
-					if (selectorValue instanceof ConstantValue.Unknown) {
-						errorInCases = true;
-					}
-					if (!(selectorValue instanceof ConstantValue.Vector)) {
-						return error(caseItem, "internal error: selector is not a vector in spite of type conversion");
-					}
-					ConstantValue.Vector selectorVectorValue = (ConstantValue.Vector) selectorValue;
+					ConstantValue.Vector selectorVectorValue = processCaseSelectorValue(currentCaseSelectorExpression, selector.getDataType());
 					if (foundSelectorValues.add(selectorVectorValue)) {
 						caseSelectorValues.add(selectorVectorValue);
 					} else {
@@ -626,6 +617,21 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 
 	public ErrorHandler getErrorHandler() {
 		return errorHandler;
+	}
+
+	@Override
+	public ConstantValue.Vector processCaseSelectorValue(Expression expression, ProcessedDataType selectorDataType) {
+		ProcessedExpression processedSelectorValueExpression = process(expression);
+		processedSelectorValueExpression = convertImplicitly(processedSelectorValueExpression, selectorDataType);
+		ConstantValue selectorValue = evaluateLocalExpressionThatMustBeFormallyConstant(processedSelectorValueExpression);
+		if (selectorValue instanceof ConstantValue.Unknown) {
+			return null;
+		}
+		if (!(selectorValue instanceof ConstantValue.Vector)) {
+			error(expression, "internal error: selector is not a vector in spite of type conversion");
+			return null;
+		}
+		return (ConstantValue.Vector) selectorValue;
 	}
 
 }

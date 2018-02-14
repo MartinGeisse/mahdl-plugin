@@ -9,16 +9,20 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.AssignmentValidator;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
+import name.martingeisse.mahdl.plugin.processor.expression.TypeErrorException;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * TODO switch / break
+ *
  */
 public final class StatementProcessor {
 
@@ -55,11 +59,7 @@ public final class StatementProcessor {
 		if (statement instanceof Statement_Block) {
 
 			Statement_Block block = (Statement_Block) statement;
-			List<ProcessedStatement> processedBodyStatements = new ArrayList<>();
-			for (Statement bodyStatement : block.getBody().getAll()) {
-				processedBodyStatements.add(process(bodyStatement, triggerKind));
-			}
-			return new ProcessedBlock(statement, ImmutableList.copyOf(processedBodyStatements));
+			return processBlock(statement, block.getBody().getAll(), triggerKind);
 
 		} else if (statement instanceof Statement_Assignment) {
 
@@ -81,12 +81,20 @@ public final class StatementProcessor {
 
 		} else if (statement instanceof Statement_Switch) {
 
-			return process((Statement_Switch)statement);
+			return process((Statement_Switch) statement, triggerKind);
 
 		} else {
 			return error(statement, "unknown statement type");
 
 		}
+	}
+
+	public ProcessedBlock processBlock(PsiElement errorSource, List<Statement> statements, AssignmentValidator.TriggerKind triggerKind) {
+		List<ProcessedStatement> processedBodyStatements = new ArrayList<>();
+		for (Statement bodyStatement : statements) {
+			processedBodyStatements.add(process(bodyStatement, triggerKind));
+		}
+		return new ProcessedBlock(errorSource, ImmutableList.copyOf(processedBodyStatements));
 	}
 
 	private ProcessedIf processIfStatement(PsiElement errorSource, Expression condition, Statement thenBranch, Statement elseBranch, AssignmentValidator.TriggerKind triggerKind) {
@@ -101,8 +109,74 @@ public final class StatementProcessor {
 		return new ProcessedIf(errorSource, processedCondition, processedThenBranch, processedElseBranch);
 	}
 
-	private ProcessedSwitchStatement process(Statement_Switch switchStatement) {
-		// TODO Verilog has no break and uses comma for multi-selector-value cases. Sounds far more logical.
+	private ProcessedStatement process(Statement_Switch switchStatement, AssignmentValidator.TriggerKind triggerKind) {
+		ProcessedExpression selector = expressionProcessor.process(switchStatement.getSelector());
+		boolean selectorOkay = (selector.getDataType() instanceof ProcessedDataType.Vector);
+		if (!selectorOkay) {
+			error(switchStatement.getSelector(), "selector must be of vector type, found " + selector.getDataType());
+		}
+
+		if (switchStatement.getItems().getAll().isEmpty()) {
+			return error(switchStatement, "switch statement has no cases");
+		}
+
+		boolean errorInCases = false;
+		Set<ConstantValue.Vector> foundSelectorValues = new HashSet<>();
+		List<ProcessedSwitchStatement.Case> processedCases = new ArrayList<>();
+		ProcessedStatement processedDefaultCase = null;
+		for (StatementCaseItem caseItem : switchStatement.getItems().getAll()) {
+			if (caseItem instanceof StatementCaseItem_Value) {
+				StatementCaseItem_Value typedCaseItem = (StatementCaseItem_Value) caseItem;
+
+				// result value expression gets handled below
+				ListNode<Statement> statementListNode = typedCaseItem.getStatements();
+				ProcessedStatement caseStatement = processBlock(statementListNode, statementListNode.getAll(), triggerKind);
+
+				// process selector values
+				List<ConstantValue.Vector> caseSelectorValues = new ArrayList<>();
+				for (Expression currentCaseSelectorExpression : typedCaseItem.getSelectorValues().getAll()) {
+					ConstantValue.Vector selectorVectorValue = expressionProcessor.processCaseSelectorValue(currentCaseSelectorExpression, selector.getDataType());
+					if (foundSelectorValues.add(selectorVectorValue)) {
+						caseSelectorValues.add(selectorVectorValue);
+					} else {
+						error(currentCaseSelectorExpression, "duplicate selector value");
+						errorInCases = true;
+					}
+				}
+				processedCases.add(new ProcessedSwitchStatement.Case(caseSelectorValues, caseStatement));
+
+			} else if (caseItem instanceof StatementCaseItem_Default) {
+
+				// result value expression gets handled below
+				ListNode<Statement> statementListNode = ((StatementCaseItem_Default) caseItem).getStatements();
+				ProcessedStatement caseStatement = processBlock(statementListNode, statementListNode.getAll(), triggerKind);
+
+				// remember default case and check for duplicate
+				if (processedDefaultCase != null) {
+					error(caseItem, "duplicate default case");
+					errorInCases = true;
+				} else {
+					processedDefaultCase = caseStatement;
+				}
+
+			} else {
+				error(caseItem, "unknown case item type");
+				errorInCases = true;
+			}
+		}
+
+		// in case of errors, don't return a swtch expression
+		if (!selectorOkay || errorInCases) {
+			return new UnknownStatement(switchStatement);
+		}
+
+		// now build the switch expression
+		try {
+			return new ProcessedSwitchStatement(switchStatement, selector, ImmutableList.copyOf(processedCases), processedDefaultCase);
+		} catch (TypeErrorException e) {
+			return error(switchStatement, "internal error during type-check");
+		}
+
 	}
 
 	/**

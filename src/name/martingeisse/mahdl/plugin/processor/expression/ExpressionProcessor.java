@@ -31,4 +31,7 @@ public interface ExpressionProcessor {
 
 	ErrorHandler getErrorHandler();
 
+	// returns null on failure
+	ConstantValue.Vector processCaseSelectorValue(Expression expression, ProcessedDataType selectorDataType);
+
 }
