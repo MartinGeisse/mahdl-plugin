@@ -4,13 +4,9 @@
  */
 package name.martingeisse.mahdl.plugin.codegen;
 
-import com.google.common.collect.ImmutableMap;
-import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.functions.StandardFunction;
-import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
-import name.martingeisse.mahdl.plugin.processor.expression.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
+import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.statement.*;
-import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
  *
@@ -66,7 +62,7 @@ public final class StatementVerilogGenerator {
 
 		} else if (statement instanceof ProcessedIf) {
 
-			ProcessedIf processedIf = (ProcessedIf)statement;
+			ProcessedIf processedIf = (ProcessedIf) statement;
 			indent(builder, indentation);
 			builder.append("if (");
 			expressionVerilogGenerator.generate(processedIf.getCondition(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
@@ -80,6 +76,10 @@ public final class StatementVerilogGenerator {
 			indent(builder, indentation);
 			builder.append("end\n");
 
+		} else if (statement instanceof ProcessedSwitchStatement) {
+
+			generateSwitch((ProcessedSwitchStatement)statement, builder, indentation);
+
 		} else if (!(statement instanceof Nop)) {
 			throw new ModuleCannotGenerateCodeException("unknown statement: " + statement);
 		}
@@ -90,6 +90,23 @@ public final class StatementVerilogGenerator {
 		for (int i = 0; i < indentation; i++) {
 			builder.append('\t');
 		}
+	}
+
+	public void generateSwitch(ProcessedSwitchStatement statement, StringBuilder builder, int indentation) {
+		indent(builder, indentation);
+		builder.append("switch (");
+		expressionVerilogGenerator.generate(statement.getSelector(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
+		builder.append(") {\n");
+		for (ProcessedSwitchStatement.Case aCase : statement.getCases()) {
+			builder.append('\n');
+			indent(builder, indentation + 1);
+			builder.append("case ");
+			for (ConstantValue.Vector selectorValue : aCase.getSelectorValues()) {
+				// TODO
+			}
+			// TODO
+		}
+		// TODO
 	}
 
 }
