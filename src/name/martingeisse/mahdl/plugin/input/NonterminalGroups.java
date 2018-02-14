@@ -18,7 +18,6 @@ public final class NonterminalGroups {
 	public static final TokenSet STATEMENTS = TokenSet.create(
 		Symbols.statement_Assignment,
 		Symbols.statement_Block,
-		Symbols.statement_Break,
 		Symbols.statement_IfThen,
 		Symbols.statement_IfThenElse,
 		Symbols.statement_Switch

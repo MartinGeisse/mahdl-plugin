@@ -83,10 +83,6 @@ public final class StatementProcessor {
 
 			return process((Statement_Switch)statement);
 
-		} else if (statement instanceof Statement_Break) {
-
-			return error(statement, "break statements not implemented yet");
-
 		} else {
 			return error(statement, "unknown statement type");
 

@@ -34,8 +34,7 @@ public final class TokenGroups {
 		Symbols.KW_ELSE,
 		Symbols.KW_SWITCH,
 		Symbols.KW_CASE,
-		Symbols.KW_DEFAULT,
-		Symbols.KW_BREAK
+		Symbols.KW_DEFAULT
 	);
 
 	public static final TokenSet OPERATORS = TokenSet.create(

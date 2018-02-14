@@ -42,8 +42,8 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.synthetic_List_PortDefinitionGroup,
 		Symbols.synthetic_List_PortConnection,
 		Symbols.synthetic_List_Statement,
-		Symbols.synthetic_List_StatementCaseItem,
-		Symbols.synthetic_List_ExpressionCaseItem
+		Symbols.synthetic_List_StatementCaseItem_Nonempty,
+		Symbols.synthetic_List_ExpressionCaseItem_Nonempty
 	);
 
 	private static final TokenSet NOT_INDENTED_SYMBOLS = TokenSet.orSet(NonterminalGroups.STATEMENTS, TokenSet.create(
