@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO use special expression generator for L-values
  */
 public final class ModuleVerilogGenerator {
 
@@ -162,6 +162,8 @@ public final class ModuleVerilogGenerator {
 		out.println("endmodule");
 	}
 
+	// A switch expression will always be extracted, even when it could be turned into a switch statement in-place
+	// because it is already a toplevel expression, but for generated code it's okay for now.
 	private String extractExpression(ProcessedExpression expression) {
 		String name = getNextHelperSignalName();
 		StringBuilder builder = new StringBuilder();

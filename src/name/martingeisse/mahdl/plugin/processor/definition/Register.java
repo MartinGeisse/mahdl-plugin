@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- *
+ * TODO make sure the initializer is constant!
  */
 public final class Register extends SignalLike {
 
