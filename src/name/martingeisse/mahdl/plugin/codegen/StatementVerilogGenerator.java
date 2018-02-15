@@ -54,9 +54,9 @@ public final class StatementVerilogGenerator {
 
 			ProcessedAssignment assignment = (ProcessedAssignment) statement;
 			indent(builder, indentation);
-			expressionVerilogGenerator.generate(assignment.getLeftHandSide(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
+			expressionVerilogGenerator.generate(assignment.getLeftHandSide(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(" <= ");
-			expressionVerilogGenerator.generate(assignment.getRightHandSide(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
+			expressionVerilogGenerator.generate(assignment.getRightHandSide(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(";\n");
 
 		} else if (statement instanceof ProcessedIf) {
@@ -64,7 +64,7 @@ public final class StatementVerilogGenerator {
 			ProcessedIf processedIf = (ProcessedIf) statement;
 			indent(builder, indentation);
 			builder.append("if (");
-			expressionVerilogGenerator.generate(processedIf.getCondition(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
+			expressionVerilogGenerator.generate(processedIf.getCondition(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(") begin\n");
 			generate(processedIf.getThenBranch(), builder, indentation + 1);
 			if (!(processedIf.getElseBranch() instanceof Nop)) {
@@ -94,7 +94,7 @@ public final class StatementVerilogGenerator {
 	public void generateSwitch(ProcessedSwitchStatement statement, StringBuilder builder, int indentation) {
 		indent(builder, indentation);
 		builder.append("switch (");
-		expressionVerilogGenerator.generate(statement.getSelector(), builder, ExpressionVerilogGenerator.NESTING_INSIDE_SWITCH);
+		expressionVerilogGenerator.generate(statement.getSelector(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 		builder.append(") {\n");
 		for (ProcessedSwitchStatement.Case aCase : statement.getCases()) {
 			builder.append('\n');

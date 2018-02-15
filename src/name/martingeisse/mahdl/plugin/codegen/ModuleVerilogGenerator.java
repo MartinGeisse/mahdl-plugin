@@ -191,7 +191,7 @@ public final class ModuleVerilogGenerator {
 	}
 
 	private interface DefinitionCallback<T extends Named> {
-		public void call(T definition, boolean first);
+		void call(T definition, boolean first);
 	}
 
 	private static String bitOrVectorSuffixToString(ProcessedDataType processedDataType) {
