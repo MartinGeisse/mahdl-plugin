@@ -6,11 +6,18 @@ package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
+import name.martingeisse.mahdl.plugin.processor.expression.ProcessedSwitchExpression;
+import name.martingeisse.mahdl.plugin.processor.expression.SignalLikeReference;
+import name.martingeisse.mahdl.plugin.processor.expression.TypeErrorException;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedStatement;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedSwitchStatement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -155,23 +162,30 @@ public final class ModuleVerilogGenerator {
 		out.println("endmodule");
 	}
 
-	private void printExpression(ProcessedExpression expression) {
-		StringBuilder builder = new StringBuilder();
-		assembleExpression(expression, builder);
-		out.print(builder);
-	}
-
-	private void assembleExpression(ProcessedExpression expression, StringBuilder builder) {
-
-	}
-
 	private String extractExpression(ProcessedExpression expression) {
 		String name = getNextHelperSignalName();
 		StringBuilder builder = new StringBuilder();
-		builder.append("\twire").append(bitOrVectorSuffixToString(expression.getDataType()));
-		builder.append(' ').append(name).append(" = ");
-		expressionVerilogGenerator.generate(expression, builder);
-		builder.append(";\n");
+		if (expression instanceof ProcessedSwitchExpression) {
+
+			ProcessedExpression temporarySignal = new SyntheticSignalLikeExpression(expression.getErrorSource(),
+				expression.getDataType(), name);
+			ProcessedSwitchExpression switchExpression = (ProcessedSwitchExpression)expression;
+			ProcessedSwitchStatement switchStatement = switchExpression.convertToStatement(temporarySignal);
+
+			builder.append("\treg").append(bitOrVectorSuffixToString(expression.getDataType()));
+			builder.append(' ').append(name).append(";\n");
+			builder.append("\talways @(*) begin\n");
+			statementVerilogGenerator.generateSwitch(switchStatement, builder, 2);
+			builder.append("\tend\n");
+
+		} else {
+
+			builder.append("\twire").append(bitOrVectorSuffixToString(expression.getDataType()));
+			builder.append(' ').append(name).append(" = ");
+			expressionVerilogGenerator.generate(expression, builder);
+			builder.append(";\n");
+
+		}
 		ModuleVerilogGenerator.this.out.println(builder);
 		return name;
 	}

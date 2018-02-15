@@ -6,14 +6,19 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedAssignment;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedStatement;
+import name.martingeisse.mahdl.plugin.processor.statement.ProcessedSwitchStatement;
+import name.martingeisse.mahdl.plugin.processor.statement.UnknownStatement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO check that the switch is complete! Otherwise an implicit latch is generated.
  */
 public final class ProcessedSwitchExpression extends ProcessedExpression {
 
@@ -109,6 +114,20 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 			return resultValue;
 		}
 
+	}
+
+	public ProcessedSwitchStatement convertToStatement(ProcessedExpression destination) {
+		List<ProcessedSwitchStatement.Case> statementCases = new ArrayList<>();
+		for (ProcessedSwitchExpression.Case expressionCase : cases) {
+			ProcessedStatement branch = new ProcessedAssignment(getErrorSource(), destination, expressionCase.getResultValue());
+			statementCases.add(new ProcessedSwitchStatement.Case(expressionCase.getSelectorValues(), branch));
+		}
+		ProcessedStatement defaultBranch = new ProcessedAssignment(getErrorSource(), destination, this.defaultBranch);
+		try {
+			return new ProcessedSwitchStatement(getErrorSource(), selector, ImmutableList.copyOf(statementCases), defaultBranch);
+		} catch (TypeErrorException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 }
