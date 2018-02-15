@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
-import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.statement.*;
 
 /**
@@ -101,12 +100,22 @@ public final class StatementVerilogGenerator {
 			builder.append('\n');
 			indent(builder, indentation + 1);
 			builder.append("case ");
-			for (ConstantValue.Vector selectorValue : aCase.getSelectorValues()) {
-				// TODO
+			{
+				boolean first = true;
+				for (ConstantValue.Vector selectorValue : aCase.getSelectorValues()) {
+					if (first) {
+						first = false;
+					} else {
+						builder.append(", ");
+					}
+					expressionVerilogGenerator.generate(selectorValue, builder);
+				}
 			}
-			// TODO
+			builder.append(":\n");
+			generate(aCase.getBranch(), builder, indentation + 2);
 		}
-		// TODO
+		indent(builder, indentation);
+		builder.append("}\n");
 	}
 
 }

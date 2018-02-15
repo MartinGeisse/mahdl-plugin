@@ -27,12 +27,14 @@ public final class ExpressionVerilogGenerator {
 
 		So don't try to tweak nesting just because you wrongly think it is about syntax.
 	 */
+
+
+	// "toplevel" still doesn't include switch expressions, because those aren't expressions in Verilog. Any switch
+	// expression gets extracted, so the caller must make sure to not pass it here again to avoid an infinite loop.
 	public static final int NESTING_TOPLEVEL = 0;
-	public static final int NESTING_INSIDE_SWITCH = 1; // TODO switch expressions cannot be generated as such anyway,
-		// so this nesting level is useless. Handle switch expressions, then remove this level (use toplevel instead)
-	public static final int NESTING_INSIDE_OPERATION = 2;
-	public static final int NESTING_INSIDE_SELECTION = 3;
-	public static final int NESTING_IDENTIFIER_ONLY = 4;
+	public static final int NESTING_INSIDE_OPERATION = 1;
+	public static final int NESTING_INSIDE_SELECTION = 2;
+	public static final int NESTING_IDENTIFIER_ONLY = 3;
 
 	private static final ImmutableMap<ProcessedUnaryOperator, String> UNARY_OPERATOR_SYMBOLS;
 
@@ -71,8 +73,6 @@ public final class ExpressionVerilogGenerator {
 
 	static {
 		ImmutableMap.Builder builder = ImmutableMap.builder();
-
-		// switch...
 
 		// operations
 		builder.put(ProcessedUnaryOperation.class, NESTING_INSIDE_OPERATION);
@@ -127,18 +127,8 @@ public final class ExpressionVerilogGenerator {
 		// constant folding
 		ConstantValue value = fold(expression);
 		if (!(value instanceof ConstantValue.Unknown)) {
-			if (value instanceof ConstantValue.Bit) {
-				boolean set = ((ConstantValue.Bit) value).isSet();
-				builder.append(set ? "1" : "0");
-			} else if (value instanceof ConstantValue.Vector) {
-				ConstantValue.Vector vector = (ConstantValue.Vector)value;
-				builder.append(vector.getSize()).append("'h").append(vector.getHexLiteral());
-			} else if (value instanceof ConstantValue.Memory) {
+			if (!generate(value, builder)) {
 				extract(expression, builder);
-			} else if (value instanceof ConstantValue.Integer) {
-				builder.append(((ConstantValue.Integer) value).getValue());
-			} else {
-				throw new ModuleCannotGenerateCodeException("invalid run-time constant: " + value);
 			}
 			return;
 		}
@@ -239,8 +229,31 @@ public final class ExpressionVerilogGenerator {
 				throw new ModuleCannotGenerateCodeException("invalid run-time type conversion: " + expression);
 			}
 
+		} else if (expression instanceof ProcessedSwitchExpression) {
+
+			extract(expression, builder);
+
 		} else {
 			throw new ModuleCannotGenerateCodeException("unknown expression type: " + expression);
+		}
+	}
+
+	public boolean generate(ConstantValue value, StringBuilder builder) {
+		if (value instanceof ConstantValue.Bit) {
+			boolean set = ((ConstantValue.Bit) value).isSet();
+			builder.append(set ? "1" : "0");
+			return true;
+		} else if (value instanceof ConstantValue.Vector) {
+			ConstantValue.Vector vector = (ConstantValue.Vector)value;
+			builder.append(vector.getSize()).append("'h").append(vector.getHexLiteral());
+			return true;
+		} else if (value instanceof ConstantValue.Memory) {
+			return false;
+		} else if (value instanceof ConstantValue.Integer) {
+			builder.append(((ConstantValue.Integer) value).getValue());
+			return true;
+		} else {
+			throw new ModuleCannotGenerateCodeException("invalid run-time constant: " + value);
 		}
 	}
 
