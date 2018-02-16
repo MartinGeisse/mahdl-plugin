@@ -86,7 +86,7 @@ public final class ModuleVerilogGenerator {
 			out.println(';');
 		});
 
-		// print continuous assignments from initializers
+		// print continuous assignments from signal initializers
 		out.println();
 		foreachDefinition(Signal.class, (signal, first) -> {
 			if (signal.getInitializer() != null) {
@@ -118,7 +118,7 @@ public final class ModuleVerilogGenerator {
 			out.println("\tend");
 		}
 
-		// print do-blocks
+		// print do-blocks. TODO use VariableVerilogGenerator to print l-values and extract them in reverse direction than ExpressionVerilogGenerator
 		out.println();
 		{
 			StringBuilder builder = new StringBuilder();
@@ -130,7 +130,8 @@ public final class ModuleVerilogGenerator {
 		}
 
 		// print module instances
-		// TODO generate helper signals for complex port assignments
+		// TODO generate helper signals for complex port assignments (ExpressionVerilogGenerator does this for input ports)
+		// TODO use VariableVerilogGenerator to print l-values for output ports and extract them in reverse direction than ExpressionVerilogGenerator
 		out.println();
 		{
 			StringBuilder builder = new StringBuilder();
