@@ -153,6 +153,10 @@ public final class ExpressionVerilogGenerator {
 
 			builder.append(((SignalLikeReference) expression).getDefinition().getName());
 
+		} else if (expression instanceof SyntheticSignalLikeExpression) {
+
+			builder.append(((SyntheticSignalLikeExpression) expression).getName());
+
 		} else if (expression instanceof InstancePortReference) {
 
 			InstancePortReference instancePortReference = (InstancePortReference)expression;
@@ -295,6 +299,8 @@ public final class ExpressionVerilogGenerator {
 	private void extract(ProcessedExpression expression, StringBuilder builder) {
 		if (expression instanceof SignalLikeReference) {
 			builder.append(((SignalLikeReference) expression).getDefinition().getName());
+		} else if (expression instanceof SyntheticSignalLikeExpression) {
+			builder.append(((SyntheticSignalLikeExpression) expression).getName());
 		} else {
 			builder.append(extractor.extract(expression));
 		}
