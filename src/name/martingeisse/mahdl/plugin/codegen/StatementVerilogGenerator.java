@@ -13,9 +13,11 @@ import name.martingeisse.mahdl.plugin.processor.statement.*;
 public final class StatementVerilogGenerator {
 
 	private final ExpressionVerilogGenerator expressionVerilogGenerator;
+	private final VariableVerilogGenerator variableVerilogGenerator;
 
-	public StatementVerilogGenerator(ExpressionVerilogGenerator expressionVerilogGenerator) {
+	public StatementVerilogGenerator(ExpressionVerilogGenerator expressionVerilogGenerator, VariableVerilogGenerator variableVerilogGenerator) {
 		this.expressionVerilogGenerator = expressionVerilogGenerator;
+		this.variableVerilogGenerator = variableVerilogGenerator;
 	}
 
 	/**
@@ -54,7 +56,7 @@ public final class StatementVerilogGenerator {
 
 			ProcessedAssignment assignment = (ProcessedAssignment) statement;
 			indent(builder, indentation);
-			expressionVerilogGenerator.generate(assignment.getLeftHandSide(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
+			variableVerilogGenerator.generate(assignment.getLeftHandSide(), builder, VariableVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(" <= ");
 			expressionVerilogGenerator.generate(assignment.getRightHandSide(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(";\n");

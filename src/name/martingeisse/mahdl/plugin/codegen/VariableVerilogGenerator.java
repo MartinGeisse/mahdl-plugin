@@ -5,92 +5,92 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.functions.StandardFunction;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
 
 /**
- * This class is like {@link ExpressionVerilogGenerator} but for L-expressions. The differences in principle are:
- * - different extraction rules
- * - extracted signals use the opposite assignment direction
- *
- * Note that even L-expression can be very complex, such as in the assignment
- *
- * 		register vector[7:0] x;
- * 		register vector[7:0] y;
- * 		signal vector[7:0] foo;
- *
- * 		...
- *
- * 		(x _ y)[11:4] = foo;
- *
- * In this case, the concatenation (x _ y) will be extracted to a synthetic signal.
- *
- * This class uses the {@link ExpressionVerilogGenerator} to generate nested R-expressions inside L-expressions,
- * such as selection indices.
+ * This class is like {@link ExpressionVerilogGenerator} but for L-expressions.
+ * <p>
+ * A fundamental difference between these two classes is that this variable generator cannot extract any L-expressions.
+ * This ight have been possible for continuous assignments, but for clocked assignments, there is no way part of a
+ * complex left-hand side can be extracted.
+ * <p>
+ * Right now, this isn't a problem because Verilog seems to support all kinds of left-hand side expressions we use.
+ * Synthesis tools might be more picky, though, and if this ever becomes a problem, the best way to deal with the
+ * problem is probably not extraction but breaking apart the assignment in a way that is specific to the LHS expression
+ * type. For example, for two 8-bit signal x and y, (x _ y)[11:4] would be split into two assignments to x[3:0] and
+ * y[7:4], using a corresponding slice of the RHS.
+ * <p>
+ * Extracting R-expressions that are embedded in the L-expressions, such as the index of a selection, is no problem and
+ * is delegated to the {@link ExpressionVerilogGenerator}.
  */
 public final class VariableVerilogGenerator {
 
-	public static final int NESTING_TOPLEVEL = 0;
-	public static final int NESTING_INSIDE_OPERATION = 1;
-	public static final int NESTING_INSIDE_SELECTION = 2;
-	public static final int NESTING_IDENTIFIER_ONLY = 3;
-
-	private static final ImmutableMap<Class<? extends ProcessedExpression>, Integer> EXTRACTION_NEEDED_NESTING_LEVELS;
-
-	static {
-		ImmutableMap.Builder builder = ImmutableMap.builder();
-
-		// operations
-		builder.put(ProcessedBinaryOperation.class, NESTING_INSIDE_OPERATION);
-
-		// selection
-		builder.put(ProcessedIndexSelection.class, NESTING_INSIDE_SELECTION);
-		builder.put(ProcessedRangeSelection.class, NESTING_INSIDE_SELECTION);
-
-		// primary
-		builder.put(InstancePortReference.class, NESTING_IDENTIFIER_ONLY);
-
-		EXTRACTION_NEEDED_NESTING_LEVELS = builder.build();
-	}
-
-	private final Extractor extractor;
 	private final ExpressionVerilogGenerator expressionVerilogGenerator;
 
-	public VariableVerilogGenerator(Extractor extractor, ExpressionVerilogGenerator expressionVerilogGenerator) {
-		this.extractor = extractor;
+	public VariableVerilogGenerator(ExpressionVerilogGenerator expressionVerilogGenerator) {
 		this.expressionVerilogGenerator = expressionVerilogGenerator;
 	}
 
 	/**
-	 * Generates the code for the specified L-expression to the builder, writing helper signals to the output as needed.
+	 * Generates the code for the specified expression to the builder.
 	 */
 	public void generate(ProcessedExpression expression, StringBuilder builder) {
-		generate(expression, builder, NESTING_TOPLEVEL);
-	}
+		if (expression instanceof UnknownExpression) {
 
-	/**
-	 * Generates the code for the specified L-expression to the builder, writing helper signals to the output as needed.
-	 * Any expressions that conflict with the specified current nesting level will be extracted.
-	 */
-	public void generate(ProcessedExpression expression, StringBuilder builder, int nesting) {
-		// TODO
-	}
+			throw new ModuleHasErrorsException();
 
-	//
-	// extraction
-	//
+		} else if (expression instanceof SignalLikeReference) {
 
-	private void extract(ProcessedExpression expression, StringBuilder builder) {
-		if (expression instanceof SignalLikeReference) {
 			builder.append(((SignalLikeReference) expression).getDefinition().getName());
+
 		} else if (expression instanceof SyntheticSignalLikeExpression) {
+
 			builder.append(((SyntheticSignalLikeExpression) expression).getName());
+
+		} else if (expression instanceof InstancePortReference) {
+
+			InstancePortReference instancePortReference = (InstancePortReference) expression;
+			builder.append(instancePortReference.getModuleInstance().getName());
+			builder.append('.').append(instancePortReference.getPort().getName());
+
+		} else if (expression instanceof ProcessedIndexSelection) {
+
+			ProcessedIndexSelection selection = (ProcessedIndexSelection) expression;
+			generate(selection.getContainer(), builder);
+			builder.append('[');
+			expressionVerilogGenerator.generate(selection.getIndex(), builder);
+			builder.append(']');
+
+		} else if (expression instanceof ProcessedRangeSelection) {
+
+			ProcessedRangeSelection selection = (ProcessedRangeSelection) expression;
+			generate(selection.getContainer(), builder);
+			builder.append('[').append(selection.getFromIndex()).append(':').append(selection.getToIndex()).append(']');
+
+		} else if (expression instanceof ProcessedBinaryOperation) {
+
+			ProcessedBinaryOperation operation = (ProcessedBinaryOperation) expression;
+			ProcessedBinaryOperator operator = operation.getOperator();
+			if (operator == ProcessedBinaryOperator.VECTOR_CONCAT) {
+				builder.append('{');
+				generate(operation.getLeftOperand(), builder);
+				builder.append(", ");
+				generate(operation.getRightOperand(), builder);
+				builder.append('}');
+			} else {
+				throw newInvalidAssignmentTargetException(expression);
+			}
+
 		} else {
-			builder.append(extractor.extract(expression));
+			throw newInvalidAssignmentTargetException(expression);
 		}
 	}
 
-	public interface Extractor {
-		String extract(ProcessedExpression expression);
+	private static ModuleCannotGenerateCodeException newInvalidAssignmentTargetException(ProcessedExpression expression) {
+		return new ModuleCannotGenerateCodeException("invalid assignment target: " + expression);
 	}
 
 }

@@ -27,6 +27,7 @@ public final class ModuleVerilogGenerator {
 	private final ModuleDefinition module;
 	private final PrintWriter out;
 	private final ExpressionVerilogGenerator expressionVerilogGenerator;
+	private final VariableVerilogGenerator variableVerilogGenerator;
 	private final StatementVerilogGenerator statementVerilogGenerator;
 	private int helperSignalNameGenerationCounter = 0;
 
@@ -38,7 +39,8 @@ public final class ModuleVerilogGenerator {
 		this.module = module;
 		this.out = out;
 		this.expressionVerilogGenerator = new ExpressionVerilogGenerator(this::extractExpression);
-		this.statementVerilogGenerator = new StatementVerilogGenerator(expressionVerilogGenerator);
+		this.variableVerilogGenerator = new VariableVerilogGenerator(expressionVerilogGenerator);
+		this.statementVerilogGenerator = new StatementVerilogGenerator(expressionVerilogGenerator, variableVerilogGenerator);
 	}
 
 	public void run() {
@@ -118,7 +120,7 @@ public final class ModuleVerilogGenerator {
 			out.println("\tend");
 		}
 
-		// print do-blocks. TODO use VariableVerilogGenerator to print l-values and extract them in reverse direction than ExpressionVerilogGenerator
+		// print do-blocks
 		out.println();
 		{
 			StringBuilder builder = new StringBuilder();
