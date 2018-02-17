@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO use special expression generator for L-values
+ * TODO review this class
  */
 public final class ModuleVerilogGenerator {
 
@@ -132,8 +132,6 @@ public final class ModuleVerilogGenerator {
 		}
 
 		// print module instances
-		// TODO generate helper signals for complex port assignments (ExpressionVerilogGenerator does this for input ports)
-		// TODO use VariableVerilogGenerator to print l-values for output ports and extract them in reverse direction than ExpressionVerilogGenerator
 		out.println();
 		{
 			StringBuilder builder = new StringBuilder();
@@ -154,7 +152,11 @@ public final class ModuleVerilogGenerator {
 					builder.append("\t\t.");
 					builder.append(portConnection.getPort().getName());
 					builder.append('(');
-					expressionVerilogGenerator.generate(portConnection.getProcessedExpression(), builder);
+					if (portConnection.getPort().getDirection() == PortDirection.IN) {
+						expressionVerilogGenerator.generate(portConnection.getProcessedExpression(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
+					} else {
+						variableVerilogGenerator.generate(portConnection.getProcessedExpression(), builder);
+					}
 					builder.append(')');
 				}
 				builder.append("\n\t);\n");
