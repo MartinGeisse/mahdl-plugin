@@ -6,7 +6,6 @@ package name.martingeisse.mahdl.plugin.functions;
 
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
-import name.martingeisse.mahdl.plugin.processor.expression.TypeErrorException;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,11 +18,10 @@ import java.util.List;
 public enum StandardFunction {
 
 	ASCII("ascii") {
-
 		@Override
-		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws TypeErrorException {
+		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws FunctionParameterException {
 			if (arguments.size() != 1 || arguments.get(0).getDataType().getFamily() != ProcessedDataType.Family.TEXT) {
-				throw new TypeErrorException();
+				throw new FunctionParameterException("need exactly 1 argument of type text");
 			}
 			// TODO we need constant evaluation here!
 			throw new UnsupportedOperationException("not yet implemented");
@@ -38,13 +36,10 @@ public enum StandardFunction {
 	},
 
 	ASCIIZ("asciiz") {
-
 		@Override
-		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws TypeErrorException {
-			if (arguments.size() != 1 || arguments.get(0).getDataType().getFamily() != ProcessedDataType.Family.TEXT) {
-				throw new TypeErrorException();
-			}
-			// TODO we need constant evaluation here!
+		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws FunctionParameterException {
+//			checkFixedArguments(arguments, ProcessedDataType.Text.INSTANCE, ProcessedDataType.Integer.INSTANCE);
+//			return arguments.get(1).evaluateFormallyConstant();
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 
@@ -56,9 +51,8 @@ public enum StandardFunction {
 	},
 
 	LOAD_BINARY_FILE("loadBinaryFile") {
-
 		@Override
-		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws TypeErrorException {
+		public ProcessedDataType checkType(List<ProcessedExpression> arguments) throws FunctionParameterException {
 			// TODO this function needs first/second size arguments -- or we need something like "auto-convertable types",
 			// those that can insert a type conversion by themselves automatically (but how should that work?)
 			throw new UnsupportedOperationException("not yet implemented");
@@ -70,9 +64,7 @@ public enum StandardFunction {
 			throw new UnsupportedOperationException("not yet implemented");
 		}
 
-	},
-
-	;
+	},;
 
 	private final String nameInCode;
 
@@ -85,7 +77,7 @@ public enum StandardFunction {
 		return nameInCode;
 	}
 
-	public abstract ProcessedDataType checkType(List<ProcessedExpression> arguments) throws TypeErrorException;
+	public abstract ProcessedDataType checkType(List<ProcessedExpression> arguments) throws FunctionParameterException;
 
 	@NotNull
 	public abstract ConstantValue applyToConstantValues(@NotNull ConstantValue... values) throws FunctionParameterException;

@@ -4,10 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.codegen;
 
-import com.google.common.collect.ImmutableMap;
-import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.functions.StandardFunction;
-import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
 
 /**

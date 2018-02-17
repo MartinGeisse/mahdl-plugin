@@ -56,7 +56,7 @@ public final class StatementVerilogGenerator {
 
 			ProcessedAssignment assignment = (ProcessedAssignment) statement;
 			indent(builder, indentation);
-			variableVerilogGenerator.generate(assignment.getLeftHandSide(), builder, VariableVerilogGenerator.NESTING_TOPLEVEL);
+			variableVerilogGenerator.generate(assignment.getLeftHandSide(), builder);
 			builder.append(" <= ");
 			expressionVerilogGenerator.generate(assignment.getRightHandSide(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
 			builder.append(";\n");

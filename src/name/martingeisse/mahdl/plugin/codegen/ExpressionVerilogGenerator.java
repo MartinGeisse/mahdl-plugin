@@ -6,10 +6,9 @@ package name.martingeisse.mahdl.plugin.codegen;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.functions.StandardFunction;
+import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
-import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
  *
@@ -219,10 +218,10 @@ public final class ExpressionVerilogGenerator {
 		} else if (expression instanceof ProcessedFunctionCall) {
 
 			ProcessedFunctionCall call = (ProcessedFunctionCall) expression;
-			StandardFunction function = call.getFunction();
+			BuiltinFunction function = call.getFunction();
 
 			// for now, all functions are for formally constant expressions only
-			throw new ModuleCannotGenerateCodeException("function cannot be called for formally non-constant expressions: " + function.getNameInCode());
+			throw new ModuleCannotGenerateCodeException("function '" + function.getName() + "' cannot be called for formally non-constant expressions");
 
 		} else if (expression instanceof TypeConversion) {
 

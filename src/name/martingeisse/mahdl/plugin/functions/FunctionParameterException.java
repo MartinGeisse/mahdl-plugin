@@ -4,8 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.functions;
 
-import org.jetbrains.annotations.NotNull;
-
 /**
  * This class signals that a function was applied to the wrong number of parameters, or parameters of wrong type,
  * or parameters that should have been constant but aren't, or (in the case of constant-valued parameters) parameters
@@ -15,8 +13,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FunctionParameterException extends Exception {
 
-	public FunctionParameterException(@NotNull String message) {
+	private final int argumentIndex;
+
+	public FunctionParameterException(String message) {
+		this(message, -1);
+	}
+
+	public FunctionParameterException(String message, int argumentIndex) {
 		super(message);
+		this.argumentIndex = argumentIndex;
+	}
+
+	public int getArgumentIndex() {
+		return argumentIndex;
 	}
 
 }

@@ -6,8 +6,9 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
-import name.martingeisse.mahdl.plugin.functions.StandardFunction;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,18 +18,19 @@ import java.util.List;
  */
 public class ProcessedFunctionCall extends ProcessedExpression {
 
-	private final StandardFunction function;
+	private final BuiltinFunction function;
 	private final ImmutableList<ProcessedExpression> arguments;
 
 	public ProcessedFunctionCall(PsiElement errorSource,
-								 StandardFunction function,
-								 ImmutableList<ProcessedExpression> arguments) throws TypeErrorException {
-		super(errorSource, function.checkType(arguments));
+								 ProcessedDataType returnType,
+								 BuiltinFunction function,
+								 ImmutableList<ProcessedExpression> arguments) {
+		super(errorSource, returnType);
 		this.function = function;
 		this.arguments = arguments;
 	}
 
-	public StandardFunction getFunction() {
+	public BuiltinFunction getFunction() {
 		return function;
 	}
 
@@ -51,7 +53,7 @@ public class ProcessedFunctionCall extends ProcessedExpression {
 			return ConstantValue.Unknown.INSTANCE;
 		}
 		try {
-			return function.applyToConstantValues(argumentValues.toArray(new ConstantValue[argumentValues.size()]));
+			return function.applyToConstantValues(argumentValues);
 		} catch (FunctionParameterException e) {
 			return context.error(this, e.getMessage());
 		}
