@@ -22,7 +22,8 @@ public final class BuiltinFunctions {
 
 	static {
 		List<BuiltinFunction> functions = new ArrayList<>();
-		// TODO
+		functions.add(new AsciiFunction());
+		functions.add(new AsciizFunction());
 
 		ImmutableMap.Builder<String, BuiltinFunction> builder = ImmutableMap.builder();
 		for (BuiltinFunction function : functions) {

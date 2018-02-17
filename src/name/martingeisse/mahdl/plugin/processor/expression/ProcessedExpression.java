@@ -53,7 +53,7 @@ public abstract class ProcessedExpression {
 	/**
 	 * If this expression can be used as a bit literal, returns the corresponding expression that *is* a bit literal.
 	 * Otherwise returns null.
-	 *
+	 * <p>
 	 * The only expressions that can be used as a bit literal (except bit literals themselves) are the integer literals
 	 * 0 and 1. (Any computed integer that is 0 or 1, even if formally constant, cannot be used as a bit literal).
 	 * Before turning an integer literal into a bit literal, make sure you need a bit and not an integer!

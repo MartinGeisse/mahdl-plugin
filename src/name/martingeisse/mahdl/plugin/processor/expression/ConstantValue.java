@@ -275,6 +275,7 @@ public abstract class ConstantValue {
 
 	}
 
+	// TODO rename memory to matrix?
 	public static final class Memory extends ConstantValue {
 
 		private final int firstSize, secondSize;

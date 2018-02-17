@@ -7,7 +7,6 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
-import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.util.ArrayList;
@@ -52,11 +51,7 @@ public class ProcessedFunctionCall extends ProcessedExpression {
 		if (error) {
 			return ConstantValue.Unknown.INSTANCE;
 		}
-		try {
-			return function.applyToConstantValues(argumentValues);
-		} catch (FunctionParameterException e) {
-			return context.error(this, e.getMessage());
-		}
+		return function.applyToConstantValues(getErrorSource(), argumentValues, context);
 	}
 
 }

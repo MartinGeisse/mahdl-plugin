@@ -5,6 +5,8 @@
 package name.martingeisse.mahdl.plugin.functions;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -15,7 +17,7 @@ import java.util.List;
 /**
  *
  */
-public abstract class FixedSignatureFunction implements BuiltinFunction {
+public abstract class FixedSignatureFunction extends AbstractFunction {
 
 	private final ImmutableList<ProcessedDataType> argumentTypes;
 
@@ -45,20 +47,21 @@ public abstract class FixedSignatureFunction implements BuiltinFunction {
 
 	@NotNull
 	@Override
-	public ProcessedDataType checkType(@NotNull List<ProcessedExpression> arguments) throws FunctionParameterException {
+	public ProcessedDataType checkType(@NotNull PsiElement errorSource, @NotNull List<ProcessedExpression> arguments, @NotNull ErrorHandler errorHandler) {
 		if (arguments.size() != argumentTypes.size()) {
-			throw new FunctionParameterException(getSignatureText() + " cannot be invoked with " + arguments.size() + " arguments");
+			errorHandler.onError(errorSource, getSignatureText() + " cannot be invoked with " + arguments.size() + " arguments");
 		}
 		for (int i = 0; i < argumentTypes.size(); i++) {
-			if (!arguments.get(i).getDataType().equals(argumentTypes.get(i))) {
-				throw new FunctionParameterException("argument #" + i + " has type " + arguments.get(i).getDataType() +
-					", expected " + argumentTypes.get(i), i);
+			ProcessedExpression argument = arguments.get(i);
+			if (!argument.getDataType().equals(argumentTypes.get(i))) {
+				errorHandler.onError(argument.getErrorSource(),
+					"argument #" + i + " has type " + argument.getDataType() + ", expected " + argumentTypes.get(i));
 			}
 		}
-		return internalCheckType(arguments);
+		return internalCheckType(arguments, errorHandler);
 	}
 
 	@NotNull
-	protected abstract ProcessedDataType internalCheckType(@NotNull List<ProcessedExpression> arguments) throws FunctionParameterException;
+	protected abstract ProcessedDataType internalCheckType(@NotNull List<ProcessedExpression> arguments, ErrorHandler errorHandler);
 
 }

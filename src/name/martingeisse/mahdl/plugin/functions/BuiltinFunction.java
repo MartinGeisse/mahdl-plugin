@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.functions;
 
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
@@ -21,13 +22,13 @@ public interface BuiltinFunction {
 	String getName();
 
 	@NotNull
-	ProcessedDataType checkType(@NotNull List<ProcessedExpression> arguments,
-								ErrorHandler errorHandler)
-		throws FunctionParameterException;
+	ProcessedDataType checkType(@NotNull PsiElement errorSource,
+								@NotNull List<ProcessedExpression> arguments,
+								@NotNull ErrorHandler errorHandler);
 
 	@NotNull
-	ConstantValue applyToConstantValues(@NotNull List<ConstantValue> arguments,
-										ProcessedExpression.FormallyConstantEvaluationContext context)
-		throws FunctionParameterException;
+	ConstantValue applyToConstantValues(@NotNull PsiElement errorSource,
+										@NotNull List<ConstantValue> arguments,
+										@NotNull ProcessedExpression.FormallyConstantEvaluationContext context);
 
 }

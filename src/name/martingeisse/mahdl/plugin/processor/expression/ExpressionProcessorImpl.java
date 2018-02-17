@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunctions;
-import name.martingeisse.mahdl.plugin.functions.FunctionParameterException;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
@@ -512,35 +511,9 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			return new UnknownExpression(expression);
 		}
 
-		ProcessedDataType returnType;
-		try {
-			returnType = builtinFunction.checkType(arguments);
-		} catch (FunctionParameterException e) {
-
-			int argumentIndex = e.getArgumentIndex();
-			PsiElement errorSource = (argumentIndex < 0 || argumentIndex >= arguments.size()) ?
-				expression : arguments.get(argumentIndex).getErrorSource();
-
-			String message;
-			if (e.getMessage() == null) {
-				StringBuilder builder = new StringBuilder();
-				builder.append("function ").append(functionName).append(" cannot be applied to arguments of type (");
-				boolean first = true;
-				for (ProcessedExpression argument : arguments) {
-					if (first) {
-						first = false;
-					} else {
-						builder.append(", ");
-					}
-					builder.append(argument.getDataType());
-				}
-				builder.append(")");
-				return error(expression, builder.toString());
-			} else {
-				message = e.getMessage();
-			}
-
-			return error(errorSource, message);
+		ProcessedDataType returnType = builtinFunction.checkType(expression, arguments, errorHandler);
+		if (returnType instanceof ProcessedDataType.Unknown) {
+			return new UnknownExpression(expression);
 		}
 
 		return new ProcessedFunctionCall(expression, returnType, builtinFunction, ImmutableList.copyOf(arguments));
