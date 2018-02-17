@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO review this class
+ * 
  */
 public final class ModuleVerilogGenerator {
 
@@ -60,7 +60,7 @@ public final class ModuleVerilogGenerator {
 		out.println();
 		foreachDefinition(ModulePort.class, (port, first) -> {
 			out.print('\t');
-			// output ports are always assigned to in always-blocks
+			// output ports are always assigned to in always-blocks, so they are Verilog "regs"
 			out.print(port.getDirection() == PortDirection.IN ? "input" : "output reg");
 			out.print(bitOrVectorSuffixToString(port.getProcessedDataType()));
 			out.print(' ');
