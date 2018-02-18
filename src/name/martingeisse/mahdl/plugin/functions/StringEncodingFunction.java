@@ -47,13 +47,11 @@ public abstract class StringEncodingFunction extends FixedSignatureFunction {
 		try {
 			encode(text, byteArrayOutputStream);
 		} catch (IOException e) {
-			context.error(errorSource, e.toString());
-			return ConstantValue.Unknown.INSTANCE;
+			return context.error(errorSource, e.toString());
 		}
 		if (byteArrayOutputStream.size() > size) {
-			context.error(errorSource, "encoded text is " + byteArrayOutputStream.size() +
+			return context.error(errorSource, "encoded text is " + byteArrayOutputStream.size() +
 				" bytes, but target size is only " + size + " bytes");
-			return ConstantValue.Unknown.INSTANCE;
 		}
 		byte[] data = byteArrayOutputStream.toByteArray();
 		BitSet bits = new BitSet();

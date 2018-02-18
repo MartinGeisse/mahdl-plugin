@@ -276,6 +276,7 @@ public abstract class ConstantValue {
 	}
 
 	// TODO rename memory to matrix?
+	// TODO cells are stored in big endian order. What about rows?
 	public static final class Memory extends ConstantValue {
 
 		private final int firstSize, secondSize;
