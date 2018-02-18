@@ -110,7 +110,7 @@ public final class ModuleVerilogGenerator {
 					builder.append("\t\t");
 					builder.append(register.getName());
 					builder.append(" <= ");
-					expressionVerilogGenerator.generate(register.getProcessedInitializer(), builder);
+					expressionVerilogGenerator.generate(register.getInitializerValue(), builder);
 					builder.append(";\n");
 				}
 			});

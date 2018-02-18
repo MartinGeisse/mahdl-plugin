@@ -23,7 +23,7 @@ import java.util.List;
  */
 public abstract class LoadMemoryFileFunction extends FixedSignatureFunction {
 
-	public LoadMemoryFileFunction(ImmutableList<ProcessedDataType> argumentTypes) {
+	public LoadMemoryFileFunction() {
 		super(ImmutableList.of(
 			ProcessedDataType.Text.INSTANCE,
 			ProcessedDataType.Integer.INSTANCE,
