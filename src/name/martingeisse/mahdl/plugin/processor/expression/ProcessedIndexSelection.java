@@ -55,8 +55,8 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 			return -1;
 		} else if (containerValue instanceof ConstantValue.Vector) {
 			return ((ConstantValue.Vector) containerValue).getSize();
-		} else if (containerValue instanceof ConstantValue.Memory) {
-			return ((ConstantValue.Memory) containerValue).getFirstSize();
+		} else if (containerValue instanceof ConstantValue.Matrix) {
+			return ((ConstantValue.Matrix) containerValue).getFirstSize();
 		} else {
 			context.evaluationInconsistency(container.getErrorSource(), "index selection found container value " + containerValue);
 			return -1;

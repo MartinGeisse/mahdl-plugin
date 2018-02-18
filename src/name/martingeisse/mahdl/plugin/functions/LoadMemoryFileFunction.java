@@ -66,19 +66,19 @@ public abstract class LoadMemoryFileFunction extends FixedSignatureFunction {
 		if (value instanceof ConstantValue.Unknown) {
 			return value;
 		}
-		if (!(value instanceof ConstantValue.Memory)) {
+		if (!(value instanceof ConstantValue.Matrix)) {
 			return context.error(errorSource, "file loader returned value of type " + value.getDataTypeFamily());
 		}
-		ConstantValue.Memory memoryValue = (ConstantValue.Memory) value;
-		if (memoryValue.getSecondSize() != secondSize) {
+		ConstantValue.Matrix matrixValue = (ConstantValue.Matrix) value;
+		if (matrixValue.getSecondSize() != secondSize) {
 			return context.error(errorSource, "file loader returned memory with cell size " +
-				memoryValue.getSecondSize() + ", expected " + secondSize);
+				matrixValue.getSecondSize() + ", expected " + secondSize);
 		}
-		if (memoryValue.getFirstSize() > firstSize) {
-			return context.error(errorSource, "file loader returned memory with " + memoryValue.getFirstSize() +
+		if (matrixValue.getFirstSize() > firstSize) {
+			return context.error(errorSource, "file loader returned memory with " + matrixValue.getFirstSize() +
 				"rows, expected at most " + firstSize);
 		}
-		return new ConstantValue.Memory(firstSize, secondSize, memoryValue.getBits());
+		return new ConstantValue.Matrix(firstSize, secondSize, matrixValue.getBits());
 
 	}
 

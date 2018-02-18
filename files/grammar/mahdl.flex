@@ -96,7 +96,7 @@ register { return Symbols.KW_REGISTER; }
 // data type keywords
 bit { return Symbols.KW_BIT; }
 vector { return Symbols.KW_VECTOR; }
-memory { return Symbols.KW_MEMORY; }
+matrix { return Symbols.KW_MATRIX; }
 integer { return Symbols.KW_INTEGER; }
 text { return Symbols.KW_TEXT; }
 

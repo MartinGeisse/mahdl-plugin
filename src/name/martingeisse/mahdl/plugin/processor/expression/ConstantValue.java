@@ -277,12 +277,12 @@ public abstract class ConstantValue {
 
 	// TODO rename memory to matrix?
 	// TODO cells are stored in big endian order. What about rows?
-	public static final class Memory extends ConstantValue {
+	public static final class Matrix extends ConstantValue {
 
 		private final int firstSize, secondSize;
 		private final BitSet bits;
 
-		public Memory(int firstSize, int secondSize, @NotNull BitSet bits) {
+		public Matrix(int firstSize, int secondSize, @NotNull BitSet bits) {
 			this.firstSize = firstSize;
 			this.secondSize = secondSize;
 			this.bits = bits;
@@ -303,8 +303,8 @@ public abstract class ConstantValue {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof Memory) {
-				Memory other = (Memory) obj;
+			if (obj instanceof Matrix) {
+				Matrix other = (Matrix) obj;
 				return firstSize == other.firstSize && secondSize == other.secondSize && bits.equals(other.bits);
 			}
 			return false;

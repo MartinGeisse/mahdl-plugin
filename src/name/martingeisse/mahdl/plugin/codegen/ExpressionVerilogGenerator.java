@@ -250,7 +250,7 @@ public final class ExpressionVerilogGenerator {
 			ConstantValue.Vector vector = (ConstantValue.Vector)value;
 			builder.append(vector.getSize()).append("'h").append(vector.getHexLiteral());
 			return true;
-		} else if (value instanceof ConstantValue.Memory) {
+		} else if (value instanceof ConstantValue.Matrix) {
 			return false;
 		} else if (value instanceof ConstantValue.Integer) {
 			builder.append(((ConstantValue.Integer) value).getValue());

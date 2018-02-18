@@ -64,7 +64,7 @@ public abstract class StringEncodingFunction extends FixedSignatureFunction {
 				b = (byte) (b << 1);
 			}
 		}
-		return new ConstantValue.Memory(size, 8, bits);
+		return new ConstantValue.Matrix(size, 8, bits);
 	}
 
 	protected abstract void encode(String text, OutputStream out) throws IOException;
