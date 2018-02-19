@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class DataType_Memory extends DataType  {
+public final class DataType_Matrix extends DataType  {
 
-    public DataType_Memory(@NotNull ASTNode node) {
+    public DataType_Matrix(@NotNull ASTNode node) {
         super(node);
     }
 

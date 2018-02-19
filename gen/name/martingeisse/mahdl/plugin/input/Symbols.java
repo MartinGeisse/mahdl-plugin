@@ -26,7 +26,7 @@ public class Symbols {
 	public static final MahdlElementType KW_IN = new MahdlElementType("KW_IN");
 	public static final MahdlElementType KW_INTEGER = new MahdlElementType("KW_INTEGER");
 	public static final MahdlElementType KW_INTERFACE = new MahdlElementType("KW_INTERFACE");
-	public static final MahdlElementType KW_MEMORY = new MahdlElementType("KW_MEMORY");
+	public static final MahdlElementType KW_MATRIX = new MahdlElementType("KW_MATRIX");
 	public static final MahdlElementType KW_MODULE = new MahdlElementType("KW_MODULE");
 	public static final MahdlElementType KW_OUT = new MahdlElementType("KW_OUT");
 	public static final MahdlElementType KW_REGISTER = new MahdlElementType("KW_REGISTER");
@@ -68,7 +68,7 @@ public class Symbols {
 
 	public static final MahdlElementType dataType_Bit = new MahdlElementType("dataType_Bit");
 	public static final MahdlElementType dataType_Integer = new MahdlElementType("dataType_Integer");
-	public static final MahdlElementType dataType_Memory = new MahdlElementType("dataType_Memory");
+	public static final MahdlElementType dataType_Matrix = new MahdlElementType("dataType_Matrix");
 	public static final MahdlElementType dataType_Text = new MahdlElementType("dataType_Text");
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");

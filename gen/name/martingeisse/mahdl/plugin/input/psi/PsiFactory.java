@@ -199,8 +199,8 @@ public class PsiFactory {
                     if (type == Symbols.dataType_Vector) {
                 return new DataType_Vector(node);
             }
-                    if (type == Symbols.dataType_Memory) {
-                return new DataType_Memory(node);
+                    if (type == Symbols.dataType_Matrix) {
+                return new DataType_Matrix(node);
             }
                     if (type == Symbols.dataType_Integer) {
                 return new DataType_Integer(node);
