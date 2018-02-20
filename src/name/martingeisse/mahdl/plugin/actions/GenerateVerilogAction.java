@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
@@ -18,9 +19,8 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  *
@@ -94,6 +94,36 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 			throw exceptionHolder.getValue();
 		}
 		return verilogFolderHolder.getValue();
+	}
+
+	private Properties readAssociatedProperties(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
+		VirtualFile propertiesFile = findPropertiesFile(toplevelModuleFile, console);
+		if (propertiesFile == null) {
+			return null;
+		}
+		try (InputStream inputStream = propertiesFile.getInputStream()) {
+			Properties properties = new Properties();
+			properties.load(inputStream);
+			return properties;
+		} catch (IOException e) {
+			console.print("Exception while reading associated properties file: " + e, ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+	}
+
+	private VirtualFile findPropertiesFile(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
+		String grammarFileName = toplevelModuleFile.getName();
+		if (!grammarFileName.endsWith(".mahdl")) {
+			console.print("Toplevel module file extension is not .mahdl", ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+		String propertiesFileName = grammarFileName.substring(0, grammarFileName.length() - ".mahdl".length()) + ".properties";
+		VirtualFile propertiesFile = toplevelModuleFile.getParent().findChild(propertiesFileName);
+		if (propertiesFile == null) {
+			console.print("Could not find associated properties file", ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+		return propertiesFile;
 	}
 
 }
