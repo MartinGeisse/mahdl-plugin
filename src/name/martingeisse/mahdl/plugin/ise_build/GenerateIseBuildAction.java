@@ -55,6 +55,8 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 			return;
 		}
 
+		// TODO load associated properties file (FPGA part; pin assignment)
+
 		// generate Verilog files
 		String buildName = actionTargetSourceFile.getModule().getName();
 		VirtualFile buildFolder = createBuildFolder(projectModule, console, buildName);
@@ -63,7 +65,7 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		designGenerator.generate();
 
 		// generate build files
-		generate(buildFolder, "build.prj", new XstProjectGenerator());
+		generate(buildFolder, "build.prj", new XstProjectGenerator(designGenerator));
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
