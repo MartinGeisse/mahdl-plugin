@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 
 /**
  *
@@ -57,11 +55,16 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 			return;
 		}
 
-		// do it!
+		// generate Verilog files
 		String buildName = actionTargetSourceFile.getModule().getName();
-		VirtualFile verilogFolder = createBuildFolder(projectModule, console, buildName);
-		DesignVerilogGenerator.OutputConsumer outputConsumer = new FlatVerilogFolderOutputConsumer(verilogFolder);
-		new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer).generate();
+		VirtualFile buildFolder = createBuildFolder(projectModule, console, buildName);
+		DesignVerilogGenerator.OutputConsumer outputConsumer = new FlatVerilogFolderOutputConsumer(buildFolder);
+		DesignVerilogGenerator designGenerator = new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer);
+		designGenerator.generate();
+
+		// generate build files
+		generate(buildFolder, "build.prj", new XstProjectGenerator());
+
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
 
@@ -105,6 +108,28 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 			}
 		} else {
 			return existingSubfolder;
+		}
+	}
+
+	private void generate(VirtualFile outputFolder, String fileName, TextFileGenerator generator) throws Exception {
+		MutableObject<Exception> exceptionHolder = new MutableObject<>();
+		ApplicationManager.getApplication().runWriteAction(() -> {
+			try {
+				VirtualFile outputFile = outputFolder.findChild(fileName);
+				if (outputFile == null) {
+					outputFile = outputFolder.createChildData(this, fileName);
+				} else if (outputFile.isDirectory()) {
+					throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
+				}
+				try (OutputStream outputStream = outputFile.getOutputStream(this)) {
+					generator.generate(outputStream);
+				}
+			} catch (Exception e) {
+				exceptionHolder.setValue(e);
+			}
+		});
+		if (exceptionHolder.getValue() != null) {
+			throw exceptionHolder.getValue();
 		}
 	}
 

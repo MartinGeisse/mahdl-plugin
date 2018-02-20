@@ -23,11 +23,20 @@ public class DesignVerilogGenerator {
 	private final Module toplevelModule;
 	private final Set<Module> requestedModules = new HashSet<>();
 	private final Set<String> generatedModuleNames = new HashSet<>();
+	private final Set<Module> generatedModules = new HashSet<>();
 	private final OutputConsumer outputConsumer;
 
 	public DesignVerilogGenerator(Module toplevelModule, OutputConsumer outputConsumer) {
 		this.toplevelModule = toplevelModule;
 		this.outputConsumer = outputConsumer;
+	}
+
+	public Module getToplevelModule() {
+		return toplevelModule;
+	}
+
+	public Set<Module> getGeneratedModules() {
+		return generatedModules;
 	}
 
 	public void generate() throws Exception {
@@ -41,6 +50,7 @@ public class DesignVerilogGenerator {
 			}
 			generateModule(module);
 			generatedModuleNames.add(name);
+			generatedModules.add(module);
 		}
 		generateModule(toplevelModule);
 	}
