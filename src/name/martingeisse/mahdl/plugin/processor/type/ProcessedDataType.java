@@ -14,7 +14,7 @@ public abstract class ProcessedDataType {
 
 	public enum Family {
 
-		BIT, VECTOR, MEMORY, INTEGER, TEXT, UNKNOWN;
+		BIT, VECTOR, MATRIX, INTEGER, TEXT, UNKNOWN;
 
 		public String getDisplayString() {
 			return name().toLowerCase();
@@ -119,11 +119,11 @@ public abstract class ProcessedDataType {
 
 	}
 
-	public static final class Memory extends ProcessedDataType {
+	public static final class Matrix extends ProcessedDataType {
 
 		private final int firstSize, secondSize;
 
-		public Memory(int firstSize, int secondSize) {
+		public Matrix(int firstSize, int secondSize) {
 			this.firstSize = firstSize;
 			this.secondSize = secondSize;
 		}
@@ -138,8 +138,8 @@ public abstract class ProcessedDataType {
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof Memory) {
-				Memory other = (Memory) obj;
+			if (obj instanceof Matrix) {
+				Matrix other = (Matrix) obj;
 				return firstSize == other.firstSize && secondSize == other.secondSize;
 			}
 			return false;
@@ -147,18 +147,18 @@ public abstract class ProcessedDataType {
 
 		@Override
 		public int hashCode() {
-			return new HashCodeBuilder().append(Memory.class).append(firstSize).append(secondSize).toHashCode();
+			return new HashCodeBuilder().append(Matrix.class).append(firstSize).append(secondSize).toHashCode();
 		}
 
 		@NotNull
 		public String toString() {
-			return "memory[" + firstSize + "][" + secondSize + "]";
+			return "matrix[" + firstSize + "][" + secondSize + "]";
 		}
 
 		@Override
 		@NotNull
 		public Family getFamily() {
-			return Family.MEMORY;
+			return Family.MATRIX;
 		}
 
 	}

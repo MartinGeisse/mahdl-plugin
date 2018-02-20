@@ -1,6 +1,6 @@
 
 Parameterized modules:
-In v1, all vector and memory sized must have port-independent constant sizes. So the compiler must be able to
+In v1, all vector and matrix sized must have port-independent constant sizes. So the compiler must be able to
 compute the size to an integer without ever reading any constant ports (non-constant ports are not valid for type
 information anyway). In v2, it would be nice to allow port-dependent constant sizes, i.e. using constant ports.
 However, we don't want errors in the size formulas to pop up during module instantiation, but module definition!

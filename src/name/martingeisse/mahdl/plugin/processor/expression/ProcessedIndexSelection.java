@@ -109,17 +109,17 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 
 	}
 
-	public static final class VectorFromMemory extends ProcessedIndexSelection {
+	public static final class VectorFromMatrix extends ProcessedIndexSelection {
 
-		public VectorFromMemory(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+		public VectorFromMatrix(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
 			super(errorSource, typeCheck(container, index), container, index);
 		}
 
 		private static ProcessedDataType typeCheck(ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
-			if (!(container.getDataType() instanceof ProcessedDataType.Memory)) {
+			if (!(container.getDataType() instanceof ProcessedDataType.Matrix)) {
 				throw new TypeErrorException();
 			}
-			ProcessedDataType.Memory containerType = (ProcessedDataType.Memory) container.getDataType();
+			ProcessedDataType.Matrix containerType = (ProcessedDataType.Matrix) container.getDataType();
 			if (index.getDataType() instanceof ProcessedDataType.Vector) {
 				ProcessedDataType.Vector indexType = (ProcessedDataType.Vector) index.getDataType();
 				if (containerType.getFirstSize() < (1 << indexType.getSize())) {

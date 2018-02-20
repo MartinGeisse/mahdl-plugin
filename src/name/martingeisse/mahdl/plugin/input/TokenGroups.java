@@ -26,7 +26,7 @@ public final class TokenGroups {
 		Symbols.KW_REGISTER,
 		Symbols.KW_BIT,
 		Symbols.KW_VECTOR,
-		Symbols.KW_MEMORY,
+		Symbols.KW_MATRIX,
 		Symbols.KW_INTEGER,
 		Symbols.KW_TEXT,
 		Symbols.KW_DO,

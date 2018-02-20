@@ -275,8 +275,7 @@ public abstract class ConstantValue {
 
 	}
 
-	// TODO rename memory to matrix?
-	// TODO cells are stored in big endian order. What about rows?
+	// TODO columns are stored in big endian order. What about rows?
 	public static final class Matrix extends ConstantValue {
 
 		private final int firstSize, secondSize;
@@ -318,13 +317,13 @@ public abstract class ConstantValue {
 		@Override
 		@NotNull
 		public ProcessedDataType.Family getDataTypeFamily() {
-			return ProcessedDataType.Family.MEMORY;
+			return ProcessedDataType.Family.MATRIX;
 		}
 
 		@Override
 		@NotNull
 		public ProcessedDataType getDataType() {
-			return new ProcessedDataType.Memory(firstSize, secondSize);
+			return new ProcessedDataType.Matrix(firstSize, secondSize);
 		}
 
 		@Override
@@ -342,7 +341,7 @@ public abstract class ConstantValue {
 		@NotNull
 		@Override
 		public String convertToString() {
-			return "(memory)";
+			return "(matrix)";
 		}
 
 		@Override

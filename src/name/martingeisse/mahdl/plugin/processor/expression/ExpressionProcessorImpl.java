@@ -236,8 +236,8 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 		} else {
 			if (container.getDataType() instanceof ProcessedDataType.Vector) {
 				return new ProcessedIndexSelection.BitFromVector(expression, container, index);
-			} else if (container.getDataType() instanceof ProcessedDataType.Memory) {
-				return new ProcessedIndexSelection.VectorFromMemory(expression, container, index);
+			} else if (container.getDataType() instanceof ProcessedDataType.Matrix) {
+				return new ProcessedIndexSelection.VectorFromMatrix(expression, container, index);
 			} else {
 				return error(expression, "unknown container type");
 			}
@@ -276,14 +276,14 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 
 	}
 
-	private int determineContainerSize(@NotNull ProcessedExpression container, boolean allowMemory, String operatorVerb) {
+	private int determineContainerSize(@NotNull ProcessedExpression container, boolean allowMatrix, String operatorVerb) {
 		ProcessedDataType type = container.getDataType();
 		if (type instanceof ProcessedDataType.Unknown) {
 			return -1;
 		} else if (type instanceof ProcessedDataType.Vector) {
 			return ((ProcessedDataType.Vector) type).getSize();
-		} else if (allowMemory && type instanceof ProcessedDataType.Memory) {
-			return ((ProcessedDataType.Memory) type).getFirstSize();
+		} else if (allowMatrix && type instanceof ProcessedDataType.Matrix) {
+			return ((ProcessedDataType.Matrix) type).getFirstSize();
 		} else {
 			error(container, "cannot " + operatorVerb + " from an expression of type " + type.getFamily().getDisplayString());
 			return -1;

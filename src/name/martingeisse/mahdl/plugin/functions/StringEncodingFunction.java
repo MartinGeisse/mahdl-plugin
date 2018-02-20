@@ -35,7 +35,7 @@ public abstract class StringEncodingFunction extends FixedSignatureFunction {
 	protected ProcessedDataType internalCheckType(@NotNull List<ProcessedExpression> arguments, ErrorHandler errorHandler) {
 		int size = arguments.get(1).evaluateFormallyConstant(new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler)).
 			convertToInteger().intValueExact();
-		return new ProcessedDataType.Memory(size, 8);
+		return new ProcessedDataType.Matrix(size, 8);
 	}
 
 	@NotNull

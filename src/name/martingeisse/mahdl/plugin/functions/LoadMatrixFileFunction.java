@@ -21,9 +21,9 @@ import java.util.List;
 /**
  *
  */
-public abstract class LoadMemoryFileFunction extends FixedSignatureFunction {
+public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
 
-	public LoadMemoryFileFunction() {
+	public LoadMatrixFileFunction() {
 		super(ImmutableList.of(
 			ProcessedDataType.Text.INSTANCE,
 			ProcessedDataType.Integer.INSTANCE,
@@ -37,7 +37,7 @@ public abstract class LoadMemoryFileFunction extends FixedSignatureFunction {
 		ProcessedExpression.FormallyConstantEvaluationContext context = new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler);
 		int firstSize = arguments.get(1).evaluateFormallyConstant(context).convertToInteger().intValueExact();
 		int secondSize = arguments.get(1).evaluateFormallyConstant(context).convertToInteger().intValueExact();
-		return new ProcessedDataType.Memory(firstSize, secondSize);
+		return new ProcessedDataType.Matrix(firstSize, secondSize);
 	}
 
 	@NotNull
@@ -71,12 +71,12 @@ public abstract class LoadMemoryFileFunction extends FixedSignatureFunction {
 		}
 		ConstantValue.Matrix matrixValue = (ConstantValue.Matrix) value;
 		if (matrixValue.getSecondSize() != secondSize) {
-			return context.error(errorSource, "file loader returned memory with cell size " +
-				matrixValue.getSecondSize() + ", expected " + secondSize);
+			return context.error(errorSource, "file loader returned matrix with " +
+				matrixValue.getSecondSize() + " columns, expected " + secondSize);
 		}
 		if (matrixValue.getFirstSize() > firstSize) {
-			return context.error(errorSource, "file loader returned memory with " + matrixValue.getFirstSize() +
-				"rows, expected at most " + firstSize);
+			return context.error(errorSource, "file loader returned matrix with " + matrixValue.getFirstSize() +
+				" rows, expected at most " + firstSize);
 		}
 		return new ConstantValue.Matrix(firstSize, secondSize, matrixValue.getBits());
 

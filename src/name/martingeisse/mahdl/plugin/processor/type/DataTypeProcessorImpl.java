@@ -4,7 +4,6 @@
  */
 package name.martingeisse.mahdl.plugin.processor.type;
 
-import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
@@ -38,11 +37,11 @@ public final class DataTypeProcessorImpl implements DataTypeProcessor {
 			DataType_Vector vector = (DataType_Vector) dataType;
 			int size = processConstantSizeExpression(vector.getSize(), reportErrors);
 			return size < 0 ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Vector(size);
-		} else if (dataType instanceof DataType_Memory) {
-			DataType_Memory memory = (DataType_Memory) dataType;
-			int firstSize = processConstantSizeExpression(memory.getFirstSize(), reportErrors);
-			int secondSize = processConstantSizeExpression(memory.getSecondSize(), reportErrors);
-			return (firstSize < 0 || secondSize < 0) ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Memory(firstSize, secondSize);
+		} else if (dataType instanceof DataType_Matrix) {
+			DataType_Matrix matrix = (DataType_Matrix) dataType;
+			int firstSize = processConstantSizeExpression(matrix.getFirstSize(), reportErrors);
+			int secondSize = processConstantSizeExpression(matrix.getSecondSize(), reportErrors);
+			return (firstSize < 0 || secondSize < 0) ? ProcessedDataType.Unknown.INSTANCE : new ProcessedDataType.Matrix(firstSize, secondSize);
 		} else if (dataType instanceof DataType_Integer) {
 			return ProcessedDataType.Integer.INSTANCE;
 		} else if (dataType instanceof DataType_Text) {

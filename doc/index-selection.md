@@ -1,7 +1,7 @@
 
 # Index Selection
 
-Index selection has container and index sub-expressions. The container must be a vector or memory whose size (first
+Index selection has container and index sub-expressions. The container must be a vector or matrix whose size (first
 size for memories) is relevant here: We want to ensure statically that the index cannot be *out-of-bounds*, that is,
 be greater or equal than the container size. We also want the index to be non-negative.
 

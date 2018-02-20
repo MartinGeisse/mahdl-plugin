@@ -119,7 +119,7 @@ public final class DefinitionProcessor {
 					if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
 						dataTypeFamily != ProcessedDataType.Family.BIT &&
 						dataTypeFamily != ProcessedDataType.Family.VECTOR &&
-						dataTypeFamily != ProcessedDataType.Family.MEMORY) {
+						dataTypeFamily != ProcessedDataType.Family.MATRIX) {
 						errorHandler.onError(dataType, dataTypeFamily.getDisplayString() + " type not allowed for signals and registers");
 						processedDataType = ProcessedDataType.Unknown.INSTANCE;
 					}
