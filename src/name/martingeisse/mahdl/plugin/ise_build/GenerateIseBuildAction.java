@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.actions.AbstractModuleAndConsoleAction;
+import name.martingeisse.mahdl.plugin.actions.FlatVerilogFolderOutputConsumer;
 import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -57,40 +58,17 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		}
 
 		// do it!
-		// TODO
-//		VirtualFile verilogFolder = createVerilogFolder(projectModule, console);
-//		DesignVerilogGenerator.OutputConsumer outputConsumer = (moduleName, generatedCode) -> {
-//			MutableObject<Exception> exceptionHolder = new MutableObject<>();
-//			ApplicationManager.getApplication().runWriteAction(() -> {
-//				try {
-//					String fileName = moduleName + ".v";
-//					VirtualFile outputFile = verilogFolder.findChild(fileName);
-//					if (outputFile == null) {
-//						outputFile = verilogFolder.createChildData(this, fileName);
-//					} else if (outputFile.isDirectory()) {
-//						throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
-//					}
-//					try (OutputStream outputStream = outputFile.getOutputStream(this)) {
-//						try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-//							outputStreamWriter.write(generatedCode);
-//						}
-//					}
-//				} catch (IOException e) {
-//					exceptionHolder.setValue(e);
-//				}
-//			});
-//			if (exceptionHolder.getValue() != null) {
-//				throw exceptionHolder.getValue();
-//			}
-//		};
-//		new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer).generate();
-//		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
+		String buildName = actionTargetSourceFile.getModule().getName();
+		VirtualFile verilogFolder = createBuildFolder(projectModule, console, buildName);
+		DesignVerilogGenerator.OutputConsumer outputConsumer = new FlatVerilogFolderOutputConsumer(verilogFolder);
+		new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer).generate();
+		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
 
 	// can be called from any thread
-	private VirtualFile createIseBuildFolder(@NotNull Module projectModule, @NotNull ConsoleViewImpl console) throws Exception {
+	private VirtualFile createBuildFolder(@NotNull Module projectModule, @NotNull ConsoleViewImpl console, String buildSubfolderName) throws Exception {
 		MutableObject<Exception> exceptionHolder = new MutableObject<>();
-		MutableObject<VirtualFile> iseBuildFolderHolder = new MutableObject<>();
+		MutableObject<VirtualFile> buildFolderHolder = new MutableObject<>();
 		ApplicationManager.getApplication().runWriteAction(() -> {
 			try {
 				VirtualFile projectModuleFile = projectModule.getModuleFile();
@@ -98,19 +76,14 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 					throw new UserMessageException("could not locate project module folder");
 				}
 				VirtualFile projectModuleFolder = projectModuleFile.getParent();
-				final VirtualFile existingIseBuildFolder = projectModuleFolder.findChild("ise");
-				final VirtualFile iseBuildFolder;
-				if (existingIseBuildFolder == null) {
-					try {
-						iseBuildFolder = projectModuleFolder.createChildDirectory(this, "ise");
-					} catch (IOException e) {
-						console.print("Could not create 'ise' folder: " + e, ConsoleViewContentType.ERROR_OUTPUT);
-						return;
-					}
-				} else {
-					iseBuildFolder = existingIseBuildFolder;
+				VirtualFile buildParentFolder = createOrUseFolder(projectModuleFolder, "ise", console);
+				if (buildParentFolder == null)
+					return;
+				VirtualFile buildSubfolder = createOrUseFolder(buildParentFolder, buildSubfolderName, console);
+				if (buildSubfolder == null) {
+					return;
 				}
-				iseBuildFolderHolder.setValue(iseBuildFolder);
+				buildFolderHolder.setValue(buildSubfolder);
 			} catch (Exception e) {
 				exceptionHolder.setValue(e);
 			}
@@ -118,7 +91,21 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		if (exceptionHolder.getValue() != null) {
 			throw exceptionHolder.getValue();
 		}
-		return iseBuildFolderHolder.getValue();
+		return buildFolderHolder.getValue();
+	}
+
+	private VirtualFile createOrUseFolder(VirtualFile parentFolder, String name, @NotNull ConsoleViewImpl console) {
+		final VirtualFile existingSubfolder = parentFolder.findChild(name);
+		if (existingSubfolder == null) {
+			try {
+				return parentFolder.createChildDirectory(this, name);
+			} catch (IOException e) {
+				console.print("Could not create '" + name + "' folder: " + e, ConsoleViewContentType.ERROR_OUTPUT);
+				return null;
+			}
+		} else {
+			return existingSubfolder;
+		}
 	}
 
 }

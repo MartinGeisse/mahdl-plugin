@@ -57,30 +57,7 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 
 		// do it!
 		VirtualFile verilogFolder = createVerilogFolder(projectModule, console);
-		DesignVerilogGenerator.OutputConsumer outputConsumer = (moduleName, generatedCode) -> {
-			MutableObject<Exception> exceptionHolder = new MutableObject<>();
-			ApplicationManager.getApplication().runWriteAction(() -> {
-				try {
-					String fileName = moduleName + ".v";
-					VirtualFile outputFile = verilogFolder.findChild(fileName);
-					if (outputFile == null) {
-						outputFile = verilogFolder.createChildData(this, fileName);
-					} else if (outputFile.isDirectory()) {
-						throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
-					}
-					try (OutputStream outputStream = outputFile.getOutputStream(this)) {
-						try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-							outputStreamWriter.write(generatedCode);
-						}
-					}
-				} catch (IOException e) {
-					exceptionHolder.setValue(e);
-				}
-			});
-			if (exceptionHolder.getValue() != null) {
-				throw exceptionHolder.getValue();
-			}
-		};
+		DesignVerilogGenerator.OutputConsumer outputConsumer = new FlatVerilogFolderOutputConsumer(verilogFolder);
 		new DesignVerilogGenerator(actionTargetSourceFile.getModule(), outputConsumer).generate();
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
