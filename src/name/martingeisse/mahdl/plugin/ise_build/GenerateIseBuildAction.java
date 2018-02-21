@@ -4,6 +4,7 @@
  */
 package name.martingeisse.mahdl.plugin.ise_build;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,6 +14,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.actions.AbstractModuleAndConsoleAction;
+import name.martingeisse.mahdl.plugin.actions.Configuration;
 import name.martingeisse.mahdl.plugin.actions.FlatVerilogFolderOutputConsumer;
 import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
@@ -20,7 +22,9 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Properties;
 
 /**
  *
@@ -55,7 +59,20 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 			return;
 		}
 
-		// TODO load associated properties file (FPGA part; pin assignment)
+		// load associated properties file
+		Configuration configuration;
+		{
+			VirtualFile virtualFile = actionTargetSourceFile.getVirtualFile();
+			if (virtualFile == null) {
+				console.print("Toplevel module is not inside a file", ConsoleViewContentType.ERROR_OUTPUT);
+				return;
+			}
+			Properties properties = readAssociatedProperties(virtualFile, console);
+			if (properties == null) {
+				return;
+			}
+			configuration = new Configuration(properties);
+		}
 
 		// generate Verilog files
 		String buildName = actionTargetSourceFile.getModule().getName();
@@ -65,9 +82,46 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		designGenerator.generate();
 
 		// generate build files
-		generate(buildFolder, "build.prj", new XstProjectGenerator(designGenerator));
+		BuildContext buildContext = new BuildContext(designGenerator.getToplevelModule(),
+			ImmutableSet.copyOf(designGenerator.getGeneratedModules()), configuration, buildFolder);
+		generate(buildFolder, "environment.sh", new EnvironmentVariablesScriptGenerator(buildContext));
+		generate(buildFolder, "build.xst", new XstScriptGenerator(buildContext));
+		generate(buildFolder, "build.prj", new XstProjectGenerator(buildContext));
+		generate(buildFolder, "build.ucf", new UcfGenerator(buildContext));
+		generate(buildFolder, "build.sh", new BuildScriptGenerator(buildContext));
+		generate(buildFolder, "upload.sh", new UploadScriptGenerator(buildContext));
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
+	}
+
+	private Properties readAssociatedProperties(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
+		VirtualFile propertiesFile = findPropertiesFile(toplevelModuleFile, console);
+		if (propertiesFile == null) {
+			return null;
+		}
+		try (InputStream inputStream = propertiesFile.getInputStream()) {
+			Properties properties = new Properties();
+			properties.load(inputStream);
+			return properties;
+		} catch (IOException e) {
+			console.print("Exception while reading associated properties file: " + e, ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+	}
+
+	private VirtualFile findPropertiesFile(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
+		String grammarFileName = toplevelModuleFile.getName();
+		if (!grammarFileName.endsWith(".mahdl")) {
+			console.print("Toplevel module file extension is not .mahdl", ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+		String propertiesFileName = grammarFileName.substring(0, grammarFileName.length() - ".mahdl".length()) + ".properties";
+		VirtualFile propertiesFile = toplevelModuleFile.getParent().findChild(propertiesFileName);
+		if (propertiesFile == null) {
+			console.print("Could not find associated properties file", ConsoleViewContentType.ERROR_OUTPUT);
+			return null;
+		}
+		return propertiesFile;
 	}
 
 	// can be called from any thread
