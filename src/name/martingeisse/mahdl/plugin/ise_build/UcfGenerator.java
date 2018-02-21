@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.util.Map;
 
 /**
- *
+ * TODO some nets need two lines in the UCF
  */
 public class UcfGenerator extends TextFileGenerator {
 

@@ -23,7 +23,7 @@ public class XstScriptGenerator extends TextFileGenerator {
 		out.println("-ifn src/build.prj");
 		out.println("-ofmt NGC");
 		out.println("-ofn build/synthesized.ngc");
-		out.println("-top " + buildContext.getToplevelModule().getModuleName());
+		out.println("-top " + buildContext.getToplevelModule().getName());
 		out.println("-p " + buildContext.getConfiguration().getRequired("fpga.part"));
 		out.println("-opt_level 1");
 		out.println("-opt_mode SPEED");

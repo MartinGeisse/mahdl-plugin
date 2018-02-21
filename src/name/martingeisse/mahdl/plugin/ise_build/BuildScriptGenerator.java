@@ -7,7 +7,7 @@ import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import java.io.PrintWriter;
 
 /**
- *
+ * TODO set owner's x bit on the file
  */
 public class BuildScriptGenerator extends TextFileGenerator {
 

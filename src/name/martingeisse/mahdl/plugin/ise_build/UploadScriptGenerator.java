@@ -6,7 +6,7 @@ import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import java.io.PrintWriter;
 
 /**
- *
+ * TODO set owner's x bit on the file
  */
 public class UploadScriptGenerator extends TextFileGenerator {
 
