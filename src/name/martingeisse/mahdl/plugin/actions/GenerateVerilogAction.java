@@ -64,37 +64,26 @@ public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
 
 	// can be called from any thread
 	private VirtualFile createVerilogFolder(@NotNull Module projectModule, @NotNull ConsoleViewImpl console) throws Exception {
-		MutableObject<Exception> exceptionHolder = new MutableObject<>();
-		MutableObject<VirtualFile> verilogFolderHolder = new MutableObject<>();
-		ApplicationManager.getApplication().runWriteAction(() -> {
-			try {
-				VirtualFile projectModuleFile = projectModule.getModuleFile();
-				if (projectModuleFile == null) {
-					throw new UserMessageException("could not locate project module folder");
-				}
-				VirtualFile projectModuleFolder = projectModuleFile.getParent();
-				final VirtualFile existingVerilogFolder = projectModuleFolder.findChild("verilog");
-				final VirtualFile verilogFolder;
-				if (existingVerilogFolder == null) {
-					try {
-						verilogFolder = projectModuleFolder.createChildDirectory(this, "verilog");
-					} catch (IOException e) {
-						console.print("Could not create 'verilog' folder: " + e, ConsoleViewContentType.ERROR_OUTPUT);
-						return;
-					}
-				} else {
-					verilogFolder = existingVerilogFolder;
-				}
-				verilogFolderHolder.setValue(verilogFolder);
-			} catch (Exception e) {
-				exceptionHolder.setValue(e);
+		MyReturnWriteAction<VirtualFile> action = () -> {
+			VirtualFile projectModuleFile = projectModule.getModuleFile();
+			if (projectModuleFile == null) {
+				throw new UserMessageException("could not locate project module folder");
 			}
-		});
-		if (exceptionHolder.getValue() != null) {
-			throw exceptionHolder.getValue();
-		}
-		return verilogFolderHolder.getValue();
+			VirtualFile projectModuleFolder = projectModuleFile.getParent();
+			final VirtualFile existingVerilogFolder = projectModuleFolder.findChild("verilog");
+			final VirtualFile verilogFolder;
+			if (existingVerilogFolder == null) {
+				try {
+					verilogFolder = projectModuleFolder.createChildDirectory(this, "verilog");
+				} catch (IOException e) {
+					throw new UserMessageException("Could not create 'verilog' folder: " + e);
+				}
+			} else {
+				verilogFolder = existingVerilogFolder;
+			}
+			return verilogFolder;
+		};
+		return runWriteAction(action);
 	}
-
 
 }

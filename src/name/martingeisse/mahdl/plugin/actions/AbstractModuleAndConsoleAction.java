@@ -15,17 +15,21 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import name.martingeisse.mahdl.plugin.MahdlLanguage;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.util.SelfDescribingRuntimeException;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.Consumer;
@@ -137,6 +141,46 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 		printable.accept(printWriter);
 		printWriter.flush();
 		console.print(stringWriter.toString(), ConsoleViewContentType.ERROR_OUTPUT);
+	}
+
+	protected void runWriteAction(MyVoidWriteAction action) throws Exception {
+		MutableObject<Exception> exceptionHolder = new MutableObject<>();
+		ApplicationManager.getApplication().runWriteAction(() -> {
+			try {
+				action.run();
+			} catch (Exception e) {
+				exceptionHolder.setValue(e);
+			}
+		});
+		if (exceptionHolder.getValue() != null) {
+			throw exceptionHolder.getValue();
+		}
+	}
+
+	protected <R> R runWriteAction(MyReturnWriteAction<R> action) throws Exception {
+		MutableObject<R> resultHolder = new MutableObject<>();
+		MutableObject<Exception> exceptionHolder = new MutableObject<>();
+		ApplicationManager.getApplication().runWriteAction(() -> {
+			try {
+				resultHolder.setValue(action.run());
+			} catch (Exception e) {
+				exceptionHolder.setValue(e);
+			}
+		});
+		if (exceptionHolder.getValue() != null) {
+			throw exceptionHolder.getValue();
+		}
+		return resultHolder.getValue();
+	}
+
+	// like Runnable but can throw exceptions
+	public interface MyVoidWriteAction {
+		void run() throws Exception;
+	}
+
+	// like Supplier but can throw exceptions
+	public interface MyReturnWriteAction<R> {
+		R run() throws Exception;
 	}
 
 }

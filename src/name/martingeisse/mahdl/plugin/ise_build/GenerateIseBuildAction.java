@@ -61,20 +61,15 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 			return;
 		}
 
-		// load associated properties file
-		Configuration configuration;
-		{
-			VirtualFile virtualFile = actionTargetSourceFile.getVirtualFile();
-			if (virtualFile == null) {
-				console.print("Toplevel module is not inside a file", ConsoleViewContentType.ERROR_OUTPUT);
-				return;
-			}
-			Properties properties = readAssociatedProperties(virtualFile, console);
-			if (properties == null) {
-				return;
-			}
-			configuration = new Configuration(properties);
+		// we need this file to find associated files
+		VirtualFile virtualFile = actionTargetSourceFile.getVirtualFile();
+		if (virtualFile == null) {
+			console.print("Toplevel module is not inside a file", ConsoleViewContentType.ERROR_OUTPUT);
+			return;
 		}
+
+		// load associated properties file
+		Configuration configuration = new Configuration(readAssociatedProperties(virtualFile));
 
 		// generate Verilog files
 		String buildName = actionTargetSourceFile.getModule().getName();
@@ -97,80 +92,70 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		generate(buildFolder, "environment.sh", new EnvironmentVariablesScriptGenerator(buildContext));
 		generate(buildFolder, "build.xst", new XstScriptGenerator(buildContext));
 		generate(buildFolder, "build.prj", new XstProjectGenerator(buildContext));
-		generate(buildFolder, "build.ucf", new UcfGenerator(buildContext));
 		generate(buildFolder, "build.sh", new BuildScriptGenerator(buildContext), makeExecutable);
 		generate(buildFolder, "upload.sh", new UploadScriptGenerator(buildContext), makeExecutable);
+		copyConstraints(virtualFile, buildFolder, console);
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
 
-	private Properties readAssociatedProperties(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
-		VirtualFile propertiesFile = findPropertiesFile(toplevelModuleFile, console);
-		if (propertiesFile == null) {
-			return null;
-		}
+	@NotNull
+	private Properties readAssociatedProperties(VirtualFile toplevelModuleFile) {
+		VirtualFile propertiesFile = findAssociatedFile(toplevelModuleFile, ".properties");
 		try (InputStream inputStream = propertiesFile.getInputStream()) {
 			Properties properties = new Properties();
 			properties.load(inputStream);
 			return properties;
 		} catch (IOException e) {
-			console.print("Exception while reading associated properties file: " + e, ConsoleViewContentType.ERROR_OUTPUT);
-			return null;
+			throw new UserMessageException("Exception while reading associated properties file: " + e);
 		}
 	}
 
-	private VirtualFile findPropertiesFile(VirtualFile toplevelModuleFile, ConsoleViewImpl console) {
+	private void copyConstraints(VirtualFile toplevelModuleFile, VirtualFile buildFolder, ConsoleViewImpl console) {
+		VirtualFile constraintsFile = findAssociatedFile(toplevelModuleFile, ".ucf");
+		try {
+			constraintsFile.copy(this, buildFolder, "build.ucf");
+		} catch (IOException e) {
+			console.print("Exception while copying UCF file: " + e, ConsoleViewContentType.ERROR_OUTPUT);
+		}
+	}
+
+	private VirtualFile findAssociatedFile(VirtualFile toplevelModuleFile, String dotExtension) {
 		String grammarFileName = toplevelModuleFile.getName();
 		if (!grammarFileName.endsWith(".mahdl")) {
-			console.print("Toplevel module file extension is not .mahdl", ConsoleViewContentType.ERROR_OUTPUT);
-			return null;
+			throw new UserMessageException("Toplevel module file extension is not .mahdl");
 		}
-		String propertiesFileName = grammarFileName.substring(0, grammarFileName.length() - ".mahdl".length()) + ".properties";
-		VirtualFile propertiesFile = toplevelModuleFile.getParent().findChild(propertiesFileName);
-		if (propertiesFile == null) {
-			console.print("Could not find associated properties file", ConsoleViewContentType.ERROR_OUTPUT);
-			return null;
+		String associatedFileName = grammarFileName.substring(0, grammarFileName.length() - ".mahdl".length()) + dotExtension;
+		VirtualFile associatedFile = toplevelModuleFile.getParent().findChild(associatedFileName);
+		if (associatedFile == null) {
+			throw new UserMessageException("Could not find associated " + dotExtension + " file");
 		}
-		return propertiesFile;
+		return associatedFile;
 	}
 
 	// can be called from any thread
 	private VirtualFile createBuildFolder(@NotNull Module projectModule, @NotNull ConsoleViewImpl console, String buildSubfolderName) throws Exception {
-		MutableObject<Exception> exceptionHolder = new MutableObject<>();
-		MutableObject<VirtualFile> buildFolderHolder = new MutableObject<>();
-		ApplicationManager.getApplication().runWriteAction(() -> {
-			try {
-				VirtualFile projectModuleFile = projectModule.getModuleFile();
-				if (projectModuleFile == null) {
-					throw new UserMessageException("could not locate project module folder");
-				}
-				VirtualFile projectModuleFolder = projectModuleFile.getParent();
-				VirtualFile buildParentFolder = createOrUseFolder(projectModuleFolder, "ise", console);
-				if (buildParentFolder == null)
-					return;
-				VirtualFile buildSubfolder = createOrUseFolder(buildParentFolder, buildSubfolderName, console);
-				if (buildSubfolder == null) {
-					return;
-				}
-				buildFolderHolder.setValue(buildSubfolder);
-			} catch (Exception e) {
-				exceptionHolder.setValue(e);
+		MyReturnWriteAction<VirtualFile> action = () -> {
+			VirtualFile projectModuleFile = projectModule.getModuleFile();
+			if (projectModuleFile == null) {
+				throw new UserMessageException("could not locate project module folder");
 			}
-		});
-		if (exceptionHolder.getValue() != null) {
-			throw exceptionHolder.getValue();
-		}
-		return buildFolderHolder.getValue();
+			VirtualFile projectModuleFolder = projectModuleFile.getParent();
+			VirtualFile buildParentFolder = createOrUseFolder(projectModuleFolder, "ise", console);
+			VirtualFile buildSubfolder = createOrUseFolder(buildParentFolder, buildSubfolderName, console);
+			return buildSubfolder;
+		};
+		return runWriteAction(action);
 	}
 
+	@NotNull
 	private VirtualFile createOrUseFolder(VirtualFile parentFolder, String name, @NotNull ConsoleViewImpl console) {
 		final VirtualFile existingSubfolder = parentFolder.findChild(name);
 		if (existingSubfolder == null) {
 			try {
 				return parentFolder.createChildDirectory(this, name);
 			} catch (IOException e) {
-				console.print("Could not create '" + name + "' folder: " + e, ConsoleViewContentType.ERROR_OUTPUT);
-				return null;
+				throw new UserMessageException("Could not create '" + name + "' folder: " + e);
 			}
 		} else {
 			return existingSubfolder;
@@ -178,30 +163,24 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 	}
 
 	private void generate(VirtualFile outputFolder, String fileName, TextFileGenerator generator) throws Exception {
-		generate(outputFolder, fileName, generator, file -> {});
+		generate(outputFolder, fileName, generator, file -> {
+		});
 	}
 
 	private void generate(VirtualFile outputFolder, String fileName, TextFileGenerator generator, Consumer<VirtualFile> filePostProcessor) throws Exception {
-		MutableObject<Exception> exceptionHolder = new MutableObject<>();
-		ApplicationManager.getApplication().runWriteAction(() -> {
-			try {
-				VirtualFile outputFile = outputFolder.findChild(fileName);
-				if (outputFile == null) {
-					outputFile = outputFolder.createChildData(this, fileName);
-				} else if (outputFile.isDirectory()) {
-					throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
-				}
-				try (OutputStream outputStream = outputFile.getOutputStream(this)) {
-					generator.generate(outputStream);
-				}
-				filePostProcessor.accept(outputFile);
-			} catch (Exception e) {
-				exceptionHolder.setValue(e);
+		MyVoidWriteAction action = () -> {
+			VirtualFile outputFile = outputFolder.findChild(fileName);
+			if (outputFile == null) {
+				outputFile = outputFolder.createChildData(this, fileName);
+			} else if (outputFile.isDirectory()) {
+				throw new UserMessageException("collision with existing folder while creating output file " + fileName + "'");
 			}
-		});
-		if (exceptionHolder.getValue() != null) {
-			throw exceptionHolder.getValue();
-		}
+			try (OutputStream outputStream = outputFile.getOutputStream(this)) {
+				generator.generate(outputStream);
+			}
+			filePostProcessor.accept(outputFile);
+		};
+		runWriteAction(action);
 	}
 
 }
