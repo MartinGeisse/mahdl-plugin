@@ -21,10 +21,12 @@ import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
+import java.util.function.Consumer;
 
 /**
  *
@@ -82,14 +84,22 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		designGenerator.generate();
 
 		// generate build files
+		Consumer<VirtualFile> makeExecutable = file -> {
+			File localFile = new File(file.getPath());
+			if (localFile.exists()) {
+				if (!localFile.setExecutable(true, true)) {
+					console.print("Could not make " + localFile.getName() + " executable", ConsoleViewContentType.LOG_WARNING_OUTPUT);
+				}
+			}
+		};
 		BuildContext buildContext = new BuildContext(designGenerator.getToplevelModule(),
 			ImmutableSet.copyOf(designGenerator.getGeneratedModules()), configuration, buildFolder);
 		generate(buildFolder, "environment.sh", new EnvironmentVariablesScriptGenerator(buildContext));
 		generate(buildFolder, "build.xst", new XstScriptGenerator(buildContext));
 		generate(buildFolder, "build.prj", new XstProjectGenerator(buildContext));
 		generate(buildFolder, "build.ucf", new UcfGenerator(buildContext));
-		generate(buildFolder, "build.sh", new BuildScriptGenerator(buildContext));
-		generate(buildFolder, "upload.sh", new UploadScriptGenerator(buildContext));
+		generate(buildFolder, "build.sh", new BuildScriptGenerator(buildContext), makeExecutable);
+		generate(buildFolder, "upload.sh", new UploadScriptGenerator(buildContext), makeExecutable);
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
@@ -168,6 +178,10 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 	}
 
 	private void generate(VirtualFile outputFolder, String fileName, TextFileGenerator generator) throws Exception {
+		generate(outputFolder, fileName, generator, file -> {});
+	}
+
+	private void generate(VirtualFile outputFolder, String fileName, TextFileGenerator generator, Consumer<VirtualFile> filePostProcessor) throws Exception {
 		MutableObject<Exception> exceptionHolder = new MutableObject<>();
 		ApplicationManager.getApplication().runWriteAction(() -> {
 			try {
@@ -180,6 +194,7 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 				try (OutputStream outputStream = outputFile.getOutputStream(this)) {
 					generator.generate(outputStream);
 				}
+				filePostProcessor.accept(outputFile);
 			} catch (Exception e) {
 				exceptionHolder.setValue(e);
 			}
