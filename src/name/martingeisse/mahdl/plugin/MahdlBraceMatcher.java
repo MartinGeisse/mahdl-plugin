@@ -20,7 +20,7 @@ public class MahdlBraceMatcher implements PairedBraceMatcher {
 	@NotNull
 	@Override
 	public BracePair[] getPairs() {
-		return new BracePair[] {
+		return new BracePair[]{
 			new BracePair(Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE, true),
 			new BracePair(Symbols.OPENING_SQUARE_BRACKET, Symbols.CLOSING_SQUARE_BRACKET, false),
 			new BracePair(Symbols.OPENING_PARENTHESIS, Symbols.CLOSING_PARENTHESIS, false),
@@ -32,27 +32,12 @@ public class MahdlBraceMatcher implements PairedBraceMatcher {
 		return true;
 	}
 
+	// note: IntelliJ docs claim that this is only called for structural braces
+	@Override
 	public int getCodeConstructStart(@Nullable PsiFile file, int openingBraceOffset) {
-		/* TODO the exact semantics of this method are currently unclear to me
-		PsiElement element = file.findElementAt(openingBraceOffset);
-		if (element == null || element instanceof PsiFile) {
-			return openingBraceOffset;
-		}
-		PsiElement parent = element.getParent();
-		if (parent instanceof Grammar) {
-			// this happens only for the terminal list
-			return InternalPsiUtil.getChild((Grammar)parent, 0).getTextRange().getStartOffset();
-		}
-		if (parent instanceof Grammar_PrecedenceTable) {
-			return parent.getTextRange().getStartOffset();
-		}
-		if (parent instanceof Production_Multi) {
-			return parent.getTextRange().getStartOffset();
-		}
-		if (parent instanceof AlternativeAttribute_ResolveBlock) {
-			return parent.getTextRange().getStartOffset();
-		}
-		*/
+		// This method is only called when clicking on a closing brace of a block longer than one screen. In such a
+		// case, IntelliJ first determines the corresponding opening brace, then calls this method to get the starting
+		// line of the code construct (which may start even before the opening brace). Not too important for now.
 		return openingBraceOffset;
 	}
 
