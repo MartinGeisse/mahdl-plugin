@@ -7,17 +7,12 @@ package name.martingeisse.mahdl.plugin.codegen;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedSwitchExpression;
-import name.martingeisse.mahdl.plugin.processor.expression.SignalLikeReference;
-import name.martingeisse.mahdl.plugin.processor.expression.TypeErrorException;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
-import name.martingeisse.mahdl.plugin.processor.statement.ProcessedStatement;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedSwitchStatement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -72,7 +67,9 @@ public final class ModuleVerilogGenerator {
 		out.println();
 		foreachDefinition(SignalLike.class, (signalLike, first) -> {
 			if (signalLike instanceof Signal) {
-				if (signalLike.getInitializer() == null) {
+				if (signalLike.getProcessedDataType() instanceof ProcessedDataType.Matrix) {
+					out.print("\treg");
+				} else if (signalLike.getInitializer() == null) {
 					out.print("\treg");
 				} else {
 					out.print("\twire");
@@ -92,13 +89,15 @@ public final class ModuleVerilogGenerator {
 		out.println();
 		foreachDefinition(Signal.class, (signal, first) -> {
 			if (signal.getInitializer() != null) {
-				StringBuilder builder = new StringBuilder();
-				builder.append("\tassign ");
-				builder.append(signal.getName());
-				builder.append(" = ");
-				expressionVerilogGenerator.generate(signal.getProcessedInitializer(), builder);
-				builder.append(';');
-				out.println(builder);
+				if (!(signal.getProcessedDataType() instanceof ProcessedDataType.Matrix)) {
+					StringBuilder builder = new StringBuilder();
+					builder.append("\tassign ");
+					builder.append(signal.getName());
+					builder.append(" = ");
+					expressionVerilogGenerator.generate(signal.getProcessedInitializer(), builder);
+					builder.append(';');
+					out.println(builder);
+				}
 			}
 		});
 
@@ -107,11 +106,13 @@ public final class ModuleVerilogGenerator {
 			StringBuilder builder = new StringBuilder();
 			foreachDefinition(Register.class, (register, first) -> {
 				if (register.getInitializer() != null) {
-					builder.append("\t\t");
-					builder.append(register.getName());
-					builder.append(" <= ");
-					expressionVerilogGenerator.generate(register.getInitializerValue(), builder);
-					builder.append(";\n");
+					if (!(register.getProcessedDataType() instanceof ProcessedDataType.Matrix)) {
+						builder.append("\t\t");
+						builder.append(register.getName());
+						builder.append(" <= ");
+						expressionVerilogGenerator.generate(register.getInitializerValue(), builder);
+						builder.append(";\n");
+					}
 				}
 			});
 			out.println();
@@ -170,13 +171,16 @@ public final class ModuleVerilogGenerator {
 	// A switch expression will always be extracted, even when it could be turned into a switch statement in-place
 	// because it is already a toplevel expression, but for generated code it's okay for now.
 	private String extractExpression(ProcessedExpression expression) {
+
+		// TODO matrix expressions
+
 		String name = getNextHelperSignalName();
 		StringBuilder builder = new StringBuilder();
 		if (expression instanceof ProcessedSwitchExpression) {
 
 			ProcessedExpression temporarySignal = new SyntheticSignalLikeExpression(expression.getErrorSource(),
 				expression.getDataType(), name);
-			ProcessedSwitchExpression switchExpression = (ProcessedSwitchExpression)expression;
+			ProcessedSwitchExpression switchExpression = (ProcessedSwitchExpression) expression;
 			ProcessedSwitchStatement switchStatement = switchExpression.convertToStatement(temporarySignal);
 
 			builder.append("\treg").append(bitOrVectorSuffixToString(expression.getDataType()));
