@@ -230,8 +230,7 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 			if (type == Symbols.module) {
 				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
 			} else if (type == Symbols.implementationItem_ModuleInstance) {
-				// TODO switch to braces when the syntax is changed
-				return getChildAttributes(newChildIndex, children, Symbols.OPENING_PARENTHESIS, Symbols.CLOSING_PARENTHESIS);
+				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
 			} else if (type == Symbols.statement_Switch) {
 				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
 			} else if (type == Symbols.statementCaseItem_Value || type == Symbols.statementCaseItem_Default) {
