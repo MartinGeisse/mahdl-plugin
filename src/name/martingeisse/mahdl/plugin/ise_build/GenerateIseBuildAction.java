@@ -94,7 +94,7 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		generate(buildFolder, "build.prj", new XstProjectGenerator(buildContext));
 		generate(buildFolder, "build.sh", new BuildScriptGenerator(buildContext), makeExecutable);
 		generate(buildFolder, "upload.sh", new UploadScriptGenerator(buildContext), makeExecutable);
-		copyConstraints(virtualFile, buildFolder, console);
+		copyConstraints(virtualFile, buildFolder);
 
 		console.print("Done.", ConsoleViewContentType.NORMAL_OUTPUT);
 	}
@@ -111,13 +111,17 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		}
 	}
 
-	private void copyConstraints(VirtualFile toplevelModuleFile, VirtualFile buildFolder, ConsoleViewImpl console) {
+	private void copyConstraints(VirtualFile toplevelModuleFile, VirtualFile buildFolder) throws Exception {
 		VirtualFile constraintsFile = findAssociatedFile(toplevelModuleFile, ".ucf");
-		try {
-			constraintsFile.copy(this, buildFolder, "build.ucf");
-		} catch (IOException e) {
-			console.print("Exception while copying UCF file: " + e, ConsoleViewContentType.ERROR_OUTPUT);
-		}
+		MyVoidWriteAction action = () -> {
+			String targetFilename = "build.ucf";
+			VirtualFile existingTargetFile = buildFolder.findChild(targetFilename);
+			if (existingTargetFile != null) {
+				existingTargetFile.delete(this);
+			}
+			constraintsFile.copy(this, buildFolder, targetFilename);
+		};
+		runWriteAction(action);
 	}
 
 	private VirtualFile findAssociatedFile(VirtualFile toplevelModuleFile, String dotExtension) {
