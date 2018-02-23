@@ -18,25 +18,18 @@ import com.intellij.util.containers.ContainerUtil;
 import name.martingeisse.mahdl.plugin.input.NonterminalGroups;
 import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.TokenGroups;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
- * TODO most code was commented out
+ *
  */
 public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 
 	private static final TokenSet WHITESPACE_AND_COMMENT_SYMBOLS = TokenSet.orSet(TokenGroups.WHITESPACE, TokenGroups.COMMENTS);
-
-	private static final TokenSet DEFAULT_INDENTED_SYMBOLS = TokenSet.create(
-
-//		// terminal list inside a precedence declaration
-//		Symbols.precedenceDeclaration_Normal_Terminals_List,
-//		Symbols.precedenceDeclarationSymbol
-
-	);
 
 	private static final TokenSet NORMALLY_INDENTED_SYMBOLS = TokenSet.create(
 		Symbols.synthetic_List_PortDefinitionGroup,
@@ -44,6 +37,15 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.synthetic_List_Statement,
 		Symbols.synthetic_List_StatementCaseItem_Nonempty,
 		Symbols.synthetic_List_ExpressionCaseItem_Nonempty
+	);
+
+	private static final TokenSet POSSIBLE_PARENTS_OF_NORMALLY_INDENTED_SYMBOLS = TokenSet.create(
+		Symbols.module,
+		Symbols.implementationItem_ModuleInstance,
+		Symbols.statement_Block,
+		Symbols.statementCaseItem_Default,
+		Symbols.statementCaseItem_Value,
+		Symbols.statement_Switch
 	);
 
 	private static final TokenSet NOT_INDENTED_SYMBOLS = TokenSet.orSet(NonterminalGroups.STATEMENTS, TokenSet.create(
@@ -63,6 +65,7 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.expressionCaseItem_Value,
 
 		// top-level elements
+		Symbols.module,
 		Symbols.KW_INTERFACE,
 		Symbols.synthetic_List_ImplementationItem,
 		Symbols.implementationItem_SignalLikeDefinitionGroup,
@@ -82,7 +85,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 	private static final TokenSet INFIX_OPERATORS = TokenSet.create(
 //		Symbols.BAR
 	);
-
 
 	@NotNull
 	@Override
@@ -130,12 +132,21 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 
 		@Override
 		public Indent getIndent() {
+			if (myNode.getTreeParent() == null) {
+				return Indent.getNoneIndent();
+			}
 			IElementType type = myNode.getElementType();
+			IElementType parentType = myNode.getTreeParent().getElementType();
+
+			if (TokenGroups.WHITESPACE.contains(type)) {
+				return Indent.getNoneIndent();
+			}
+
 			if (TokenGroups.COMMENTS.contains(type)) {
 				// Comment symbols are not handled by the parser, but rather implicitly attached to the AST produced
 				// by the parser. This sometimes produces a wrong result, especially for comments in an AST list node:
 				// in such a case, a comment before the first list node is wrongly attached outside of the list, and
-				// thus not indented. We solve this by looking fir the first non-comment token to see if it is
+				// thus not indented. We solve this by looking for the first non-comment token to see if it is
 				// normally indented.
 				ASTNode node = getNode();
 				while (node != null && WHITESPACE_AND_COMMENT_SYMBOLS.contains(node.getElementType())) {
@@ -145,9 +156,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 					return Indent.getNormalIndent();
 				}
 				return Indent.getNoneIndent();
-			}
-			if (DEFAULT_INDENTED_SYMBOLS.contains(type)) {
-				return null;
 			}
 			if (NORMALLY_INDENTED_SYMBOLS.contains(type)) {
 				return Indent.getNormalIndent();
@@ -200,6 +208,50 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		@Override
 		public boolean isLeaf() {
 			return myNode.getFirstChildNode() == null;
+		}
+
+		@NotNull
+		@Override
+		public ChildAttributes getChildAttributes(int newChildIndex) {
+			IElementType type = myNode.getElementType();
+			if (!POSSIBLE_PARENTS_OF_NORMALLY_INDENTED_SYMBOLS.contains(type)) {
+				return new ChildAttributes(Indent.getNoneIndent(), null);
+			}
+			List<ASTNode> children = ContainerUtil.mapNotNull(myNode.getChildren(null), node -> {
+				if (node.getElementType() == TokenType.WHITE_SPACE || node.getTextLength() == 0) {
+					return null;
+				} else {
+					return node;
+				}
+			});
+			if (newChildIndex >= children.size()) {
+				return new ChildAttributes(Indent.getNoneIndent(), null);
+			}
+			if (type == Symbols.module) {
+				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
+			} else if (type == Symbols.implementationItem_ModuleInstance) {
+				// TODO switch to braces when the syntax is changed
+				return getChildAttributes(newChildIndex, children, Symbols.OPENING_PARENTHESIS, Symbols.CLOSING_PARENTHESIS);
+			} else if (type == Symbols.statement_Switch) {
+				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
+			} else if (type == Symbols.statementCaseItem_Value || type == Symbols.statementCaseItem_Default) {
+				return getChildAttributes(newChildIndex, children, Symbols.COLON, null);
+			} else {
+				return new ChildAttributes(Indent.getNormalIndent(), null);
+			}
+		}
+
+		private ChildAttributes getChildAttributes(int newChildIndex, List<ASTNode> children, IElementType startType, IElementType stopType) {
+			boolean indented = false;
+			for (int i = 0; i < newChildIndex; i++) {
+				IElementType childType = children.get(i).getElementType();
+				if (childType == startType) {
+					indented = true;
+				} else if (childType == stopType) {
+					indented = false;
+				}
+			}
+			return new ChildAttributes(indented ? Indent.getNormalIndent() : Indent.getNoneIndent(), null);
 		}
 
 	}
