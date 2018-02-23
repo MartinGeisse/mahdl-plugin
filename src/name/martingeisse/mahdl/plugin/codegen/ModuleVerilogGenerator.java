@@ -102,7 +102,7 @@ public final class ModuleVerilogGenerator {
 			}
 		});
 
-		// print register initializers (initial blocks)
+		// print register initializers (initial blocks). TODO matrix initializers / file loading
 		{
 			StringBuilder builder = new StringBuilder();
 			foreachDefinition(Register.class, (register, first) -> {

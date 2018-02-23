@@ -275,7 +275,9 @@ public abstract class ConstantValue {
 
 	}
 
-	// TODO columns are stored in big endian order. What about rows?
+	/**
+	 * A matrix value uses a {@link BitSet} to store rows in ascending index order, columns in descending index order.
+	 */
 	public static final class Matrix extends ConstantValue {
 
 		private final int firstSize, secondSize;
