@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
+import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 /**
  *
@@ -26,7 +27,6 @@ public final class ExpressionVerilogGenerator {
 
 		So don't try to tweak nesting just because you wrongly think it is about syntax.
 	 */
-
 
 	// "toplevel" still doesn't include switch expressions, because those aren't expressions in Verilog. Any switch
 	// expression gets extracted, so the caller must make sure to not pass it here again to avoid an infinite loop.
@@ -122,6 +122,7 @@ public final class ExpressionVerilogGenerator {
 	 * Any expressions that conflict with the specified current nesting level will be extracted.
 	 */
 	public void generate(ProcessedExpression expression, StringBuilder builder, int nesting) {
+		ProcessedDataType dataType = expression.getDataType();
 
 		// constant folding
 		ConstantValue value = fold(expression);
@@ -141,6 +142,19 @@ public final class ExpressionVerilogGenerator {
 			}
 		}
 
+		// any matrix-typed expressions must be handled outside this generator
+		if (dataType instanceof ProcessedDataType.Matrix) {
+			extract(expression, builder);
+			return;
+		}
+
+		// Reject compile-time types. Note that any constant sub-expression has been folded to a run-time type by now.
+		if (dataType instanceof ProcessedDataType.Unknown) {
+			throw new ModuleHasErrorsException();
+		} else if (!(dataType instanceof ProcessedDataType.Bit) && !(dataType instanceof ProcessedDataType.Vector)) {
+			throw new ModuleCannotGenerateCodeException("type " + dataType + " cannot be used at run-time");
+		}
+
 		// handle normal cases
 		if (expression instanceof UnknownExpression) {
 			throw new ModuleHasErrorsException();
@@ -158,13 +172,13 @@ public final class ExpressionVerilogGenerator {
 
 		} else if (expression instanceof InstancePortReference) {
 
-			InstancePortReference instancePortReference = (InstancePortReference)expression;
+			InstancePortReference instancePortReference = (InstancePortReference) expression;
 			builder.append(instancePortReference.getModuleInstance().getName());
 			builder.append('.').append(instancePortReference.getPort().getName());
 
 		} else if (expression instanceof ProcessedIndexSelection) {
 
-			ProcessedIndexSelection selection = (ProcessedIndexSelection)expression;
+			ProcessedIndexSelection selection = (ProcessedIndexSelection) expression;
 			generate(selection.getContainer(), builder, NESTING_INSIDE_SELECTION);
 			builder.append('[');
 			generate(selection.getIndex(), builder, NESTING_INSIDE_SELECTION);
@@ -172,7 +186,7 @@ public final class ExpressionVerilogGenerator {
 
 		} else if (expression instanceof ProcessedRangeSelection) {
 
-			ProcessedRangeSelection selection = (ProcessedRangeSelection)expression;
+			ProcessedRangeSelection selection = (ProcessedRangeSelection) expression;
 			generate(selection.getContainer(), builder, NESTING_INSIDE_SELECTION);
 			builder.append('[').append(selection.getFromIndex()).append(':').append(selection.getToIndex()).append(']');
 
@@ -247,7 +261,7 @@ public final class ExpressionVerilogGenerator {
 			builder.append(set ? "1" : "0");
 			return true;
 		} else if (value instanceof ConstantValue.Vector) {
-			ConstantValue.Vector vector = (ConstantValue.Vector)value;
+			ConstantValue.Vector vector = (ConstantValue.Vector) value;
 			builder.append(vector.getSize()).append("'h").append(vector.getHexLiteral());
 			return true;
 		} else if (value instanceof ConstantValue.Matrix) {
