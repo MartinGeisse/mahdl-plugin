@@ -12,7 +12,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import name.martingeisse.mahdl.plugin.input.psi.Module;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+import name.martingeisse.mahdl.plugin.input.Symbols;
+import name.martingeisse.mahdl.plugin.input.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,22 +24,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO commented out for now
+ *
  */
 public class MahdlStructureViewFactory implements PsiStructureViewFactory {
 
+	private static final TokenSet VISIBLE_ELEMENTS = TokenSet.create(
+		Symbols.module,
+		Symbols.synthetic_List_PortDefinitionGroup,
+		Symbols.implementationItem_SignalLikeDefinitionGroup,
+		Symbols.implementationItem_DoBlock,
+		Symbols.implementationItem_ModuleInstance
+	);
+
 	private static boolean shouldInclude(PsiElement element) {
-		// TODO
-//		if (element instanceof Grammar_TerminalDeclarations) {
-//			return true;
-//		}
-//		if (element instanceof Grammar_PrecedenceTable) {
-//			return true;
-//		}
-//		if (element instanceof Production) {
-//			return true;
-//		}
-		return false;
+		return VISIBLE_ELEMENTS.contains(element.getNode().getElementType());
 	}
 
 	@Nullable
@@ -98,18 +99,41 @@ public class MahdlStructureViewFactory implements PsiStructureViewFactory {
 		@Nullable
 		@Override
 		public String getPresentableText() {
-			// TODO
-//			if (element instanceof Grammar_TerminalDeclarations) {
-//				return "%terminals {...}";
-//			}
-//			if (element instanceof Grammar_PrecedenceTable) {
-//				return "%precedence {...}";
-//			}
-//			if (element instanceof Production) {
-//				String name = ((Production) element).getName();
-//				return (name == null ? "(production)" : name);
-//			}
-			return element.toString();
+			IElementType elementType = element.getNode().getElementType();
+			if (elementType == Symbols.module && element instanceof Module) {
+				return "module " + ((Module) element).getName();
+			} else if (elementType == Symbols.synthetic_List_PortDefinitionGroup && element instanceof ListNode<?>) {
+				return "interface";
+			} else if (elementType == Symbols.implementationItem_SignalLikeDefinitionGroup && element instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+				ImplementationItem_SignalLikeDefinitionGroup group = (ImplementationItem_SignalLikeDefinitionGroup) element;
+				StringBuilder builder = new StringBuilder();
+				builder.append(group.getKind().getText());
+				builder.append(' ');
+				boolean first = true;
+				for (SignalLikeDefinition definition : group.getDefinitions().getAll()) {
+					if (first) {
+						first = false;
+					} else {
+						builder.append(", ");
+					}
+					builder.append(definition.getName());
+				}
+				return builder.toString();
+			} else if (elementType == Symbols.implementationItem_DoBlock && element instanceof ImplementationItem_DoBlock) {
+				ImplementationItem_DoBlock doBlock = (ImplementationItem_DoBlock) element;
+				if (doBlock.getTrigger() == null) {
+					return "do (???)";
+				} else {
+					return "do (" + doBlock.getTrigger().getText() + ")";
+				}
+			} else if (elementType == Symbols.implementationItem_ModuleInstance && element instanceof ImplementationItem_ModuleInstance) {
+				ImplementationItem_ModuleInstance moduleInstance = (ImplementationItem_ModuleInstance) element;
+				String moduleName = moduleInstance.getModuleName() == null ? "???" : PsiUtil.canonicalizeQualifiedModuleName(moduleInstance.getModuleName());
+				String instanceName = moduleInstance.getName() == null ? "???" : moduleInstance.getName();
+				return moduleName + ' ' + instanceName;
+			} else {
+				return element.getText();
+			}
 		}
 
 		@Nullable
