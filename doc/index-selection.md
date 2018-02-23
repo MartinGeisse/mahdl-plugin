@@ -24,7 +24,7 @@ It is also less obvious in such a case which kinds of expressions are allowed fo
 not have a power-of-two size. Most of the language behavior and what is allowed is defined in terms of *types*, not
 *constness*, and is much easier to understand that way (see operators.md). Making an exception here seems ugly.
 
-**TODO** it might be possible to mix constant folding into the expression processor without a lot of effort. But even
+It might have been possible to mix constant folding into the expression processor without a lot of effort. But even
 then, it is still unclear whether this is a good idea: Most of the behavior of the language is bound to types, not
 formal constness. For example, whether -3 < 5 can be evaluated depends on the left and right types: If the left-hand
 operand is a vector, -3 cannot be represented and is either wrapped or produces an error (depending on the exact
