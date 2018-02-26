@@ -61,7 +61,7 @@
 // toplevel / modules
 //
 
-module ::= KW_MODULE IDENTIFIER:moduleName SEMICOLON
+module ::= KW_MODULE qualifiedModuleName:moduleName SEMICOLON
 		KW_INTERFACE OPENING_CURLY_BRACE portDefinitionGroup*:portDefinitionGroups CLOSING_CURLY_BRACE
 		implementationItem*:implementationItems;
 
