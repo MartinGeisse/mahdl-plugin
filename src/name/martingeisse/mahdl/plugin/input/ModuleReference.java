@@ -48,30 +48,7 @@ public class ModuleReference implements PsiReference {
 	@Nullable
 	@Override
 	public PsiElement resolve() {
-
-		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
-		if (sourceRoot == null) {
-			return null;
-		}
-		String[] segments = PsiUtil.parseQualifiedModuleName(moduleName);
-		VirtualFile targetVirtualFile = sourceRoot;
-		for (int i = 0; i < segments.length - 1; i++) {
-			targetVirtualFile = targetVirtualFile.findChild(segments[i]);
-			if (targetVirtualFile == null) {
-				return null;
-			}
-		}
-		targetVirtualFile = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
-		if (targetVirtualFile == null) {
-			return null;
-		}
-
-		PsiFile targetPsiFile = PsiManager.getInstance(moduleName.getProject()).findFile(targetVirtualFile);
-		if (!(targetPsiFile instanceof MahdlSourceFile)) {
-			return null;
-		}
-
-		return ((MahdlSourceFile)targetPsiFile).getModule();
+		return PsiUtil.resolveModuleName(moduleName);
 	}
 
 	@NotNull
@@ -114,9 +91,9 @@ public class ModuleReference implements PsiReference {
 	@Override
 	public boolean isReferenceTo(@Nullable PsiElement psiElement) {
 		if (psiElement instanceof Module) {
-			String candidateModuleName = ((Module) psiElement).getModuleName().getText();
-			String lastSegmentOfReference = PsiUtil.getSimpleModuleName(moduleName);
-			if (candidateModuleName.equals(lastSegmentOfReference)) {
+			String canonicalReferenceModuleName = PsiUtil.canonicalizeQualifiedModuleName(moduleName);
+			String canonicalCandidateModuleName = PsiUtil.canonicalizeQualifiedModuleName(((Module) psiElement).getModuleName());
+			if (canonicalCandidateModuleName.equals(canonicalReferenceModuleName)) {
 				PsiElement resolved = resolve();
 				return (resolved != null && resolved.equals(psiElement));
 			}

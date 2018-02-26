@@ -37,7 +37,7 @@ public final class PortDefinitionGroup extends ASTWrapperPsiElement  {
             return (ListNode<PortDefinition>)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

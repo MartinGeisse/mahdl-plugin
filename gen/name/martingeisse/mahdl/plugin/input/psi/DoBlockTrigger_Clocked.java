@@ -31,7 +31,7 @@ public final class DoBlockTrigger_Clocked extends DoBlockTrigger  {
             return (Expression)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 	
 	
 	

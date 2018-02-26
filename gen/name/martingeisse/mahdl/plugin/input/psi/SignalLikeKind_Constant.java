@@ -28,7 +28,7 @@ public final class SignalLikeKind_Constant extends SignalLikeKind  {
     }
 
     
-			
+		
 	
 	
 	

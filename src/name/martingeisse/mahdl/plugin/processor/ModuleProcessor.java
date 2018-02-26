@@ -6,6 +6,9 @@ package name.martingeisse.mahdl.plugin.processor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.psi.*;
@@ -18,6 +21,7 @@ import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
 import name.martingeisse.mahdl.plugin.processor.statement.StatementProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
+import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -62,18 +66,8 @@ public final class ModuleProcessor {
 
 	public ModuleDefinition process() {
 
-		// make sure the module name matches the file name
-		{
-			MahdlSourceFile mahdlSourceFile = PsiUtil.getAncestor(module, MahdlSourceFile.class);
-			if (mahdlSourceFile != null) {
-				String moduleName = module.getModuleName().getText();
-				String expectedFileName = moduleName + '.' + MahdlFileType.DEFAULT_EXTENSION;
-				String actualFileName = mahdlSourceFile.getName();
-				if (!actualFileName.equals(expectedFileName)) {
-					errorHandler.onError(module.getModuleName(), "module '" + moduleName + "' should be defined in a file named '" + expectedFileName + "'");
-				}
-			}
-		}
+		// make sure the module name matches the file name and sits in the right folder
+		validateModuleNameAgainstFilePath();
 
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
 		// a mutual dependency between the type system, constant evaluation and expression processing. Note the
@@ -127,6 +121,15 @@ public final class ModuleProcessor {
 		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
 		return new ModuleDefinition(module.getModuleName().getText(), ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
+	}
+
+	private void validateModuleNameAgainstFilePath() {
+		Module moduleForName = PsiUtil.resolveModuleName(module.getModuleName());
+		if (moduleForName != module) {
+			// TODO test -- not sure if we get the same PSI nodes here or just "equal" ones
+			String canonicalModuleName = PsiUtil.canonicalizeQualifiedModuleName(module.getModuleName());
+			errorHandler.onError(module.getModuleName(), "module '" + canonicalModuleName + "' should be defined in a file and folder that match its name");
+		}
 	}
 
 	private boolean isConstant(ImplementationItem item) {

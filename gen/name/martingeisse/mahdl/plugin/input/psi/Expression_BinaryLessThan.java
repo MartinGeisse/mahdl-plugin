@@ -34,7 +34,7 @@ public final class Expression_BinaryLessThan extends Expression implements Binar
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

@@ -28,7 +28,7 @@ public final class DataType_Bit extends DataType  {
     }
 
     
-			
+		
 	
 	
 	

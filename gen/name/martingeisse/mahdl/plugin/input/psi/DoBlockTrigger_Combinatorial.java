@@ -28,7 +28,7 @@ public final class DoBlockTrigger_Combinatorial extends DoBlockTrigger  {
     }
 
     
-			
+		
 	
 	
 	

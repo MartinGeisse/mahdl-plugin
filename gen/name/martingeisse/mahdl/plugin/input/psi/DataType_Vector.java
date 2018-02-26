@@ -31,7 +31,7 @@ public final class DataType_Vector extends DataType  {
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

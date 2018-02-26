@@ -28,7 +28,7 @@ public abstract class PortDirection extends ASTWrapperPsiElement  {
     }
 
     
-			
+		
 	
 	
 	

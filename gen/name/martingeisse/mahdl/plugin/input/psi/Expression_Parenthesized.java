@@ -31,7 +31,7 @@ public final class Expression_Parenthesized extends Expression  {
             return (Expression)InternalPsiUtil.getChild(this, 1);
         }
     
-			
+		
 	
 	
 	

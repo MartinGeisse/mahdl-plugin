@@ -21,14 +21,14 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class Module extends ASTWrapperPsiElement implements PsiNameIdentifierOwner {
+public final class Module extends ASTWrapperPsiElement implements PsiNamedElement,PsiNameIdentifierOwner {
 
     public Module(@NotNull ASTNode node) {
         super(node);
     }
 
-        public LeafPsiElement getModuleName() {
-            return (LeafPsiElement)InternalPsiUtil.getChild(this, 1);
+        public QualifiedModuleName getModuleName() {
+            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 1);
         }
         public ListNode<PortDefinitionGroup> getPortDefinitionGroups() {
             return (ListNode<PortDefinitionGroup>)InternalPsiUtil.getChild(this, 5);
@@ -37,25 +37,22 @@ public final class Module extends ASTWrapperPsiElement implements PsiNameIdentif
             return (ListNode<ImplementationItem>)InternalPsiUtil.getChild(this, 7);
         }
     
-		
-        public LeafPsiElement getNameIdentifier() {
-			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getNameIdentifier(this);
-        }
-
-		
+	
 		public String getName() {
-			LeafPsiElement nameIdentifier = getNameIdentifier();
-			return (nameIdentifier == null ? null : nameIdentifier.getText());
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getName(this);
 		}
 
 		public PsiElement setName(String newName) throws IncorrectOperationException {
-			LeafPsiElement nameIdentifier = getNameIdentifier();
-			if (nameIdentifier == null) {
-				throw new IncorrectOperationException("name identifier not found");
-			}
-			return (LeafPsiElement) nameIdentifier.replaceWithText(newName);
+			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.setName(this, newName);
 		}
 
+		
+	    
+            public PsiElement getNameIdentifier() {
+                return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getNameIdentifier(this);
+            }
+
+        
 	
 	
 			public void superclassDelete() throws IncorrectOperationException {

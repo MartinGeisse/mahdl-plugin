@@ -34,7 +34,7 @@ public final class Expression_BinaryXor extends Expression implements BinaryOper
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

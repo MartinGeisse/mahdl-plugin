@@ -31,7 +31,7 @@ public final class Expression_UnaryMinus extends Expression implements UnaryOper
             return (Expression)InternalPsiUtil.getChild(this, 1);
         }
     
-			
+		
 	
 	
 	

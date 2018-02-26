@@ -34,7 +34,7 @@ public final class Expression_BinaryEqual extends Expression implements BinaryOp
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

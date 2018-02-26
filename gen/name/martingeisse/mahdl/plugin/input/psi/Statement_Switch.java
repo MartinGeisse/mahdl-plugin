@@ -34,7 +34,7 @@ public final class Statement_Switch extends Statement  {
             return (ListNode<StatementCaseItem>)InternalPsiUtil.getChild(this, 5);
         }
     
-			
+		
 	
 	
 	

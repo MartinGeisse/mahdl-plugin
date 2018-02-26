@@ -34,7 +34,7 @@ public final class Expression_BinaryMinus extends Expression implements BinaryOp
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

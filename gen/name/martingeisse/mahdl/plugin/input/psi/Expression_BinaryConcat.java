@@ -34,7 +34,7 @@ public final class Expression_BinaryConcat extends Expression implements BinaryO
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

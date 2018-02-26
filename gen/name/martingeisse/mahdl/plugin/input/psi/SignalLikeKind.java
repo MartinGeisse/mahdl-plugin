@@ -28,7 +28,7 @@ public abstract class SignalLikeKind extends ASTWrapperPsiElement  {
     }
 
     
-			
+		
 	
 	
 	

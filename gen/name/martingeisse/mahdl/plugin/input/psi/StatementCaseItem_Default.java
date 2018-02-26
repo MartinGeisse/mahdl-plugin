@@ -31,7 +31,7 @@ public final class StatementCaseItem_Default extends StatementCaseItem  {
             return (ListNode<Statement>)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

@@ -37,7 +37,7 @@ public final class ImplementationItem_SignalLikeDefinitionGroup extends Implemen
             return (ListNode<SignalLikeDefinition>)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

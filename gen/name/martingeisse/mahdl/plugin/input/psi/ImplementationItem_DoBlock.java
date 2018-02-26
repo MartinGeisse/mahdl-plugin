@@ -34,7 +34,7 @@ public final class ImplementationItem_DoBlock extends ImplementationItem  {
             return (Statement)InternalPsiUtil.getChild(this, 4);
         }
     
-			
+		
 	
 	
 	

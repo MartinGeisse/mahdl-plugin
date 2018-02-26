@@ -31,7 +31,7 @@ public final class ExtendedExpression_Normal extends ExtendedExpression  {
             return (Expression)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 	
 	
 	

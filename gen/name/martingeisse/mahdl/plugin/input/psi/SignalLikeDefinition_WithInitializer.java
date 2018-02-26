@@ -35,24 +35,25 @@ public final class SignalLikeDefinition_WithInitializer extends SignalLikeDefini
         }
     
 		
-        public LeafPsiElement getNameIdentifier() {
-			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getNameIdentifier(this);
-        }
+	    
+            public LeafPsiElement getNameIdentifier() {
+                return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getNameIdentifier(this);
+            }
 
-		
-		public String getName() {
-			LeafPsiElement nameIdentifier = getNameIdentifier();
-			return (nameIdentifier == null ? null : nameIdentifier.getText());
-		}
+            public String getName() {
+                LeafPsiElement nameIdentifier = getNameIdentifier();
+                return (nameIdentifier == null ? null : nameIdentifier.getText());
+            }
 
-		public PsiElement setName(String newName) throws IncorrectOperationException {
-			LeafPsiElement nameIdentifier = getNameIdentifier();
-			if (nameIdentifier == null) {
-				throw new IncorrectOperationException("name identifier not found");
-			}
-			return (LeafPsiElement) nameIdentifier.replaceWithText(newName);
-		}
+            public PsiElement setName(String newName) throws IncorrectOperationException {
+                LeafPsiElement nameIdentifier = getNameIdentifier();
+                if (nameIdentifier == null) {
+                    throw new IncorrectOperationException("name identifier not found");
+                }
+                return (LeafPsiElement) nameIdentifier.replaceWithText(newName);
+            }
 
+        
 	
 	
 	

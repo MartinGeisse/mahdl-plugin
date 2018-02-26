@@ -31,7 +31,7 @@ public final class QualifiedModuleName extends ASTWrapperPsiElement  {
             return (ListNode<LeafPsiElement>)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 			public PsiReference getReference() {
 			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
 		}

@@ -31,7 +31,7 @@ public final class InstanceReferenceName extends ASTWrapperPsiElement  {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 			public PsiReference getReference() {
 			return name.martingeisse.mahdl.plugin.input.psi.PsiUtil.getReference(this);
 		}

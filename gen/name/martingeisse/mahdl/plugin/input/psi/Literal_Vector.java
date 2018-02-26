@@ -31,7 +31,7 @@ public final class Literal_Vector extends Literal  {
             return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 	
 	
 	

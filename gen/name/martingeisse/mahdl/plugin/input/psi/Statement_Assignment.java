@@ -34,7 +34,7 @@ public final class Statement_Assignment extends Statement  {
             return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

@@ -31,7 +31,7 @@ public final class ExpressionCaseItem_Default extends ExpressionCaseItem  {
             return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

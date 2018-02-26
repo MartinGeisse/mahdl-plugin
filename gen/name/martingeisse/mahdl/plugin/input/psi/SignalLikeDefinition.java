@@ -28,7 +28,7 @@ public abstract class SignalLikeDefinition extends ASTWrapperPsiElement implemen
     }
 
     
-			
+		
 	
 			public void superclassDelete() throws IncorrectOperationException {
 			super.delete();

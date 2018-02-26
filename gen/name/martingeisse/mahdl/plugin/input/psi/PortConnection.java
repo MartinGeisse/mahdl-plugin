@@ -34,7 +34,7 @@ public final class PortConnection extends ASTWrapperPsiElement  {
             return (ExtendedExpression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

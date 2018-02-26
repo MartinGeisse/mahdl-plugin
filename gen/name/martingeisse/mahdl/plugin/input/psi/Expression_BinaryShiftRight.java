@@ -34,7 +34,7 @@ public final class Expression_BinaryShiftRight extends Expression implements Bin
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

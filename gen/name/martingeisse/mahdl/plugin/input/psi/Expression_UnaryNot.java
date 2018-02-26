@@ -31,7 +31,7 @@ public final class Expression_UnaryNot extends Expression implements UnaryOperat
             return (Expression)InternalPsiUtil.getChild(this, 1);
         }
     
-			
+		
 	
 	
 	

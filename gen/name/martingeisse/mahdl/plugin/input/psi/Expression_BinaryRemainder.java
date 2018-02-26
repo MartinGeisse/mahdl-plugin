@@ -34,7 +34,7 @@ public final class Expression_BinaryRemainder extends Expression implements Bina
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

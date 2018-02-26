@@ -31,7 +31,7 @@ public final class Expression_Literal extends Expression  {
             return (Literal)InternalPsiUtil.getChild(this, 0);
         }
     
-			
+		
 	
 	
 	

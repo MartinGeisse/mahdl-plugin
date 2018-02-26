@@ -34,7 +34,7 @@ public final class DataType_Matrix extends DataType  {
             return (Expression)InternalPsiUtil.getChild(this, 5);
         }
     
-			
+		
 	
 	
 	

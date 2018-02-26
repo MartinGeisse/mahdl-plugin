@@ -10,11 +10,13 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.util.Consumer;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
+import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
 import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
 import name.martingeisse.mahdl.plugin.input.ModuleInstanceReference;
@@ -80,13 +82,49 @@ public final class PsiUtil {
 		return ProjectRootManager.getInstance(originPsiFile.getProject()).getFileIndex().getSourceRootForFile(originVirtualFile);
 	}
 
+	@Nullable
+	public static Module resolveModuleName(QualifiedModuleName moduleName) {
+		VirtualFile sourceRoot = getSourceRoot(moduleName);
+		if (sourceRoot == null) {
+			return null;
+		}
+		String[] segments = parseQualifiedModuleName(moduleName);
+		VirtualFile targetVirtualFile = sourceRoot;
+		for (int i = 0; i < segments.length - 1; i++) {
+			targetVirtualFile = targetVirtualFile.findChild(segments[i]);
+			if (targetVirtualFile == null) {
+				return null;
+			}
+		}
+		targetVirtualFile = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
+		if (targetVirtualFile == null) {
+			return null;
+		}
+		PsiFile targetPsiFile = PsiManager.getInstance(moduleName.getProject()).findFile(targetVirtualFile);
+		if (!(targetPsiFile instanceof MahdlSourceFile)) {
+			return null;
+		}
+		return ((MahdlSourceFile)targetPsiFile).getModule();
+	}
+
+
 	//
 	// naming support
 	//
 
 	@Nullable
-	public static LeafPsiElement getNameIdentifier(@NotNull Module node) {
+	public static QualifiedModuleName getNameIdentifier(@NotNull Module node) {
 		return node.getModuleName();
+	}
+
+	@Nullable
+	public static String getName(@NotNull Module node) {
+		QualifiedModuleName name = node.getModuleName();
+		return name == null ? null : canonicalizeQualifiedModuleName(name);
+	}
+
+	public static PsiElement setName(@NotNull Module node, @NotNull String newName) {
+		throw new IncorrectOperationException("renaming module not yet implemented");
 	}
 
 	@Nullable
@@ -183,13 +221,6 @@ public final class PsiUtil {
 			segments.add(segment.getText());
 		}
 		return segments.toArray(new String[segments.size()]);
-	}
-
-	@NotNull
-	public static String getSimpleModuleName(@NotNull QualifiedModuleName name) {
-		MutableObject<LeafPsiElement> elementHolder = new MutableObject<>();
-		name.getSegments().foreach(elementHolder::setValue);
-		return elementHolder.getValue().getText();
 	}
 
 }

@@ -34,7 +34,7 @@ public final class Expression_BinaryPlus extends Expression implements BinaryOpe
             return (Expression)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	

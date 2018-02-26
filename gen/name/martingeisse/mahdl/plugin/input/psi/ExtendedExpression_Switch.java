@@ -34,7 +34,7 @@ public final class ExtendedExpression_Switch extends ExtendedExpression  {
             return (ListNode<ExpressionCaseItem>)InternalPsiUtil.getChild(this, 5);
         }
     
-			
+		
 	
 	
 	

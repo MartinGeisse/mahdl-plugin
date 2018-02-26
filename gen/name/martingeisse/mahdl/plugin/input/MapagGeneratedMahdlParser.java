@@ -91,7 +91,7 @@ public class MapagGeneratedMahdlParser implements PsiParser, LightPsiParser {
 	static {
 		try (InputStream inputStream = MapagGeneratedMahdlParser.class.getResourceAsStream("/MapagGeneratedMahdlParser.actions")) {
 			try (DataInputStream dataInputStream = new DataInputStream(inputStream)) {
-				ACTION_TABLE = new int[900 * ACTION_TABLE_WIDTH];
+				ACTION_TABLE = new int[904 * ACTION_TABLE_WIDTH];
 				for (int i = 0; i < ACTION_TABLE.length; i++) {
 					ACTION_TABLE[i] = dataInputStream.readInt();
 				}
@@ -1181,6 +1181,7 @@ public class MapagGeneratedMahdlParser implements PsiParser, LightPsiParser {
                     "bit integer matrix text vector",
                     "bit integer matrix text vector",
                     "(identifier) .",
+                    ". ;",
                     "(identifier)",
                     ", ; =",
                     ", ;",
@@ -1272,8 +1273,11 @@ public class MapagGeneratedMahdlParser implements PsiParser, LightPsiParser {
                     "case default }",
                     "case default }",
                     "(identifier) .",
+                    ". ;",
+                    "(identifier)",
                     "(identifier)",
                     "(identifier) .",
+                    ". ;",
                     ", ;",
                     ", ;",
                     ", ;",

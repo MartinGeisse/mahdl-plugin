@@ -31,7 +31,7 @@ public final class Expression_UnaryPlus extends Expression implements UnaryOpera
             return (Expression)InternalPsiUtil.getChild(this, 1);
         }
     
-			
+		
 	
 	
 	

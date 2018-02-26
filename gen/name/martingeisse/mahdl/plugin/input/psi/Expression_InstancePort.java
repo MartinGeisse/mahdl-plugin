@@ -34,7 +34,7 @@ public final class Expression_InstancePort extends Expression  {
             return (InstancePortName)InternalPsiUtil.getChild(this, 2);
         }
     
-			
+		
 	
 	
 	
