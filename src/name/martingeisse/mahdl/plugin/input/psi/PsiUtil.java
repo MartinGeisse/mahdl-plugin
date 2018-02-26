@@ -17,10 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
-import name.martingeisse.mahdl.plugin.input.IdentifierExpressionReference;
-import name.martingeisse.mahdl.plugin.input.ModuleInstancePortReference;
-import name.martingeisse.mahdl.plugin.input.ModuleInstanceReference;
-import name.martingeisse.mahdl.plugin.input.ModuleReference;
+import name.martingeisse.mahdl.plugin.input.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
@@ -82,31 +79,42 @@ public final class PsiUtil {
 		return ProjectRootManager.getInstance(originPsiFile.getProject()).getFileIndex().getSourceRootForFile(originVirtualFile);
 	}
 
-	@Nullable
-	public static Module resolveModuleName(QualifiedModuleName moduleName) {
+	@NotNull
+	public static VirtualFile resolveModuleNameToVirtualFile(QualifiedModuleName moduleName) throws ReferenceResolutionException {
 		VirtualFile sourceRoot = getSourceRoot(moduleName);
 		if (sourceRoot == null) {
-			return null;
+			throw new ReferenceResolutionException("the module name is not located inside a source root");
 		}
 		String[] segments = parseQualifiedModuleName(moduleName);
 		VirtualFile targetVirtualFile = sourceRoot;
 		for (int i = 0; i < segments.length - 1; i++) {
 			targetVirtualFile = targetVirtualFile.findChild(segments[i]);
 			if (targetVirtualFile == null) {
-				return null;
+				String path = sourceRoot.getPath() + '/' + StringUtils.join(segments, '/') + ".mahdl";
+				throw new ReferenceResolutionException("could not locate module file " + path + ": folder " + segments[i] + " not found");
 			}
 		}
-		targetVirtualFile = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
-		if (targetVirtualFile == null) {
-			return null;
+		VirtualFile file = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
+		if (file == null) {
+			String path = sourceRoot.getPath() + '/' + StringUtils.join(segments, '/') + ".mahdl";
+			throw new ReferenceResolutionException("module file " + path + " not found");
 		}
-		PsiFile targetPsiFile = PsiManager.getInstance(moduleName.getProject()).findFile(targetVirtualFile);
-		if (!(targetPsiFile instanceof MahdlSourceFile)) {
-			return null;
-		}
-		return ((MahdlSourceFile)targetPsiFile).getModule();
+		return file;
 	}
 
+	@NotNull
+	public static Module resolveModuleName(QualifiedModuleName moduleName) throws ReferenceResolutionException {
+		VirtualFile targetVirtualFile = resolveModuleNameToVirtualFile(moduleName);
+		PsiFile targetPsiFile = PsiManager.getInstance(moduleName.getProject()).findFile(targetVirtualFile);
+		if (!(targetPsiFile instanceof MahdlSourceFile)) {
+			throw new ReferenceResolutionException(targetVirtualFile.getPath() + " is not a MaHDL source file");
+		}
+		Module module = ((MahdlSourceFile) targetPsiFile).getModule();
+		if (module == null) {
+			throw new ReferenceResolutionException("target file does not contain a module");
+		}
+		return module;
+	}
 
 	//
 	// naming support

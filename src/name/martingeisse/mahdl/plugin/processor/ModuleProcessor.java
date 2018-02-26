@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
+import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
 import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
@@ -124,11 +125,19 @@ public final class ModuleProcessor {
 	}
 
 	private void validateModuleNameAgainstFilePath() {
-		Module moduleForName = PsiUtil.resolveModuleName(module.getModuleName());
+		QualifiedModuleName name = module.getModuleName();
+		String canonicalName = PsiUtil.canonicalizeQualifiedModuleName(name);
+		Module moduleForName;
+		VirtualFile fileForName;
+		try {
+			moduleForName = PsiUtil.resolveModuleName(name);
+			fileForName = PsiUtil.resolveModuleNameToVirtualFile(name);
+		} catch (ReferenceResolutionException e) {
+			errorHandler.onError(name, "module name '" + canonicalName + "' should refer to this file -- " + e.getMessage());
+			return;
+		}
 		if (moduleForName != module) {
-			// TODO test -- not sure if we get the same PSI nodes here or just "equal" ones
-			String canonicalModuleName = PsiUtil.canonicalizeQualifiedModuleName(module.getModuleName());
-			errorHandler.onError(module.getModuleName(), "module '" + canonicalModuleName + "' should be defined in a file and folder that match its name");
+			errorHandler.onError(name, "module name '" + canonicalName + "' refers to different file " + fileForName.getPath());
 		}
 	}
 
