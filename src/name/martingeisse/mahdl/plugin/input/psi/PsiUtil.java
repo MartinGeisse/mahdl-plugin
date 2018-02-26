@@ -67,6 +67,12 @@ public final class PsiUtil {
 	}
 
 	@Nullable
+	public static VirtualFile getVirtualFile(@NotNull PsiElement psiElement) {
+		PsiFile originPsiFile = psiElement.getContainingFile();
+		return (originPsiFile == null ? null : originPsiFile.getVirtualFile());
+	}
+
+	@Nullable
 	public static VirtualFile getSourceRoot(@NotNull PsiElement psiElement) {
 		PsiFile originPsiFile = psiElement.getContainingFile();
 		if (originPsiFile == null) {
@@ -79,8 +85,9 @@ public final class PsiUtil {
 		return ProjectRootManager.getInstance(originPsiFile.getProject()).getFileIndex().getSourceRootForFile(originVirtualFile);
 	}
 
+	// the useCase has an effect on error messages but otherwise doesn't influence resolution
 	@NotNull
-	public static VirtualFile resolveModuleNameToVirtualFile(QualifiedModuleName moduleName) throws ReferenceResolutionException {
+	public static Module resolveModuleName(QualifiedModuleName moduleName, ModuleNameResolutionUseCase useCase) throws ReferenceResolutionException {
 		VirtualFile sourceRoot = getSourceRoot(moduleName);
 		if (sourceRoot == null) {
 			throw new ReferenceResolutionException("the module name is not located inside a source root");
@@ -94,17 +101,11 @@ public final class PsiUtil {
 				throw new ReferenceResolutionException("could not locate module file " + path + ": folder " + segments[i] + " not found");
 			}
 		}
-		VirtualFile file = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
-		if (file == null) {
+		targetVirtualFile = targetVirtualFile.findChild(segments[segments.length - 1] + ".mahdl");
+		if (targetVirtualFile == null) {
 			String path = sourceRoot.getPath() + '/' + StringUtils.join(segments, '/') + ".mahdl";
 			throw new ReferenceResolutionException("module file " + path + " not found");
 		}
-		return file;
-	}
-
-	@NotNull
-	public static Module resolveModuleName(QualifiedModuleName moduleName) throws ReferenceResolutionException {
-		VirtualFile targetVirtualFile = resolveModuleNameToVirtualFile(moduleName);
 		PsiFile targetPsiFile = PsiManager.getInstance(moduleName.getProject()).findFile(targetVirtualFile);
 		if (!(targetPsiFile instanceof MahdlSourceFile)) {
 			throw new ReferenceResolutionException(targetVirtualFile.getPath() + " is not a MaHDL source file");
@@ -114,6 +115,11 @@ public final class PsiUtil {
 			throw new ReferenceResolutionException("target file does not contain a module");
 		}
 		return module;
+	}
+
+	public enum ModuleNameResolutionUseCase {
+		NAME_DECLARATION_VALIDATION,
+		REFERENCE_RESOLUTION
 	}
 
 	//

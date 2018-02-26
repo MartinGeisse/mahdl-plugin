@@ -49,7 +49,7 @@ public class ModuleReference implements PsiReference {
 	@Override
 	public PsiElement resolve() {
 		try {
-			return PsiUtil.resolveModuleName(moduleName);
+			return PsiUtil.resolveModuleName(moduleName, PsiUtil.ModuleNameResolutionUseCase.REFERENCE_RESOLUTION);
 		} catch (ReferenceResolutionException e) {
 			return null;
 		}

@@ -128,16 +128,16 @@ public final class ModuleProcessor {
 		QualifiedModuleName name = module.getModuleName();
 		String canonicalName = PsiUtil.canonicalizeQualifiedModuleName(name);
 		Module moduleForName;
-		VirtualFile fileForName;
 		try {
-			moduleForName = PsiUtil.resolveModuleName(name);
-			fileForName = PsiUtil.resolveModuleNameToVirtualFile(name);
+			moduleForName = PsiUtil.resolveModuleName(name, PsiUtil.ModuleNameResolutionUseCase.NAME_DECLARATION_VALIDATION);
 		} catch (ReferenceResolutionException e) {
-			errorHandler.onError(name, "module name '" + canonicalName + "' should refer to this file -- " + e.getMessage());
+			errorHandler.onError(name, e.getMessage());
 			return;
 		}
 		if (moduleForName != module) {
-			errorHandler.onError(name, "module name '" + canonicalName + "' refers to different file " + fileForName.getPath());
+			VirtualFile fileForName = PsiUtil.getVirtualFile(moduleForName);
+			String path = (fileForName == null ? "(null)" : fileForName.getPath());
+			errorHandler.onError(name, "module name '" + canonicalName + "' refers to different file " + path);
 		}
 	}
 
