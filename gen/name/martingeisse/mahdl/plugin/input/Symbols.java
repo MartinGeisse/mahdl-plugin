@@ -73,6 +73,7 @@ public class Symbols {
 	public static final MahdlElementType dataType_Vector = new MahdlElementType("dataType_Vector");
 	public static final MahdlElementType doBlockTrigger_Clocked = new MahdlElementType("doBlockTrigger_Clocked");
 	public static final MahdlElementType doBlockTrigger_Combinatorial = new MahdlElementType("doBlockTrigger_Combinatorial");
+	public static final MahdlElementType doBlockTrigger_Error = new MahdlElementType("doBlockTrigger_Error");
 	public static final MahdlElementType expressionCaseItem_Default = new MahdlElementType("expressionCaseItem_Default");
 	public static final MahdlElementType expressionCaseItem_Value = new MahdlElementType("expressionCaseItem_Value");
 	public static final MahdlElementType expression_BinaryAnd = new MahdlElementType("expression_BinaryAnd");
@@ -115,12 +116,17 @@ public class Symbols {
 	public static final MahdlElementType literal_Text = new MahdlElementType("literal_Text");
 	public static final MahdlElementType literal_Vector = new MahdlElementType("literal_Vector");
 	public static final MahdlElementType module = new MahdlElementType("module");
-	public static final MahdlElementType portConnection = new MahdlElementType("portConnection");
+	public static final MahdlElementType portConnection_Error1 = new MahdlElementType("portConnection_Error1");
+	public static final MahdlElementType portConnection_Error2 = new MahdlElementType("portConnection_Error2");
+	public static final MahdlElementType portConnection_Valid = new MahdlElementType("portConnection_Valid");
 	public static final MahdlElementType portDefinition = new MahdlElementType("portDefinition");
-	public static final MahdlElementType portDefinitionGroup = new MahdlElementType("portDefinitionGroup");
+	public static final MahdlElementType portDefinitionGroup_Error1 = new MahdlElementType("portDefinitionGroup_Error1");
+	public static final MahdlElementType portDefinitionGroup_Error2 = new MahdlElementType("portDefinitionGroup_Error2");
+	public static final MahdlElementType portDefinitionGroup_Valid = new MahdlElementType("portDefinitionGroup_Valid");
 	public static final MahdlElementType portDirection_In = new MahdlElementType("portDirection_In");
 	public static final MahdlElementType portDirection_Out = new MahdlElementType("portDirection_Out");
 	public static final MahdlElementType qualifiedModuleName = new MahdlElementType("qualifiedModuleName");
+	public static final MahdlElementType signalLikeDefinition_Error = new MahdlElementType("signalLikeDefinition_Error");
 	public static final MahdlElementType signalLikeDefinition_WithInitializer = new MahdlElementType("signalLikeDefinition_WithInitializer");
 	public static final MahdlElementType signalLikeDefinition_WithoutInitializer = new MahdlElementType("signalLikeDefinition_WithoutInitializer");
 	public static final MahdlElementType signalLikeKind_Constant = new MahdlElementType("signalLikeKind_Constant");
@@ -130,6 +136,8 @@ public class Symbols {
 	public static final MahdlElementType statementCaseItem_Value = new MahdlElementType("statementCaseItem_Value");
 	public static final MahdlElementType statement_Assignment = new MahdlElementType("statement_Assignment");
 	public static final MahdlElementType statement_Block = new MahdlElementType("statement_Block");
+	public static final MahdlElementType statement_Error1 = new MahdlElementType("statement_Error1");
+	public static final MahdlElementType statement_Error2 = new MahdlElementType("statement_Error2");
 	public static final MahdlElementType statement_IfThen = new MahdlElementType("statement_IfThen");
 	public static final MahdlElementType statement_IfThenElse = new MahdlElementType("statement_IfThenElse");
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");

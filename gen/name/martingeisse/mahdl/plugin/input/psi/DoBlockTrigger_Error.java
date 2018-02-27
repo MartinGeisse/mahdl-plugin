@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class PortConnection extends ASTWrapperPsiElement  {
+public final class DoBlockTrigger_Error extends DoBlockTrigger  {
 
-    public PortConnection(@NotNull ASTNode node) {
+    public DoBlockTrigger_Error(@NotNull ASTNode node) {
         super(node);
     }
 

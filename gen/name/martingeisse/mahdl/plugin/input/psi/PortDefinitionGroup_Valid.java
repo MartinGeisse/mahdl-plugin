@@ -21,12 +21,21 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class PortConnection extends ASTWrapperPsiElement  {
+public final class PortDefinitionGroup_Valid extends PortDefinitionGroup  {
 
-    public PortConnection(@NotNull ASTNode node) {
+    public PortDefinitionGroup_Valid(@NotNull ASTNode node) {
         super(node);
     }
 
+        public PortDirection getDirection() {
+            return (PortDirection)InternalPsiUtil.getChild(this, 0);
+        }
+        public DataType getDataType() {
+            return (DataType)InternalPsiUtil.getChild(this, 1);
+        }
+        public ListNode<PortDefinition> getDefinitions() {
+            return (ListNode<PortDefinition>)InternalPsiUtil.getChild(this, 2);
+        }
     
 		
 	

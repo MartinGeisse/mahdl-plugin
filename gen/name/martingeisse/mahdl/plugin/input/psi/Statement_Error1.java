@@ -21,9 +21,9 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public abstract class PortConnection extends ASTWrapperPsiElement  {
+public final class Statement_Error1 extends Statement  {
 
-    public PortConnection(@NotNull ASTNode node) {
+    public Statement_Error1(@NotNull ASTNode node) {
         super(node);
     }
 

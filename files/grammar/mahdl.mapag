@@ -69,9 +69,13 @@ module ::= KW_MODULE qualifiedModuleName:moduleName SEMICOLON
 // interface
 //
 
-portDefinitionGroup ::= portDirection:direction dataType:dataType (portDefinition, COMMA)+:definitions SEMICOLON;
+portDefinitionGroup ::= {
+	valid ::= portDirection:direction dataType:dataType (portDefinition, COMMA)+:definitions SEMICOLON;
+	error1 ::= %error SEMICOLON;
+	error2 ::= %error;
+}
 
-portDefinition ::= IDENTIFIER:identifier;
+portDefinition ::= IDENTIFIER:identifier %reduceOnError;
 
 portDirection ::= {
 	in ::= KW_IN;
@@ -105,6 +109,7 @@ signalLikeKind ::= {
 signalLikeDefinition ::= {
 	withoutInitializer ::= IDENTIFIER:identifier;
 	withInitializer ::= IDENTIFIER:identifier EQUALS extendedExpression:initializer;
+	error ::= IDENTIFIER:identifier %error;
 }
 
 
@@ -114,9 +119,13 @@ signalLikeDefinition ::= {
 
 qualifiedModuleName ::= (IDENTIFIER, DOT)+:segments;
 
-portConnection ::= instancePortName:portName COLON extendedExpression:expression SEMICOLON;
+portConnection ::= {
+		valid ::= instancePortName:portName COLON extendedExpression:expression SEMICOLON;
+		error1 ::= %error SEMICOLON;
+		error2 ::= %error;
+}
 
-instancePortName ::= IDENTIFIER:identifier;
+instancePortName ::= IDENTIFIER:identifier %reduceOnError;
 
 
 //
@@ -126,6 +135,7 @@ instancePortName ::= IDENTIFIER:identifier;
 doBlockTrigger ::= {
 	combinatorial ::= OP_TIMES;
 	clocked ::= expression:clockExpression;
+	error ::= %error;
 }
 
 statement ::= {
@@ -136,6 +146,8 @@ statement ::= {
 	ifThenElse ::= KW_IF OPENING_PARENTHESIS expression:condition CLOSING_PARENTHESIS statement:thenBranch KW_ELSE statement:elseBranch;
 	switch ::= KW_SWITCH OPENING_PARENTHESIS expression:selector CLOSING_PARENTHESIS OPENING_CURLY_BRACE statementCaseItem+:items CLOSING_CURLY_BRACE;
 	block ::= OPENING_CURLY_BRACE statement*:body CLOSING_CURLY_BRACE;
+	error1 ::= %error SEMICOLON;
+	error2 ::= %error;
 }
 
 statementCaseItem ::= {
@@ -164,7 +176,7 @@ expressionCaseItem ::= {
 expression ::= {
 
 	literal ::= literal:literal;
-	identifier ::= IDENTIFIER:identifier;
+	identifier ::= IDENTIFIER:identifier %reduceOnError;
 	instancePort ::= instanceReferenceName:instanceName DOT instancePortName:portName;
 	indexSelection ::= expression:container OPENING_SQUARE_BRACKET expression:index CLOSING_SQUARE_BRACKET;
 	rangeSelection ::= expression:container OPENING_SQUARE_BRACKET expression:from COLON expression:to CLOSING_SQUARE_BRACKET;
