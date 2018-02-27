@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO auto-complete doesn't work. Might be due to missing parser error recovery.
  */
 public class ModuleInstanceReference extends LocalReference {
 

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * TODO Port connection: auto-complete doesn't work. Not sure if this is the correct class for that.
  */
 public class ModuleInstancePortReference implements PsiReference {
 
@@ -103,7 +103,7 @@ public class ModuleInstancePortReference implements PsiReference {
 				}
 			}
 		}
-		// we found a module, but that module doesn't have a matching port. At least resolve to the module. TODO test if this works!
+		// we found a module, but that module doesn't have a matching port. At least resolve to the module.
 		return targetModule;
 	}
 
