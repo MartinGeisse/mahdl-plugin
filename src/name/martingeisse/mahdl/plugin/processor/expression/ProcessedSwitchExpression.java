@@ -117,13 +117,13 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 	}
 
 	public ProcessedSwitchStatement convertToStatement(ProcessedExpression destination) {
-		List<ProcessedSwitchStatement.Case> statementCases = new ArrayList<>();
-		for (ProcessedSwitchExpression.Case expressionCase : cases) {
-			ProcessedStatement branch = new ProcessedAssignment(getErrorSource(), destination, expressionCase.getResultValue());
-			statementCases.add(new ProcessedSwitchStatement.Case(expressionCase.getSelectorValues(), branch));
-		}
-		ProcessedStatement defaultBranch = new ProcessedAssignment(getErrorSource(), destination, this.defaultBranch);
 		try {
+			List<ProcessedSwitchStatement.Case> statementCases = new ArrayList<>();
+			for (ProcessedSwitchExpression.Case expressionCase : cases) {
+				ProcessedStatement branch = new ProcessedAssignment(getErrorSource(), destination, expressionCase.getResultValue());
+				statementCases.add(new ProcessedSwitchStatement.Case(expressionCase.getSelectorValues(), branch));
+			}
+			ProcessedStatement defaultBranch = new ProcessedAssignment(getErrorSource(), destination, this.defaultBranch);
 			return new ProcessedSwitchStatement(getErrorSource(), selector, ImmutableList.copyOf(statementCases), defaultBranch);
 		} catch (TypeErrorException e) {
 			throw new RuntimeException(e);

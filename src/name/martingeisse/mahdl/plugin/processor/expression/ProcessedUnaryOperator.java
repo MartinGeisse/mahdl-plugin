@@ -44,7 +44,7 @@ public enum ProcessedUnaryOperator {
 		if (operandType instanceof ProcessedDataType.Unknown) {
 			return operandType;
 		}
-		if (!ArrayUtils.contains(acceptedOperandFamilies, operandType)) {
+		if (!ArrayUtils.contains(acceptedOperandFamilies, operandType.getFamily())) {
 			throw new TypeErrorException();
 		}
 		return operandType;

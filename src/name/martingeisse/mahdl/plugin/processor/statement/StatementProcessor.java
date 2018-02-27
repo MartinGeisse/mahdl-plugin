@@ -65,9 +65,13 @@ public final class StatementProcessor {
 
 			Statement_Assignment assignment = (Statement_Assignment) statement;
 			ProcessedExpression leftHandSide = expressionProcessor.process(assignment.getLeftSide());
-			ProcessedExpression rightHandSide = expressionProcessor.process(assignment.getRightSide());
+			ProcessedExpression rightHandSide = expressionProcessor.process(assignment.getRightSide(), leftHandSide.getDataType());
 			assignmentValidator.validateAssignmentTo(leftHandSide, triggerKind);
-			return new ProcessedAssignment(statement, leftHandSide, rightHandSide);
+			try {
+				return new ProcessedAssignment(statement, leftHandSide, rightHandSide);
+			} catch (TypeErrorException e) {
+				return error(statement, "internal type error");
+			}
 
 		} else if (statement instanceof Statement_IfThen) {
 
