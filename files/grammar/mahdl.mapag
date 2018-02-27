@@ -85,7 +85,7 @@ portDirection ::= {
 
 implementationItem ::= {
 	signalLikeDefinitionGroup ::= signalLikeKind:kind dataType:dataType (signalLikeDefinition, COMMA)+:definitions SEMICOLON;
-	moduleInstance ::= qualifiedModuleName:moduleName IDENTIFIER:instanceName OPENING_CURLY_BRACE portConnection*:portConnections CLOSING_CURLY_BRACE SEMICOLON;
+	moduleInstance ::= qualifiedModuleName:moduleName IDENTIFIER:instanceName OPENING_CURLY_BRACE portConnection*:portConnections CLOSING_CURLY_BRACE;
 	doBlock ::= KW_DO OPENING_PARENTHESIS doBlockTrigger:trigger CLOSING_PARENTHESIS statement:statement;
 	error ::= %error; // synchronizes on the start of the next item
 }
