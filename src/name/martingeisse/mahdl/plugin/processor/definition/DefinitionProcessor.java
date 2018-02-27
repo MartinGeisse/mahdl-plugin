@@ -50,16 +50,19 @@ public final class DefinitionProcessor {
 	}
 
 	public void processPorts(@NotNull ListNode<PortDefinitionGroup> psiPortList) {
-		for (PortDefinitionGroup portDefinitionGroup : psiPortList.getAll()) {
-			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-				DataType dataType = portDefinitionGroup.getDataType();
-				ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
-				ProcessedDataType.Family family = processedDataType.getFamily();
-				if (family != ProcessedDataType.Family.UNKNOWN && family != ProcessedDataType.Family.BIT && family != ProcessedDataType.Family.VECTOR) {
-					errorHandler.onError(dataType, family.getDisplayString() + " type not allowed for ports");
-					processedDataType = ProcessedDataType.Unknown.INSTANCE;
+		for (PortDefinitionGroup untypedPortDefinitionGroup : psiPortList.getAll()) {
+			if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+				PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+					DataType dataType = portDefinitionGroup.getDataType();
+					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
+					ProcessedDataType.Family family = processedDataType.getFamily();
+					if (family != ProcessedDataType.Family.UNKNOWN && family != ProcessedDataType.Family.BIT && family != ProcessedDataType.Family.VECTOR) {
+						errorHandler.onError(dataType, family.getDisplayString() + " type not allowed for ports");
+						processedDataType = ProcessedDataType.Unknown.INSTANCE;
+					}
+					add(new ModulePort(portDefinition, portDefinitionGroup.getDirection(), dataType, processedDataType));
 				}
-				add(new ModulePort(portDefinition, portDefinitionGroup.getDirection(), dataType, processedDataType));
 			}
 		}
 	}
@@ -149,37 +152,43 @@ public final class DefinitionProcessor {
 
 			// build a map of the port definitions from the module definition
 			Map<String, InstancePort> ports = new HashMap<>();
-			for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-					String portName = portDefinition.getName();
-					if (portName != null) {
-						PortDirection direction;
-						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
-							direction = PortDirection.IN;
-						} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-							direction = PortDirection.OUT;
-						} else {
-							errorHandler.onError(portDefinitionGroup.getDirection(), "unknown direction");
-							continue;
+			for (PortDefinitionGroup untypedPortDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
+				if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+					PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+					for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+						String portName = portDefinition.getName();
+						if (portName != null) {
+							PortDirection direction;
+							if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+								direction = PortDirection.IN;
+							} else if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+								direction = PortDirection.OUT;
+							} else {
+								errorHandler.onError(portDefinitionGroup.getDirection(), "unknown direction");
+								continue;
+							}
+							// do not report errors in foreign modules
+							ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType(), false);
+							ports.put(portName, new InstancePort(portName, direction, processedDataType));
 						}
-						// do not report errors in foreign modules
-						ProcessedDataType processedDataType = dataTypeProcessor.processDataType(portDefinitionGroup.getDataType(), false);
-						ports.put(portName, new InstancePort(portName, direction, processedDataType));
 					}
 				}
 			}
 
 			// build port connections
 			Map<String, PortConnection> portConnections = new HashMap<>();
-			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection rawPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
-				LeafPsiElement portNameElement = rawPortConnection.getPortName().getIdentifier();
-				String portName = portNameElement.getText();
-				InstancePort port = ports.get(portName);
-				if (port == null) {
-					expressionProcessor.getErrorHandler().onError(rawPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
-					continue;
+			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection untypedPsiPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
+				if (untypedPsiPortConnection instanceof PortConnection_Valid) {
+					PortConnection_Valid psiPortConnection = (PortConnection_Valid)untypedPsiPortConnection;
+					LeafPsiElement portNameElement = psiPortConnection.getPortName().getIdentifier();
+					String portName = portNameElement.getText();
+					InstancePort port = ports.get(portName);
+					if (port == null) {
+						expressionProcessor.getErrorHandler().onError(psiPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
+						continue;
+					}
+					portConnections.put(portName, new PortConnection(port, portNameElement, psiPortConnection.getExpression()));
 				}
-				portConnections.put(portName, new PortConnection(port, portNameElement, rawPortConnection.getExpression()));
 			}
 
 			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(ports), ImmutableMap.copyOf(portConnections)));

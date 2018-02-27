@@ -96,10 +96,12 @@ public class ModuleInstancePortReference implements PsiReference {
 		Module targetModule = (Module)resolvedModule;
 		String referencePortName = getCanonicalText();
 		for (PortDefinitionGroup portDefinitionGroup : targetModule.getPortDefinitionGroups().getAll()) {
-			for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-				String definitionPortName = portDefinition.getName();
-				if (referencePortName.equals(definitionPortName)) {
-					return portDefinition;
+			if (portDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+				for (PortDefinition portDefinition : ((PortDefinitionGroup_Valid) portDefinitionGroup).getDefinitions().getAll()) {
+					String definitionPortName = portDefinition.getName();
+					if (referencePortName.equals(definitionPortName)) {
+						return portDefinition;
+					}
 				}
 			}
 		}
@@ -165,10 +167,12 @@ public class ModuleInstancePortReference implements PsiReference {
 		if (resolvedModule instanceof Module) {
 			Module targetModule = (Module)resolvedModule;
 			for (PortDefinitionGroup portDefinitionGroup : targetModule.getPortDefinitionGroups().getAll()) {
-				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-					String definitionPortName = portDefinition.getName();
-					if (definitionPortName != null) {
-						variants.add(definitionPortName);
+				if (portDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+					for (PortDefinition portDefinition : ((PortDefinitionGroup_Valid) portDefinitionGroup).getDefinitions().getAll()) {
+						String definitionPortName = portDefinition.getName();
+						if (definitionPortName != null) {
+							variants.add(definitionPortName);
+						}
 					}
 				}
 			}

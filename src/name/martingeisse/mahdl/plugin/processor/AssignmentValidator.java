@@ -101,12 +101,15 @@ public final class AssignmentValidator {
 				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
 				if (untypedResolvedModule instanceof Module) {
 					Module resolvedModule = (Module) untypedResolvedModule;
-					for (PortDefinitionGroup portDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-						if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
-							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-								String prefixedPortName = instanceName + '.' + portDefinition.getName();
-								if (!previouslyAssignedSignals.contains(prefixedPortName)) {
-									errorHandler.onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
+					for (PortDefinitionGroup untypedPortDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
+						if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+							PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+							if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+								for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+									String prefixedPortName = instanceName + '.' + portDefinition.getName();
+									if (!previouslyAssignedSignals.contains(prefixedPortName)) {
+										errorHandler.onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
+									}
 								}
 							}
 						}

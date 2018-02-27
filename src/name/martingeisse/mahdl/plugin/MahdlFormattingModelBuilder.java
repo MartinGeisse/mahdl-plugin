@@ -56,8 +56,12 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.CLOSING_CURLY_BRACE,
 
 		// list elements for which the list is already indented normally
-		Symbols.portDefinitionGroup,
-		Symbols.portConnection,
+		Symbols.portDefinitionGroup_Valid,
+		Symbols.portDefinitionGroup_Error1,
+		Symbols.portDefinitionGroup_Error2,
+		Symbols.portConnection_Valid,
+		Symbols.portConnection_Error1,
+		Symbols.portConnection_Error2,
 		// all statements -- merged into the TokenSet above
 		Symbols.statementCaseItem_Default,
 		Symbols.expressionCaseItem_Default,

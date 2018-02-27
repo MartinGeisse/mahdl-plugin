@@ -46,10 +46,12 @@ public abstract class LocalReference implements PsiReference {
 
 		// ports
 		for (PortDefinitionGroup group : module.getPortDefinitionGroups().getAll()) {
-			for (PortDefinition definition : group.getDefinitions().getAll()) {
-				String definitionName = definition.getName();
-				if (definitionName != null && definitionName.equals(identifier)) {
-					return definition;
+			if (group instanceof PortDefinitionGroup_Valid) {
+				for (PortDefinition definition : ((PortDefinitionGroup_Valid) group).getDefinitions().getAll()) {
+					String definitionName = definition.getName();
+					if (definitionName != null && definitionName.equals(identifier)) {
+						return definition;
+					}
 				}
 			}
 		}
