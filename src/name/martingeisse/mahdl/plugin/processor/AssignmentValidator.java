@@ -20,50 +20,6 @@ import java.util.Set;
  * This object detects assignments to invalid targets such as constants or operator expressions (except assignments to
  * concatenation, which is allowed). It also detects multiple or missing assignments to signals and registers. It is NOT
  * concerned with type safety and assumes that the {@link ExpressionProcessor} has detected any type errors already.
- *
- *
- * TODO:
- * Annotation must be registered for an element inside 'FILE' which is in 'file:///nosync/git-repos/fpga/src/mahdl/references/source.mahdl'.
- * Element passed: 'PsiElement(IDENTIFIER)' is inside the 'FILE' which is in 'file:///nosync/git-repos/fpga/src/mahdl/references/target.mahdl'
- * java.lang.Throwable: Annotation must be registered for an element inside 'FILE' which is in 'file:///nosync/git-repos/fpga/src/mahdl/references/source.mahdl'.
- * Element passed: 'PsiElement(IDENTIFIER)' is inside the 'FILE' which is in 'file:///nosync/git-repos/fpga/src/mahdl/references/target.mahdl'
- * 	at com.intellij.openapi.diagnostic.Logger.error(Logger.java:123)
- * 	at com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl.assertMyFile(AnnotationHolderImpl.java:130)
- * 	at com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl.createErrorAnnotation(AnnotationHolderImpl.java:61)
- * 	at name.martingeisse.mahdl.plugin.processor.AssignmentValidator.checkMissingAssignments(AssignmentValidator.java:65)
- * 	at name.martingeisse.mahdl.plugin.processor.ModuleProcessor.process(ModuleProcessor.java:122)
- * 	at name.martingeisse.mahdl.plugin.MahdlAnnotator.annotate(MahdlAnnotator.java:30)
- * 	at name.martingeisse.mahdl.plugin.MahdlAnnotator.annotate(MahdlAnnotator.java:25)
- * 	at com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.runAnnotators(DefaultHighlightVisitor.java:139)
- * 	at com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.visit(DefaultHighlightVisitor.java:102)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.runVisitors(GeneralHighlightingPass.java:371)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.lambda$collectHighlights$5(GeneralHighlightingPass.java:303)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.analyzeByVisitors(GeneralHighlightingPass.java:330)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.lambda$analyzeByVisitors$6(GeneralHighlightingPass.java:333)
- * 	at com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.analyze(DefaultHighlightVisitor.java:86)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.analyzeByVisitors(GeneralHighlightingPass.java:333)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.collectHighlights(GeneralHighlightingPass.java:300)
- * 	at com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass.collectInformationWithProgress(GeneralHighlightingPass.java:239)
- * 	at com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass.doCollectInformation(ProgressableTextEditorHighlightingPass.java:83)
- * 	at com.intellij.codeHighlighting.TextEditorHighlightingPass.collectInformation(TextEditorHighlightingPass.java:70)
- * 	at com.intellij.codeInsight.daemon.impl.PassExecutorService$ScheduledPass.lambda$null$1(PassExecutorService.java:437)
- * 	at com.intellij.openapi.application.impl.ApplicationImpl.tryRunReadAction(ApplicationImpl.java:1134)
- * 	at com.intellij.codeInsight.daemon.impl.PassExecutorService$ScheduledPass.lambda$doRun$2(PassExecutorService.java:430)
- * 	at com.intellij.openapi.progress.impl.CoreProgressManager.registerIndicatorAndRun(CoreProgressManager.java:580)
- * 	at com.intellij.openapi.progress.impl.CoreProgressManager.executeProcessUnderProgress(CoreProgressManager.java:525)
- * 	at com.intellij.openapi.progress.impl.ProgressManagerImpl.executeProcessUnderProgress(ProgressManagerImpl.java:85)
- * 	at com.intellij.codeInsight.daemon.impl.PassExecutorService$ScheduledPass.doRun(PassExecutorService.java:429)
- * 	at com.intellij.codeInsight.daemon.impl.PassExecutorService$ScheduledPass.lambda$run$0(PassExecutorService.java:405)
- * 	at com.intellij.openapi.application.impl.ReadMostlyRWLock.executeByImpatientReader(ReadMostlyRWLock.java:143)
- * 	at com.intellij.openapi.application.impl.ApplicationImpl.executeByImpatientReader(ApplicationImpl.java:218)
- * 	at com.intellij.codeInsight.daemon.impl.PassExecutorService$ScheduledPass.run(PassExecutorService.java:403)
- * 	at com.intellij.concurrency.JobLauncherImpl$VoidForkJoinTask$1.exec(JobLauncherImpl.java:170)
- * 	at java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:289)
- * 	at java.util.concurrent.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1056)
- * 	at java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1692)
- * 	at java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:157)
- *
- *
  */
 public final class AssignmentValidator {
 
@@ -104,11 +60,11 @@ public final class AssignmentValidator {
 					for (PortDefinitionGroup untypedPortDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 						if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
 							PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
-							if (portDefinitionGroup.getDirection() instanceof PortDirection_Out) {
+							if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
 								for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 									String prefixedPortName = instanceName + '.' + portDefinition.getName();
 									if (!previouslyAssignedSignals.contains(prefixedPortName)) {
-										errorHandler.onError(portDefinition.getIdentifier(), "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
+										errorHandler.onError(moduleInstanceElement, "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
 									}
 								}
 							}

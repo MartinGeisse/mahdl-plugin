@@ -173,6 +173,7 @@ public final class ModuleProcessor {
 					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,
 						portConnection.getPort(), portConnection.getPortNameElement());
 				} else {
+					// TODO processedExpression is null when we get here, so no validation actually happens!
 					assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), AssignmentValidator.TriggerKind.CONTINUOUS);
 				}
 			}
