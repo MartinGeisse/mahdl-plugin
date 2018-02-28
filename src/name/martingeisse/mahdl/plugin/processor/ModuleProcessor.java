@@ -91,12 +91,14 @@ public final class ModuleProcessor {
 			}
 		}
 		for (Named definition : getDefinitions().values()) {
-			if (definition instanceof SignalLike && !(definition instanceof Constant)) {
+			if (!(definition instanceof Constant)) {
 				definition.processExpressions(expressionProcessor);
 			}
 		}
 
 		// this object detects duplicate or missing assignments
+		// TODO does not process doBlocks and definitions in the original order, placing
+		// error messages in unexpected places
 		assignmentValidator = new AssignmentValidator(errorHandler);
 
 		// process named definitions
@@ -173,8 +175,11 @@ public final class ModuleProcessor {
 					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,
 						portConnection.getPort(), portConnection.getPortNameElement());
 				} else {
-					// TODO processedExpression is null when we get here, so no validation actually happens!
-					assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), AssignmentValidator.TriggerKind.CONTINUOUS);
+					if (portConnection.getProcessedExpression() == null) {
+						errorHandler.onError(portConnection.getExpressionElement(), "internal error: no processed expression");
+					} else {
+						assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), AssignmentValidator.TriggerKind.CONTINUOUS);
+					}
 				}
 			}
 

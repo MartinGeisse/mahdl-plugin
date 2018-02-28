@@ -75,7 +75,11 @@ public final class AssignmentValidator {
 		}
 	}
 
-	public void validateAssignmentTo(@Nullable ProcessedExpression destination, TriggerKind triggerKind) {
+	public void validateAssignmentTo(@NotNull ProcessedExpression destination, TriggerKind triggerKind) {
+		// noinspection ConstantConditions
+		if (destination == null) {
+			throw new IllegalArgumentException("destination cannot be null");
+		}
 		if (destination instanceof ProcessedConstantValue) {
 
 			errorHandler.onError(destination.getErrorSource(), "cannot assign to a constant");
@@ -131,7 +135,7 @@ public final class AssignmentValidator {
 			validateAssignmentToInstancePort(instancePortReference.getModuleInstance(), instancePortReference.getPort(),
 				instancePortReference.getErrorSource());
 
-		} else if (destination != null && !(destination instanceof UnknownExpression)) {
+		} else if (!(destination instanceof UnknownExpression)) {
 
 			errorHandler.onError(destination.getErrorSource(), "expression cannot be assigned to");
 

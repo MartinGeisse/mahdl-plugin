@@ -10,6 +10,7 @@ import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -278,6 +279,7 @@ public final class ExpressionVerilogGenerator {
 	// constant folding
 	//
 
+	@NotNull
 	private ConstantValue fold(ProcessedExpression expression) {
 		ErrorHandler errorHandler = (errorSource, message) -> {
 			throw new ModuleHasErrorsException(message);
@@ -285,12 +287,14 @@ public final class ExpressionVerilogGenerator {
 		ProcessedExpression.FormallyConstantEvaluationContext context = new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler) {
 
 			@Override
-			public ConstantValue.Unknown notConstant(PsiElement errorSource) {
+			@NotNull
+			public ConstantValue.Unknown notConstant(@NotNull PsiElement errorSource) {
 				throw new NotConstantException();
 			}
 
 			@Override
-			public ConstantValue.Unknown notConstant(ProcessedExpression errorSource) {
+			@NotNull
+			public ConstantValue.Unknown notConstant(@NotNull ProcessedExpression errorSource) {
 				throw new NotConstantException();
 
 			}
