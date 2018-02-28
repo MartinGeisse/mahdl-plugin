@@ -7,6 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.definition.Constant;
 import name.martingeisse.mahdl.plugin.processor.definition.SignalLike;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -15,20 +16,25 @@ public final class SignalLikeReference extends ProcessedExpression {
 
 	private final SignalLike definition;
 
-	public SignalLikeReference(PsiElement errorSource, SignalLike definition) {
+	public SignalLikeReference(@NotNull PsiElement errorSource, @NotNull SignalLike definition) {
 		super(errorSource, definition.getProcessedDataType());
 		this.definition = definition;
 	}
 
+	@NotNull
 	public SignalLike getDefinition() {
 		return definition;
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
-		String name = definition.getName();
+	@NotNull
+	public ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		if (definition instanceof Constant) {
-			return ((Constant) definition).getValue();
+			ConstantValue value = ((Constant) definition).getValue();
+			if (value == null) {
+				throw new RuntimeException("defined constant has no value: " + definition.getName());
+			}
+			return value;
 		} else {
 			return context.notConstant(this);
 		}

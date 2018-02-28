@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -16,15 +17,17 @@ public final class ProcessedConstantValue extends ProcessedExpression {
 
 	private final ConstantValue value;
 
-	public ProcessedConstantValue(PsiElement errorSource, ConstantValue value) {
+	public ProcessedConstantValue(@NotNull PsiElement errorSource, @NotNull ConstantValue value) {
 		super(errorSource, value.getDataType());
 		this.value = value;
 	}
 
+	@NotNull
 	public ConstantValue getValue() {
 		return value;
 	}
 
+	@NotNull
 	@Override
 	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		return value;

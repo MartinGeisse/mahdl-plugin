@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -16,10 +17,10 @@ public final class ProcessedConditional extends ProcessedExpression {
 	private final ProcessedExpression thenBranch;
 	private final ProcessedExpression elseBranch;
 
-	public ProcessedConditional(PsiElement errorSource,
-								ProcessedExpression condition,
-								ProcessedExpression thenBranch,
-								ProcessedExpression elseBranch) throws TypeErrorException {
+	public ProcessedConditional(@NotNull PsiElement errorSource,
+								@NotNull ProcessedExpression condition,
+								@NotNull ProcessedExpression thenBranch,
+								@NotNull ProcessedExpression elseBranch) throws TypeErrorException {
 		super(errorSource, thenBranch.getDataType());
 
 		if (!(condition.getDataType() instanceof ProcessedDataType.Bit)) {
@@ -34,14 +35,17 @@ public final class ProcessedConditional extends ProcessedExpression {
 		this.elseBranch = elseBranch;
 	}
 
+	@NotNull
 	public ProcessedExpression getCondition() {
 		return condition;
 	}
 
+	@NotNull
 	public ProcessedExpression getThenBranch() {
 		return thenBranch;
 	}
 
+	@NotNull
 	public ProcessedExpression getElseBranch() {
 		return elseBranch;
 	}

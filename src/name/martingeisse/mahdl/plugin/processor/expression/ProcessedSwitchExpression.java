@@ -73,7 +73,8 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 	}
 
 	@Override
-	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	@NotNull
+	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		ConstantValue selectorValue = selector.evaluateFormallyConstant(context);
 		if (selectorValue instanceof ConstantValue.Unknown) {
 			return selectorValue;
@@ -116,7 +117,8 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 
 	}
 
-	public ProcessedSwitchStatement convertToStatement(ProcessedExpression destination) {
+	@NotNull
+	public ProcessedSwitchStatement convertToStatement(@NotNull ProcessedExpression destination) {
 		try {
 			List<ProcessedSwitchStatement.Case> statementCases = new ArrayList<>();
 			for (ProcessedSwitchExpression.Case expressionCase : cases) {

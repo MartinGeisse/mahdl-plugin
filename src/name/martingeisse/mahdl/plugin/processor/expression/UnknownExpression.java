@@ -6,18 +6,20 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * This expression is generated in case of errors.
  */
 public final class UnknownExpression extends ProcessedExpression {
 
-	public UnknownExpression(PsiElement errorSource) {
+	public UnknownExpression(@NotNull PsiElement errorSource) {
 		super(errorSource, ProcessedDataType.Unknown.INSTANCE);
 	}
 
 	@Override
-	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	@NotNull
+	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		return ConstantValue.Unknown.INSTANCE;
 	}
 

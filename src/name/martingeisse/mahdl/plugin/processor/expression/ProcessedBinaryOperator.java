@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.function.BiPredicate;
@@ -143,6 +144,7 @@ public enum ProcessedBinaryOperator {
 		}
 	}
 
+	@NotNull
 	public ProcessedDataType checkTypes(ProcessedDataType leftType, ProcessedDataType rightType) throws TypeErrorException {
 		if (leftType instanceof ProcessedDataType.Unknown || rightType instanceof ProcessedDataType.Unknown) {
 
@@ -199,6 +201,7 @@ public enum ProcessedBinaryOperator {
 		return logicalOperation.evaluate(leftOperand, rightOperand);
 	}
 
+	@NotNull
 	public ConstantValue evaluateIntegerVectorOperator(BigInteger leftOperand, BigInteger rightOperand) throws OperatorInconsistencyException, OperandValueException {
 		if (zeroCheckRightOperand && rightOperand.equals(BigInteger.ZERO)) {
 			throw new OperandValueException("right operand is zero");

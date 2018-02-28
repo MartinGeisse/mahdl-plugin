@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 
@@ -16,24 +17,27 @@ public final class ProcessedUnaryOperation extends ProcessedExpression {
 	private final ProcessedExpression operand;
 	private final ProcessedUnaryOperator operator;
 
-	public ProcessedUnaryOperation(PsiElement errorSource,
-								   ProcessedExpression operand,
-								   ProcessedUnaryOperator operator) throws TypeErrorException {
+	public ProcessedUnaryOperation(@NotNull PsiElement errorSource,
+								   @NotNull ProcessedExpression operand,
+								   @NotNull ProcessedUnaryOperator operator) throws TypeErrorException {
 		super(errorSource, operator.checkType(operator.checkType(operand.getDataType())));
 		this.operand = operand;
 		this.operator = operator;
 	}
 
+	@NotNull
 	public ProcessedExpression getOperand() {
 		return operand;
 	}
 
+	@NotNull
 	public ProcessedUnaryOperator getOperator() {
 		return operator;
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	@NotNull
+	public ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 
 		// determine operand value
 		ConstantValue operandValue = operand.evaluateFormallyConstant(context);

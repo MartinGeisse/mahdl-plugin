@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,24 +21,27 @@ public class ProcessedFunctionCall extends ProcessedExpression {
 	private final BuiltinFunction function;
 	private final ImmutableList<ProcessedExpression> arguments;
 
-	public ProcessedFunctionCall(PsiElement errorSource,
-								 ProcessedDataType returnType,
-								 BuiltinFunction function,
-								 ImmutableList<ProcessedExpression> arguments) {
+	public ProcessedFunctionCall(@NotNull PsiElement errorSource,
+								 @NotNull ProcessedDataType returnType,
+								 @NotNull BuiltinFunction function,
+								 @NotNull ImmutableList<ProcessedExpression> arguments) {
 		super(errorSource, returnType);
 		this.function = function;
 		this.arguments = arguments;
 	}
 
+	@NotNull
 	public BuiltinFunction getFunction() {
 		return function;
 	}
 
+	@NotNull
 	public ImmutableList<ProcessedExpression> getArguments() {
 		return arguments;
 	}
 
 	@Override
+	@NotNull
 	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		boolean error = false;
 		List<ConstantValue> argumentValues = new ArrayList<>();

@@ -23,11 +23,12 @@ public enum ProcessedUnaryOperator {
 
 	private final ProcessedDataType.Family[] acceptedOperandFamilies;
 
-	ProcessedUnaryOperator(ProcessedDataType.Family... acceptedOperandFamilies) {
+	ProcessedUnaryOperator(@NotNull ProcessedDataType.Family... acceptedOperandFamilies) {
 		this.acceptedOperandFamilies = acceptedOperandFamilies;
 	}
 
-	public static ProcessedUnaryOperator from(UnaryOperation operation) {
+	@NotNull
+	public static ProcessedUnaryOperator from(@NotNull UnaryOperation operation) {
 		if (operation instanceof Expression_UnaryNot) {
 			return NOT;
 		} else if (operation instanceof Expression_UnaryPlus) {

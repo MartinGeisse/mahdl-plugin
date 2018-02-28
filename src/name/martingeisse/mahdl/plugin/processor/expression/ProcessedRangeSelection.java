@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *
@@ -16,11 +17,11 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 	private final int fromIndex;
 	private final int toIndex;
 
-	public ProcessedRangeSelection(PsiElement errorSource,
-									ProcessedDataType dataType,
-									ProcessedExpression container,
-									int fromIndex,
-									int toIndex) throws TypeErrorException {
+	public ProcessedRangeSelection(@NotNull PsiElement errorSource,
+								   @NotNull ProcessedDataType dataType,
+								   @NotNull ProcessedExpression container,
+								   int fromIndex,
+								   int toIndex) throws TypeErrorException {
 		super(errorSource, dataType);
 		if (!(container.getDataType() instanceof ProcessedDataType.Vector)) {
 			throw new TypeErrorException();
@@ -33,6 +34,7 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 		this.toIndex = toIndex;
 	}
 
+	@NotNull
 	public ProcessedExpression getContainer() {
 		return container;
 	}
@@ -46,7 +48,8 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 	}
 
 	@Override
-	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	@NotNull
+	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		return container.evaluateFormallyConstant(context).selectRange(fromIndex, toIndex);
 	}
 

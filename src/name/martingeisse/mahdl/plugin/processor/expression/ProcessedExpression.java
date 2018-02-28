@@ -63,51 +63,61 @@ public abstract class ProcessedExpression {
 		return null;
 	}
 
+	@NotNull
 	protected abstract ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context);
 
 	public static class FormallyConstantEvaluationContext {
 
 		private final ErrorHandler errorHandler;
 
-		public FormallyConstantEvaluationContext(ErrorHandler errorHandler) {
+		public FormallyConstantEvaluationContext(@NotNull ErrorHandler errorHandler) {
 			this.errorHandler = errorHandler;
 		}
 
+		@NotNull
 		public ErrorHandler getErrorHandler() {
 			return errorHandler;
 		}
 
-		public ConstantValue.Unknown error(PsiElement errorSource, String message) {
+		@NotNull
+		public ConstantValue.Unknown error(@NotNull PsiElement errorSource, @NotNull String message) {
 			errorHandler.onError(errorSource, message);
 			return ConstantValue.Unknown.INSTANCE;
 		}
 
-		public ConstantValue.Unknown error(ProcessedExpression errorSource, String message) {
+		@NotNull
+		public ConstantValue.Unknown error(@NotNull ProcessedExpression errorSource, @NotNull String message) {
 			return error(errorSource.getErrorSource(), message);
 		}
 
-		public ConstantValue.Unknown notConstant(PsiElement errorSource) {
+		@NotNull
+		public ConstantValue.Unknown notConstant(@NotNull PsiElement errorSource) {
 			return error(errorSource, "expected a formally constant expression");
 		}
 
-		public ConstantValue.Unknown notConstant(ProcessedExpression errorSource) {
+		@NotNull
+		public ConstantValue.Unknown notConstant(@NotNull ProcessedExpression errorSource) {
 			return notConstant(errorSource.getErrorSource());
 		}
 
-		public ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource, String message) {
+		@NotNull
+		public ConstantValue.Unknown evaluationInconsistency(@NotNull PsiElement errorSource, @NotNull String message) {
 			return error(errorSource, "internal error: detected an inconsistency between static type check and constant evaluation" +
 				(message == null ? "" : (": " + message)));
 		}
 
-		public ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource, String message) {
+		@NotNull
+		public ConstantValue.Unknown evaluationInconsistency(@NotNull ProcessedExpression errorSource, @NotNull String message) {
 			return evaluationInconsistency(errorSource.getErrorSource(), message);
 		}
 
-		public ConstantValue.Unknown evaluationInconsistency(PsiElement errorSource) {
+		@NotNull
+		public ConstantValue.Unknown evaluationInconsistency(@NotNull PsiElement errorSource) {
 			return evaluationInconsistency(errorSource, null);
 		}
 
-		public ConstantValue.Unknown evaluationInconsistency(ProcessedExpression errorSource) {
+		@NotNull
+		public ConstantValue.Unknown evaluationInconsistency(@NotNull ProcessedExpression errorSource) {
 			return evaluationInconsistency(errorSource.getErrorSource());
 		}
 

@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 import java.util.BitSet;
@@ -19,24 +20,27 @@ public final class ProcessedBinaryOperation extends ProcessedExpression {
 	private final ProcessedExpression rightOperand;
 	private final ProcessedBinaryOperator operator;
 
-	public ProcessedBinaryOperation(PsiElement errorSource,
-									ProcessedExpression leftOperand,
-									ProcessedExpression rightOperand,
-									ProcessedBinaryOperator operator) throws TypeErrorException {
+	public ProcessedBinaryOperation(@NotNull PsiElement errorSource,
+									@NotNull ProcessedExpression leftOperand,
+									@NotNull ProcessedExpression rightOperand,
+									@NotNull ProcessedBinaryOperator operator) throws TypeErrorException {
 		super(errorSource, operator.checkTypes(leftOperand.getDataType(), rightOperand.getDataType()));
 		this.leftOperand = leftOperand;
 		this.rightOperand = rightOperand;
 		this.operator = operator;
 	}
 
+	@NotNull
 	public ProcessedExpression getLeftOperand() {
 		return leftOperand;
 	}
 
+	@NotNull
 	public ProcessedExpression getRightOperand() {
 		return rightOperand;
 	}
 
+	@NotNull
 	public ProcessedBinaryOperator getOperator() {
 		return operator;
 	}

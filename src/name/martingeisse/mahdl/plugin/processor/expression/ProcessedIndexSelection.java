@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
 
@@ -19,25 +20,28 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 	private final ProcessedExpression container;
 	private final ProcessedExpression index;
 
-	private ProcessedIndexSelection(PsiElement errorSource,
-									ProcessedDataType dataType,
-									ProcessedExpression container,
-									ProcessedExpression index) {
+	private ProcessedIndexSelection(@NotNull PsiElement errorSource,
+									@NotNull ProcessedDataType dataType,
+									@NotNull ProcessedExpression container,
+									@NotNull ProcessedExpression index) {
 		super(errorSource, dataType);
 		this.container = container;
 		this.index = index;
 	}
 
+	@NotNull
 	public ProcessedExpression getContainer() {
 		return container;
 	}
 
+	@NotNull
 	public ProcessedExpression getIndex() {
 		return index;
 	}
 
 	@Override
-	public ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	@NotNull
+	public ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		ConstantValue containerValue = container.evaluateFormallyConstant(context);
 		ConstantValue indexValue = index.evaluateFormallyConstant(context);
 		int containerSize = handleContainerValue(context, containerValue);
@@ -50,7 +54,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 		}
 	}
 
-	private int handleContainerValue(FormallyConstantEvaluationContext context, ConstantValue containerValue) {
+	private int handleContainerValue(@NotNull FormallyConstantEvaluationContext context, @NotNull ConstantValue containerValue) {
 		if (containerValue instanceof ConstantValue.Unknown) {
 			return -1;
 		} else if (containerValue instanceof ConstantValue.Vector) {
@@ -63,7 +67,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 		}
 	}
 
-	private int handleIndexValue(FormallyConstantEvaluationContext context, ConstantValue indexValue, int containerSize) {
+	private int handleIndexValue(@NotNull FormallyConstantEvaluationContext context, @NotNull ConstantValue indexValue, int containerSize) {
 		BigInteger numericIndexValue = indexValue.convertToInteger();
 		if (numericIndexValue == null) {
 			context.evaluationInconsistency(index, "value " + indexValue + " cannot be converted to integer");
@@ -91,7 +95,7 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 
 	public static final class BitFromVector extends ProcessedIndexSelection {
 
-		public BitFromVector(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+		public BitFromVector(@NotNull PsiElement errorSource, @NotNull ProcessedExpression container, @NotNull ProcessedExpression index) throws TypeErrorException {
 			super(errorSource, ProcessedDataType.Bit.INSTANCE, container, index);
 			if (!(container.getDataType() instanceof ProcessedDataType.Vector)) {
 				throw new TypeErrorException();
@@ -111,11 +115,12 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 
 	public static final class VectorFromMatrix extends ProcessedIndexSelection {
 
-		public VectorFromMatrix(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+		public VectorFromMatrix(@NotNull PsiElement errorSource, @NotNull ProcessedExpression container, @NotNull ProcessedExpression index) throws TypeErrorException {
 			super(errorSource, typeCheck(container, index), container, index);
 		}
 
-		private static ProcessedDataType typeCheck(ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+		@NotNull
+		private static ProcessedDataType typeCheck(@NotNull ProcessedExpression container, @NotNull ProcessedExpression index) throws TypeErrorException {
 			if (!(container.getDataType() instanceof ProcessedDataType.Matrix)) {
 				throw new TypeErrorException();
 			}
