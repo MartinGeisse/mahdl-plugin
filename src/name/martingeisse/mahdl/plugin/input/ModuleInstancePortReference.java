@@ -68,7 +68,18 @@ public class ModuleInstancePortReference implements PsiReference {
 		return module;
 	}
 
-	private static PsiElement resolveSomeElementInsideInstanceDefinition(PsiElement startingPoint) {
+	@Nullable
+	private ImplementationItem_ModuleInstance resolveModuleInstance() {
+		PsiElement someElementInsideInstanceDefinition = resolveSomeElementInsideInstanceDefinition(instancePortName.getParent());
+		if (someElementInsideInstanceDefinition == null) {
+			return null;
+		} else {
+			return PsiUtil.getAncestor(someElementInsideInstanceDefinition, ImplementationItem_ModuleInstance.class);
+		}
+	}
+
+	@Nullable
+	private static PsiElement resolveSomeElementInsideInstanceDefinition(@Nullable PsiElement startingPoint) {
 		if (startingPoint == null) {
 			return null;
 		} else if (startingPoint instanceof Expression_InstancePort) {
@@ -80,15 +91,6 @@ public class ModuleInstancePortReference implements PsiReference {
 		} else {
 			return resolveSomeElementInsideInstanceDefinition(startingPoint.getParent());
 		}
-	}
-
-	// Works similar to resolve(), but won't return anything other than an ImplementationItem_ModuleInstance for the
-	// module instance to which the port belongs. Any failure case doesn't resolve the reference "as good as we can" but
-	// just returns null.
-	@Nullable
-	public ImplementationItem_ModuleInstance resolveModuleOnly() {
-		PsiElement element = resolveModule();
-		return (element instanceof ImplementationItem_ModuleInstance ? (ImplementationItem_ModuleInstance) element : null);
 	}
 
 	@Nullable
@@ -167,7 +169,8 @@ public class ModuleInstancePortReference implements PsiReference {
 
 		// note: if this returns PSI elements, they must be PsiNamedElement or contain the name in meta-data
 
-		List<Object> variants = new ArrayList<>();
+		// collect defined port names
+		List<String> portNames = new ArrayList<>();
 		PsiElement resolvedModule = resolveModule();
 		if (resolvedModule instanceof Module) {
 			Module targetModule = (Module) resolvedModule;
@@ -176,13 +179,26 @@ public class ModuleInstancePortReference implements PsiReference {
 					for (PortDefinition portDefinition : ((PortDefinitionGroup_Valid) portDefinitionGroup).getDefinitions().getAll()) {
 						String definitionPortName = portDefinition.getName();
 						if (definitionPortName != null) {
-							variants.add(definitionPortName);
+							portNames.add(definitionPortName);
 						}
 					}
 				}
 			}
 		}
-		return variants.toArray();
+
+		// remove port names for which a connection already exists. For now, don't remove ports which are used in
+		// assignments or expressions outside the instance definition -- we don't know yet if that actually helps or if
+		// it rather confuses the user.
+		ImplementationItem_ModuleInstance moduleInstance = resolveModuleInstance();
+		if (moduleInstance != null) {
+			for (PortConnection portConnection : moduleInstance.getPortConnections().getAll()) {
+				if (portConnection instanceof PortConnection_Valid) {
+					portNames.remove(((PortConnection_Valid) portConnection).getPortName().getIdentifier().getText());
+				}
+			}
+		}
+
+		return portNames.toArray();
 	}
 
 	@Override
