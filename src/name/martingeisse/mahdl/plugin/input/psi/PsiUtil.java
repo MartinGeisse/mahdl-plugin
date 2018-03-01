@@ -69,7 +69,7 @@ public final class PsiUtil {
 	@Nullable
 	public static VirtualFile getVirtualFile(@NotNull PsiElement psiElement) {
 		PsiFile originPsiFile = psiElement.getContainingFile();
-		return (originPsiFile == null ? null : originPsiFile.getVirtualFile());
+		return (originPsiFile == null ? null : originPsiFile.getOriginalFile().getVirtualFile());
 	}
 
 	@Nullable
@@ -78,7 +78,7 @@ public final class PsiUtil {
 		if (originPsiFile == null) {
 			return null;
 		}
-		VirtualFile originVirtualFile = originPsiFile.getVirtualFile();
+		VirtualFile originVirtualFile = originPsiFile.getOriginalFile().getVirtualFile();
 		if (originVirtualFile == null) {
 			return null;
 		}
@@ -209,7 +209,7 @@ public final class PsiUtil {
 	public static void delete(@NotNull ASTWrapperPsiElement node, @NotNull Runnable actualDeleteCallback) throws IncorrectOperationException {
 		PsiFile psiFile = node.getContainingFile();
 		if (psiFile != null) {
-			VirtualFile virtualFile = psiFile.getVirtualFile();
+			VirtualFile virtualFile = psiFile.getOriginalFile().getVirtualFile();
 			if (virtualFile != null) {
 				actualDeleteCallback.run();
 				FileContentUtil.reparseFiles(virtualFile);

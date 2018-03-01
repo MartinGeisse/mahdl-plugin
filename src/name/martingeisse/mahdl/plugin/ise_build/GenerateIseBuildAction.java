@@ -62,7 +62,7 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
 		}
 
 		// we need this file to find associated files
-		VirtualFile virtualFile = actionTargetSourceFile.getVirtualFile();
+		VirtualFile virtualFile = actionTargetSourceFile.getOriginalFile().getVirtualFile();
 		if (virtualFile == null) {
 			console.print("Toplevel module is not inside a file", ConsoleViewContentType.ERROR_OUTPUT);
 			return;

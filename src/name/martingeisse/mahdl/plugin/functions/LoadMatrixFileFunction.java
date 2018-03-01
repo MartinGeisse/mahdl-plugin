@@ -92,7 +92,7 @@ public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
 			context.error(anchor, "element is not inside a PsiFile");
 			return null;
 		}
-		VirtualFile containingFile = psiFile.getVirtualFile();
+		VirtualFile containingFile = psiFile.getOriginalFile().getVirtualFile();
 		if (containingFile == null) {
 			context.error(anchor, "element is not inside a VirtualFile");
 			return null;
