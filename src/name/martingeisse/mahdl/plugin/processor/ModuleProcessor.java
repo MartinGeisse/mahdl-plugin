@@ -9,6 +9,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.MahdlFileType;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
@@ -23,9 +24,11 @@ import name.martingeisse.mahdl.plugin.processor.statement.StatementProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -97,27 +100,40 @@ public final class ModuleProcessor {
 		}
 
 		// this object detects duplicate or missing assignments
-		// TODO does not process doBlocks and definitions in the original order, placing
-		// error messages in unexpected places
 		assignmentValidator = new AssignmentValidator(errorHandler);
 
-		// process named definitions
-		for (Named item : getDefinitions().values()) {
-			processDefinition(item);
-			assignmentValidator.finishSection();
-		}
+		// TODO does not process doBlocks and definitions in the original order, placing
+		// error messages in unexpected places.
+		// Idea #1: create Runnables and sort by original order
+		// Idea #2: create a map of runnables and loop over original PSI elements.
 
-		// process do-blocks
+		// Process named definitions and do-blocks. Do so in the original file's order so when an error message could
+		// in principle appear in one of multiple places, it appears where the user expects it.
+		List<Pair<Runnable, PsiElement>> runnables = new ArrayList<>();
 		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor, assignmentValidator);
 		processedDoBlocks = new ArrayList<>();
+		for (Named item : getDefinitions().values()) {
+			runnables.add(Pair.of(() -> {
+				processDefinition(item);
+				assignmentValidator.finishSection();
+			}, item.getNameElement()));
+		}
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
-			// We collect all newly assigned signals in a separate set and add them at the end of the current do-block
-			// because assigning to a signal multiple times within the same do-block is allowed. Note that the call
-			// to the AssignmentValidator is done by the StatementProcessor, so we don't have to call it here.
-			if (implementationItem instanceof ImplementationItem_DoBlock) {
-				processedDoBlocks.add(statementProcessor.process((ImplementationItem_DoBlock) implementationItem));
-			}
-			assignmentValidator.finishSection();
+			runnables.add(Pair.of(() -> {
+				// We collect all newly assigned signals in a separate set and add them at the end of the current do-block
+				// because assigning to a signal multiple times within the same do-block is allowed. Note that the
+				// per-assignment call to the AssignmentValidator is done by the StatementProcessor, so we don't have
+				// to call it here.
+				if (implementationItem instanceof ImplementationItem_DoBlock) {
+					processedDoBlocks.add(statementProcessor.process((ImplementationItem_DoBlock) implementationItem));
+				}
+				assignmentValidator.finishSection();
+			}, implementationItem));
+		}
+		// TODO check that this is the absolute start offset in the file
+		runnables.sort(Comparator.comparing(pair -> pair.getRight().getTextRange().getStartOffset()));
+		for (Pair<Runnable, PsiElement> pair : runnables) {
+			pair.getLeft().run();
 		}
 
 		// now check that all ports and signals without initializer have been assigned to

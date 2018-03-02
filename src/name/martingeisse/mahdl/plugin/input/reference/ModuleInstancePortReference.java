@@ -186,6 +186,34 @@ public class ModuleInstancePortReference implements PsiReference {
 			}
 		}
 
+		// TODO for an output port, multiple connections may be allowed. Check if all code supports that.
+		// TODO for an output port, do not prevent using that port in an expression (Which is also handled here)
+		// even if it already has a connection.
+		// -->
+		// - check if multiple connections for an output port are allowed
+		// - don't filter output ports here
+		// - if the above is too complex, consider allowing input port connections only, maybe with a '=' syntax instead of ':'
+		// - but then, why use port connections at all? A simple "do (*) {...}" would be enough.
+		//   - But more wordy.
+		//     - But this happens in Java all the time and doesn't seem to be a problem, especially with autocomplete.
+		//     - pro+con at the same time: The assignment syntax reflects signal direction (harder to write, easier to read)
+		//       - but code gets read more often than written!
+		//     - pro: output signals would need a local signal declaration anyway, even if using a port connection.
+		//       - without a connection, not only is there no additional line, but one wouldn't even use a helper signal
+		//         in many cases and just use the instance port expression directly -> even less complexity.
+		//       - so for output signals, connections are a clear loss anyway.
+		//     - for input signals, a connection would use the same value expression as an assignment to the
+		//       instance port expression. So no gain here but also no loss.
+		//       - but less wordy (discussion above) for port connections
+		//     - for structural descriptions, using assignments only keeps all code "between" instances --> very
+		//       readable and concise "wiring-style" code, like building objects with references in Java by setting
+		//       public fields.
+		//     - readability without input port connections is roughly equal to with input port connections, but
+		//       - syntax is simplified (fewer special syntaxes)
+		//       - less choice in the way things are expressed
+		//       - no syntactic distinction between input ports and output ports
+
+
 		// remove port names for which a connection already exists. For now, don't remove ports which are used in
 		// assignments or expressions outside the instance definition -- we don't know yet if that actually helps or if
 		// it rather confuses the user.
