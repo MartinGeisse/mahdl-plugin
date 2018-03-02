@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Martin Geisse
  * This file is distributed under the terms of the MIT license.
  */
-package name.martingeisse.mahdl.plugin.input;
+package name.martingeisse.mahdl.plugin.input.reference;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
+import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
 import name.martingeisse.mahdl.plugin.input.psi.PsiUtil;
 import name.martingeisse.mahdl.plugin.input.psi.QualifiedModuleName;

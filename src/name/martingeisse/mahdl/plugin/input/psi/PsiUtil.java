@@ -5,7 +5,6 @@
 package name.martingeisse.mahdl.plugin.input.psi;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -18,8 +17,11 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.*;
+import name.martingeisse.mahdl.plugin.input.reference.IdentifierExpressionReference;
+import name.martingeisse.mahdl.plugin.input.reference.ModuleInstancePortReference;
+import name.martingeisse.mahdl.plugin.input.reference.ModuleInstanceReference;
+import name.martingeisse.mahdl.plugin.input.reference.ModuleReference;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,11 +168,13 @@ public final class PsiUtil {
 	// reference support
 	//
 
+	// TODO autocomplete for module name in instance decl doesn't work
 	@NotNull
 	public static PsiReference getReference(@NotNull QualifiedModuleName node) {
 		return new ModuleReference(node);
 	}
 
+	// TODO autocomplete in instance port reference expression doesn't work
 	@NotNull
 	public static PsiReference getReference(@NotNull InstancePortName node) {
 		return new ModuleInstancePortReference(node);
