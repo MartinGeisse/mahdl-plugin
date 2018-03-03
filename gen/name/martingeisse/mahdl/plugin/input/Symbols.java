@@ -108,7 +108,7 @@ public class Symbols {
 	public static final MahdlElementType extendedExpression_Switch = new MahdlElementType("extendedExpression_Switch");
 	public static final MahdlElementType implementationItem_DoBlock = new MahdlElementType("implementationItem_DoBlock");
 	public static final MahdlElementType implementationItem_Error = new MahdlElementType("implementationItem_Error");
-	public static final MahdlElementType implementationItem_ModuleInstance = new MahdlElementType("implementationItem_ModuleInstance");
+	public static final MahdlElementType implementationItem_ModuleInstanceDefinitionGroup = new MahdlElementType("implementationItem_ModuleInstanceDefinitionGroup");
 	public static final MahdlElementType implementationItem_SignalLikeDefinitionGroup = new MahdlElementType("implementationItem_SignalLikeDefinitionGroup");
 	public static final MahdlElementType instancePortName = new MahdlElementType("instancePortName");
 	public static final MahdlElementType instanceReferenceName = new MahdlElementType("instanceReferenceName");
@@ -116,9 +116,7 @@ public class Symbols {
 	public static final MahdlElementType literal_Text = new MahdlElementType("literal_Text");
 	public static final MahdlElementType literal_Vector = new MahdlElementType("literal_Vector");
 	public static final MahdlElementType module = new MahdlElementType("module");
-	public static final MahdlElementType portConnection_Error1 = new MahdlElementType("portConnection_Error1");
-	public static final MahdlElementType portConnection_Error2 = new MahdlElementType("portConnection_Error2");
-	public static final MahdlElementType portConnection_Valid = new MahdlElementType("portConnection_Valid");
+	public static final MahdlElementType moduleInstanceDefinition = new MahdlElementType("moduleInstanceDefinition");
 	public static final MahdlElementType portDefinition = new MahdlElementType("portDefinition");
 	public static final MahdlElementType portDefinitionGroup_Error1 = new MahdlElementType("portDefinitionGroup_Error1");
 	public static final MahdlElementType portDefinitionGroup_Error2 = new MahdlElementType("portDefinitionGroup_Error2");
@@ -143,13 +141,13 @@ public class Symbols {
 	public static final MahdlElementType statement_Switch = new MahdlElementType("statement_Switch");
 	public static final MahdlElementType synthetic_List_ExpressionCaseItem_Nonempty = new MahdlElementType("synthetic_List_ExpressionCaseItem_Nonempty");
 	public static final MahdlElementType synthetic_List_ImplementationItem = new MahdlElementType("synthetic_List_ImplementationItem");
-	public static final MahdlElementType synthetic_List_PortConnection = new MahdlElementType("synthetic_List_PortConnection");
 	public static final MahdlElementType synthetic_List_PortDefinitionGroup = new MahdlElementType("synthetic_List_PortDefinitionGroup");
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
 	public static final MahdlElementType synthetic_List_StatementCaseItem_Nonempty = new MahdlElementType("synthetic_List_StatementCaseItem_Nonempty");
 	public static final MahdlElementType synthetic_List_Statement_Nonempty = new MahdlElementType("synthetic_List_Statement_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty");
+	public static final MahdlElementType synthetic_SeparatedList_ModuleInstanceDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_ModuleInstanceDefinition_COMMA_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_PortDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_PortDefinition_COMMA_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_SignalLikeDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_SignalLikeDefinition_COMMA_Nonempty");
 

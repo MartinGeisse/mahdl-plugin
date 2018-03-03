@@ -14,19 +14,32 @@ import name.martingeisse.mahdl.plugin.input.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Base class for local references to signal-likes and module instances. We use a base class that can resolve all of
  * those because they live in the same namespace. Even if a reference targets an object of the wrong kind, we still
  * resolve to that object to make life easier for users who have made a mistake.
  */
-public abstract class LocalReference implements PsiReference {
+public final class LocalReference implements PsiReference {
+
+	private final LeafPsiElement element;
+
+	public LocalReference(LeafPsiElement element) {
+		this.element = element;
+	}
 
 	@Override
-	@NotNull
-	public abstract LeafPsiElement getElement();
+	public LeafPsiElement getElement() {
+		return element;
+	}
 
 	// note: may only return true for PsiNamedElement objects!
-	protected abstract boolean isElementTargetable(@NotNull PsiElement potentialTarget);
+	protected final boolean isElementTargetable(@NotNull PsiElement potentialTarget) {
+		return (potentialTarget instanceof PortDefinition || potentialTarget instanceof SignalLikeDefinition ||
+			potentialTarget instanceof ModuleInstanceDefinition);
+	}
 
 	@Override
 	public TextRange getRangeInElement() {
@@ -37,12 +50,11 @@ public abstract class LocalReference implements PsiReference {
 	@Override
 	public PsiElement resolve() {
 
-		LeafPsiElement referenceElement = getElement();
-		Module module = PsiUtil.getAncestor(referenceElement, Module.class);
+		Module module = PsiUtil.getAncestor(element, Module.class);
 		if (module == null) {
 			return null;
 		}
-		String identifier = referenceElement.getText();
+		String identifier = element.getText();
 
 		// ports
 		for (PortDefinitionGroup group : module.getPortDefinitionGroups().getAll()) {
@@ -65,10 +77,12 @@ public abstract class LocalReference implements PsiReference {
 						return definition;
 					}
 				}
-			} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-				String instanceName = implementationItem.getName();
-				if (instanceName != null && instanceName.equals(identifier)) {
-					return ((ImplementationItem_ModuleInstance) implementationItem).getInstanceName();
+			} else if (implementationItem instanceof ImplementationItem_ModuleInstanceDefinitionGroup) {
+				for (ModuleInstanceDefinition definition : ((ImplementationItem_ModuleInstanceDefinitionGroup) implementationItem).getDefinitions().getAll()) {
+					String instanceName = definition.getName();
+					if (instanceName != null && instanceName.equals(identifier)) {
+						return definition.getIdentifier();
+					}
 				}
 			}
 		}
@@ -79,7 +93,7 @@ public abstract class LocalReference implements PsiReference {
 	@NotNull
 	@Override
 	public String getCanonicalText() {
-		return getElement().getText();
+		return element.getText();
 	}
 
 	@Override
@@ -87,7 +101,7 @@ public abstract class LocalReference implements PsiReference {
 		if (newName == null) {
 			throw new IncorrectOperationException("new name is null");
 		}
-		return PsiUtil.setText(getElement(), newName);
+		return PsiUtil.setText(element, newName);
 	}
 
 	@Override
@@ -96,7 +110,7 @@ public abstract class LocalReference implements PsiReference {
 		if (isElementTargetable(psiElement)) {
 			String newName = ((PsiNamedElement) psiElement).getName();
 			if (newName != null) {
-				return PsiUtil.setText(getElement(), newName);
+				return PsiUtil.setText(element, newName);
 			}
 		}
 		throw new IncorrectOperationException();
@@ -120,6 +134,56 @@ public abstract class LocalReference implements PsiReference {
 	@Override
 	public boolean isSoft() {
 		return false;
+	}
+
+	/**
+	 * Common implementation for both identifier expressions and module instance references:
+	 * This is useful because of the way auto-complete works in IntelliJ: The IDE inserts the
+	 * dummy string "IntellijIdeaRulezzz" at the cursor, re-parses the file, obtains a reference
+	 * for the PSI element for that string and calls getVariants() on it. Depending on the context
+	 * (especially depending on tokens *after* the cursor), this may yield different kinds of
+	 * references unintentionally.
+	 */
+	@NotNull
+	@Override
+	public Object[] getVariants() {
+
+		// obtain the module
+		Module module = PsiUtil.getAncestor(element, Module.class);
+		if (module == null) {
+			return new Object[0];
+		}
+		List<Object> variants = new ArrayList<>();
+
+		// ports
+		for (PortDefinitionGroup group : module.getPortDefinitionGroups().getAll()) {
+			if (group instanceof PortDefinitionGroup_Valid) {
+				for (PortDefinition definition : ((PortDefinitionGroup_Valid) group).getDefinitions().getAll()) {
+					String definitionName = definition.getName();
+					if (definitionName != null) {
+						variants.add(definitionName);
+					}
+				}
+			}
+		}
+
+		// implementation items
+		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
+			if (implementationItem instanceof ImplementationItem_SignalLikeDefinitionGroup) {
+				for (SignalLikeDefinition definition : ((ImplementationItem_SignalLikeDefinitionGroup) implementationItem).getDefinitions().getAll()) {
+					String definitionName = definition.getName();
+					if (definitionName != null) {
+						variants.add(definitionName);
+					}
+				}
+			} else if (implementationItem instanceof ImplementationItem_ModuleInstanceDefinitionGroup) {
+				for (ModuleInstanceDefinition definition : ((ImplementationItem_ModuleInstanceDefinitionGroup) implementationItem).getDefinitions().getAll()) {
+					variants.add(definition.getName());
+				}
+			}
+		}
+
+		return variants.toArray();
 	}
 
 }

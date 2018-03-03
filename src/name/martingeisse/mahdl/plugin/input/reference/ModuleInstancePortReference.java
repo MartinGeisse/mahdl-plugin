@@ -41,24 +41,23 @@ public class ModuleInstancePortReference implements PsiReference {
 
 	@Nullable
 	private PsiElement resolveModule() {
-
-		// This reference type can be used both in an instance port connection and in an instance port expression,
-		// so we use a helper method to locate the instance in either case, even with syntax errors.
-		PsiElement someElementInsideInstanceDefinition = resolveSomeElementInsideInstanceDefinition(instancePortName.getParent());
+		Expression_InstancePort expression = PsiUtil.getAncestor(instancePortName, Expression_InstancePort.class);
+		if (expression == null) {
+			return null;
+		}
+		PsiElement someElementInsideInstanceDefinition = expression.getInstanceName().getReference().resolve();
 		if (someElementInsideInstanceDefinition == null) {
 			return null;
 		}
-		ImplementationItem_ModuleInstance moduleInstanceElement = PsiUtil.getAncestor(someElementInsideInstanceDefinition, ImplementationItem_ModuleInstance.class);
-		if (moduleInstanceElement == null) {
+		ImplementationItem_ModuleInstanceDefinitionGroup moduleInstanceDefinitionGroup = PsiUtil.getAncestor(someElementInsideInstanceDefinition, ImplementationItem_ModuleInstanceDefinitionGroup.class);
+		if (moduleInstanceDefinitionGroup == null) {
 			// at least resolve to inside the instance
 			return someElementInsideInstanceDefinition;
 		}
-
-		// now that we found a PSI element that is part of the instance definition, both cases are handled the same way
-		PsiElement moduleNameDefiningElement = moduleInstanceElement.getModuleName().getReference().resolve();
+		PsiElement moduleNameDefiningElement = moduleInstanceDefinitionGroup.getModuleName().getReference().resolve();
 		if (moduleNameDefiningElement == null) {
 			// the module name is unknown
-			return moduleInstanceElement.getModuleName();
+			return moduleInstanceDefinitionGroup.getModuleName();
 		}
 		Module module = PsiUtil.getAncestor(moduleNameDefiningElement, Module.class);
 		if (module == null) {
@@ -66,31 +65,6 @@ public class ModuleInstancePortReference implements PsiReference {
 			return moduleNameDefiningElement;
 		}
 		return module;
-	}
-
-	@Nullable
-	private ImplementationItem_ModuleInstance resolveModuleInstance() {
-		PsiElement someElementInsideInstanceDefinition = resolveSomeElementInsideInstanceDefinition(instancePortName.getParent());
-		if (someElementInsideInstanceDefinition == null) {
-			return null;
-		} else {
-			return PsiUtil.getAncestor(someElementInsideInstanceDefinition, ImplementationItem_ModuleInstance.class);
-		}
-	}
-
-	@Nullable
-	private static PsiElement resolveSomeElementInsideInstanceDefinition(@Nullable PsiElement startingPoint) {
-		if (startingPoint == null) {
-			return null;
-		} else if (startingPoint instanceof Expression_InstancePort) {
-			return ((Expression_InstancePort) startingPoint).getInstanceName().getReference().resolve();
-		} else if (startingPoint instanceof PortConnection) {
-			return startingPoint;
-		} else if (startingPoint instanceof ImplementationItem) {
-			return null;
-		} else {
-			return resolveSomeElementInsideInstanceDefinition(startingPoint.getParent());
-		}
 	}
 
 	@Nullable
@@ -166,10 +140,7 @@ public class ModuleInstancePortReference implements PsiReference {
 	@NotNull
 	@Override
 	public Object[] getVariants() {
-
 		// note: if this returns PSI elements, they must be PsiNamedElement or contain the name in meta-data
-
-		// collect defined port names
 		List<String> portNames = new ArrayList<>();
 		PsiElement resolvedModule = resolveModule();
 		if (resolvedModule instanceof Module) {
@@ -185,47 +156,6 @@ public class ModuleInstancePortReference implements PsiReference {
 				}
 			}
 		}
-
-		// TODO for an output port, multiple connections may be allowed. Check if all code supports that.
-		// TODO for an output port, do not prevent using that port in an expression (Which is also handled here)
-		// even if it already has a connection.
-		// -->
-		// - check if multiple connections for an output port are allowed
-		// - don't filter output ports here
-		// - if the above is too complex, consider allowing input port connections only, maybe with a '=' syntax instead of ':'
-		// - but then, why use port connections at all? A simple "do (*) {...}" would be enough.
-		//   - But more wordy.
-		//     - But this happens in Java all the time and doesn't seem to be a problem, especially with autocomplete.
-		//     - pro+con at the same time: The assignment syntax reflects signal direction (harder to write, easier to read)
-		//       - but code gets read more often than written!
-		//     - pro: output signals would need a local signal declaration anyway, even if using a port connection.
-		//       - without a connection, not only is there no additional line, but one wouldn't even use a helper signal
-		//         in many cases and just use the instance port expression directly -> even less complexity.
-		//       - so for output signals, connections are a clear loss anyway.
-		//     - for input signals, a connection would use the same value expression as an assignment to the
-		//       instance port expression. So no gain here but also no loss.
-		//       - but less wordy (discussion above) for port connections
-		//     - for structural descriptions, using assignments only keeps all code "between" instances --> very
-		//       readable and concise "wiring-style" code, like building objects with references in Java by setting
-		//       public fields.
-		//     - readability without input port connections is roughly equal to with input port connections, but
-		//       - syntax is simplified (fewer special syntaxes)
-		//       - less choice in the way things are expressed
-		//       - no syntactic distinction between input ports and output ports
-
-
-		// remove port names for which a connection already exists. For now, don't remove ports which are used in
-		// assignments or expressions outside the instance definition -- we don't know yet if that actually helps or if
-		// it rather confuses the user.
-		ImplementationItem_ModuleInstance moduleInstance = resolveModuleInstance();
-		if (moduleInstance != null) {
-			for (PortConnection portConnection : moduleInstance.getPortConnections().getAll()) {
-				if (portConnection instanceof PortConnection_Valid) {
-					portNames.remove(((PortConnection_Valid) portConnection).getPortName().getIdentifier().getText());
-				}
-			}
-		}
-
 		return portNames.toArray();
 	}
 

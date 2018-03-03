@@ -16,10 +16,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
-import name.martingeisse.mahdl.plugin.input.*;
-import name.martingeisse.mahdl.plugin.input.reference.IdentifierExpressionReference;
+import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
+import name.martingeisse.mahdl.plugin.input.reference.LocalReference;
 import name.martingeisse.mahdl.plugin.input.reference.ModuleInstancePortReference;
-import name.martingeisse.mahdl.plugin.input.reference.ModuleInstanceReference;
 import name.martingeisse.mahdl.plugin.input.reference.ModuleReference;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -160,8 +159,8 @@ public final class PsiUtil {
 	}
 
 	@Nullable
-	public static LeafPsiElement getNameIdentifier(@NotNull ImplementationItem_ModuleInstance node) {
-		return node.getInstanceName();
+	public static LeafPsiElement getNameIdentifier(@NotNull ModuleInstanceDefinition node) {
+		return node.getIdentifier();
 	}
 
 	//
@@ -182,12 +181,12 @@ public final class PsiUtil {
 
 	@NotNull
 	public static PsiReference getReference(@NotNull Expression_Identifier node) {
-		return new IdentifierExpressionReference(node);
+		return new LocalReference(node.getIdentifier());
 	}
 
 	@NotNull
 	public static PsiReference getReference(@NotNull InstanceReferenceName node) {
-		return new ModuleInstanceReference(node);
+		return new LocalReference(node.getIdentifier());
 	}
 
 	//
@@ -206,7 +205,7 @@ public final class PsiUtil {
 		delete(node, node::superclassDelete);
 	}
 
-	public static void delete(@NotNull ImplementationItem_ModuleInstance node) throws IncorrectOperationException {
+	public static void delete(@NotNull ModuleInstanceDefinition node) throws IncorrectOperationException {
 		delete(node, node::superclassDelete);
 	}
 

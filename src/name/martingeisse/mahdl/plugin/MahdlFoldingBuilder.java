@@ -9,9 +9,8 @@ import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem;
 import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_DoBlock;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_SignalLikeDefinitionGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,11 +31,12 @@ public class MahdlFoldingBuilder implements FoldingBuilder {
 	}
 
 	private void collectFoldingRegions(PsiElement psiElement, List<FoldingDescriptor> destination) {
-		if (psiElement instanceof ImplementationItem_SignalLikeDefinitionGroup || psiElement instanceof ImplementationItem_DoBlock) {
+		if (psiElement instanceof ImplementationItem_DoBlock) {
 			destination.add(new FoldingDescriptor(psiElement.getNode(), psiElement.getTextRange()));
-		}
-		for (PsiElement child : psiElement.getChildren()) {
-			collectFoldingRegions(child, destination);
+		} else if (!(psiElement instanceof ImplementationItem)) {
+			for (PsiElement child : psiElement.getChildren()) {
+				collectFoldingRegions(child, destination);
+			}
 		}
 	}
 
@@ -47,10 +47,6 @@ public class MahdlFoldingBuilder implements FoldingBuilder {
 		if (psiElement instanceof ImplementationItem_DoBlock) {
 			ImplementationItem_DoBlock doBlock = (ImplementationItem_DoBlock)psiElement;
 			return "do (" + doBlock.getTrigger().getText() + ") do {...}";
-		}
-		if (psiElement instanceof ImplementationItem_ModuleInstance) {
-			ImplementationItem_ModuleInstance moduleInstance = (ImplementationItem_ModuleInstance)psiElement;
-			return moduleInstance.getModuleName().getText() + " " + moduleInstance.getInstanceName().getText() + "(...);";
 		}
 		return psiElement.toString();
 	}

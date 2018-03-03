@@ -33,7 +33,7 @@ public class MahdlStructureViewFactory implements PsiStructureViewFactory {
 		Symbols.synthetic_List_PortDefinitionGroup,
 		Symbols.implementationItem_SignalLikeDefinitionGroup,
 		Symbols.implementationItem_DoBlock,
-		Symbols.implementationItem_ModuleInstance
+		Symbols.implementationItem_ModuleInstanceDefinitionGroup
 	);
 
 	private static boolean shouldInclude(PsiElement element) {
@@ -126,11 +126,21 @@ public class MahdlStructureViewFactory implements PsiStructureViewFactory {
 				} else {
 					return "do (" + doBlock.getTrigger().getText() + ")";
 				}
-			} else if (elementType == Symbols.implementationItem_ModuleInstance && element instanceof ImplementationItem_ModuleInstance) {
-				ImplementationItem_ModuleInstance moduleInstance = (ImplementationItem_ModuleInstance) element;
-				String moduleName = moduleInstance.getModuleName() == null ? "???" : PsiUtil.canonicalizeQualifiedModuleName(moduleInstance.getModuleName());
-				String instanceName = moduleInstance.getName() == null ? "???" : moduleInstance.getName();
-				return moduleName + ' ' + instanceName;
+			} else if (elementType == Symbols.implementationItem_ModuleInstanceDefinitionGroup && element instanceof ImplementationItem_ModuleInstanceDefinitionGroup) {
+				ImplementationItem_ModuleInstanceDefinitionGroup group = (ImplementationItem_ModuleInstanceDefinitionGroup) element;
+				StringBuilder builder = new StringBuilder();
+				builder.append(group.getModuleName() == null ? "???" : PsiUtil.canonicalizeQualifiedModuleName(group.getModuleName()));
+				builder.append(' ');
+				boolean first = true;
+				for (ModuleInstanceDefinition definition : group.getDefinitions().getAll()) {
+					if (first) {
+						first = false;
+					} else {
+						builder.append(", ");
+					}
+					builder.append(definition.getName() == null ? "???" : definition.getName());
+				}
+				return builder.toString();
 			} else {
 				return element.getText();
 			}

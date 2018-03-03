@@ -21,12 +21,18 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class PortConnection_Error2 extends PortConnection  {
+public final class ImplementationItem_ModuleInstanceDefinitionGroup extends ImplementationItem  {
 
-    public PortConnection_Error2(@NotNull ASTNode node) {
+    public ImplementationItem_ModuleInstanceDefinitionGroup(@NotNull ASTNode node) {
         super(node);
     }
 
+        public QualifiedModuleName getModuleName() {
+            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 0);
+        }
+        public ListNode<ModuleInstanceDefinition> getDefinitions() {
+            return (ListNode<ModuleInstanceDefinition>)InternalPsiUtil.getChild(this, 1);
+        }
     
 		
 	
