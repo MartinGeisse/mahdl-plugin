@@ -173,7 +173,6 @@ public final class PsiUtil {
 		return new ModuleReference(node);
 	}
 
-	// TODO autocomplete in instance port reference expression doesn't work
 	@NotNull
 	public static PsiReference getReference(@NotNull InstancePortName node) {
 		return new ModuleInstancePortReference(node);

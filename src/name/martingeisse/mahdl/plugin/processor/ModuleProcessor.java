@@ -96,16 +96,9 @@ public final class ModuleProcessor {
 		// this object detects duplicate or missing assignments
 		assignmentValidator = new AssignmentValidator(errorHandler);
 
-		// TODO does not process doBlocks and definitions in the original order, placing
-		// error messages in unexpected places.
-		// Idea #1: create Runnables and sort by original order
-		// Idea #2: create a map of runnables and loop over original PSI elements.
-
 		// Process named definitions and do-blocks. Do so in the original file's order so when an error message could
 		// in principle appear in one of multiple places, it appears where the user expects it.
 		List<Pair<Runnable, PsiElement>> runnables = new ArrayList<>();
-		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor, assignmentValidator);
-		processedDoBlocks = new ArrayList<>();
 		for (Named item : getDefinitions().values()) {
 			// Inconsistencies regarding signal-likes in the initializer vs. other assignments:
 			// - ports cannot have an initializer
@@ -117,12 +110,14 @@ public final class ModuleProcessor {
 				Signal signal = (Signal)item;
 				if (signal.getInitializer() != null) {
 					runnables.add(Pair.of(() -> {
-						assignmentValidator.considerAssignedTo(signal, signal.getInitializer());
+						assignmentValidator.considerAssignedTo(signal, signal.getNameElement());
 						assignmentValidator.finishSection();
 					}, signal.getNameElement()));
 				}
 			}
 		}
+		processedDoBlocks = new ArrayList<>();
+		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor, assignmentValidator);
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			runnables.add(Pair.of(() -> {
 				// We collect all newly assigned signals in a separate set and add them at the end of the current do-block
@@ -135,7 +130,6 @@ public final class ModuleProcessor {
 				assignmentValidator.finishSection();
 			}, implementationItem));
 		}
-		// TODO check that this is the absolute start offset in the file
 		runnables.sort(Comparator.comparing(pair -> pair.getRight().getTextRange().getStartOffset()));
 		for (Pair<Runnable, PsiElement> pair : runnables) {
 			pair.getLeft().run();
