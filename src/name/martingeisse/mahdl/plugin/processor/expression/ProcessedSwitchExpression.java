@@ -9,7 +9,6 @@ import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedAssignment;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedStatement;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedSwitchStatement;
-import name.martingeisse.mahdl.plugin.processor.statement.UnknownStatement;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TODO check that the switch is complete! Otherwise an implicit latch is generated.
+ *
  */
 public final class ProcessedSwitchExpression extends ProcessedExpression {
 

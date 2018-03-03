@@ -130,7 +130,15 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			processedCases.add(new ProcessedSwitchExpression.Case(aCase.getSelectorValues(), converted));
 		}
 
-		// in case of errors, don't return a swtch expression
+		// check for missing selector values
+		if (processedDefaultCase == null) {
+			int selectorSize = ((ProcessedDataType.Vector)selector.getDataType()).getSize();
+			if (foundSelectorValues.size() != (1 << selectorSize)) {
+				return error(expression, "incomplete switch expression");
+			}
+		}
+
+		// in case of errors, don't return a switch expression
 		if (!selectorOkay || errorInCases) {
 			return new UnknownExpression(expression);
 		}
