@@ -204,8 +204,8 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			} else if (moduleInstanceCandidate instanceof ModuleInstance) {
 				moduleInstance = (ModuleInstance) moduleInstanceCandidate;
 			} else if (moduleInstanceCandidate instanceof ModuleInstanceWithMissingDefinition) {
-				ImplementationItem_ModuleInstance moduleInstanceElement = ((ModuleInstanceWithMissingDefinition) moduleInstanceCandidate).getModuleInstanceElement();
-				String moduleName = PsiUtil.canonicalizeQualifiedModuleName(moduleInstanceElement.getModuleName());
+				QualifiedModuleName moduleNameElement = ((ModuleInstanceWithMissingDefinition) moduleInstanceCandidate).getModuleNameElement();
+				String moduleName = PsiUtil.canonicalizeQualifiedModuleName(moduleNameElement);
 				return error(expression.getInstanceName(), "missing module '" + moduleName + "' for instance '" + instanceName + "'");
 			} else {
 				return error(expression.getInstanceName(), instanceName + " is not a module instance");

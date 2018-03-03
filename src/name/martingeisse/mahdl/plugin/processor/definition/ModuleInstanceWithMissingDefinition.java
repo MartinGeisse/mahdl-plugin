@@ -4,7 +4,8 @@
  */
 package name.martingeisse.mahdl.plugin.processor.definition;
 
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
+import name.martingeisse.mahdl.plugin.input.psi.ModuleInstanceDefinition;
+import name.martingeisse.mahdl.plugin.input.psi.QualifiedModuleName;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,16 +17,25 @@ import org.jetbrains.annotations.NotNull;
 public final class ModuleInstanceWithMissingDefinition extends Named {
 
 	@NotNull
-	private final ImplementationItem_ModuleInstance moduleInstanceElement;
+	private final QualifiedModuleName moduleNameElement;
 
-	public ModuleInstanceWithMissingDefinition(@NotNull ImplementationItem_ModuleInstance moduleInstanceElement) {
-		super(moduleInstanceElement.getInstanceName());
-		this.moduleInstanceElement = moduleInstanceElement;
+	@NotNull
+	private final ModuleInstanceDefinition moduleInstanceDefinitionElement;
+
+	public ModuleInstanceWithMissingDefinition(@NotNull QualifiedModuleName moduleNameElement, @NotNull ModuleInstanceDefinition moduleInstanceDefinitionElement) {
+		super(moduleInstanceDefinitionElement.getIdentifier());
+		this.moduleNameElement = moduleNameElement;
+		this.moduleInstanceDefinitionElement = moduleInstanceDefinitionElement;
 	}
 
 	@NotNull
-	public ImplementationItem_ModuleInstance getModuleInstanceElement() {
-		return moduleInstanceElement;
+	public QualifiedModuleName getModuleNameElement() {
+		return moduleNameElement;
+	}
+
+	@NotNull
+	public ModuleInstanceDefinition getModuleInstanceDefinitionElement() {
+		return moduleInstanceDefinitionElement;
 	}
 
 	@Override

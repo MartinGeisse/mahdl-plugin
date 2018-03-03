@@ -5,8 +5,8 @@
 package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableMap;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
+import name.martingeisse.mahdl.plugin.input.psi.ModuleInstanceDefinition;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ModuleInstance extends Named {
 
 	@NotNull
-	private final ImplementationItem_ModuleInstance moduleInstanceElement;
+	private final ModuleInstanceDefinition moduleInstanceDefinitionElement;
 
 	@NotNull
 	private final Module moduleElement;
@@ -24,23 +24,18 @@ public final class ModuleInstance extends Named {
 	@NotNull
 	private final ImmutableMap<String, InstancePort> ports;
 
-	@NotNull
-	private final ImmutableMap<String, PortConnection> portConnections;
-
-	public ModuleInstance(@NotNull ImplementationItem_ModuleInstance moduleInstanceElement,
+	public ModuleInstance(@NotNull ModuleInstanceDefinition moduleInstanceDefinitionElement,
 						  @NotNull Module moduleElement,
-						  @NotNull ImmutableMap<String, InstancePort> ports,
-						  @NotNull ImmutableMap<String, PortConnection> portConnections) {
-		super(moduleInstanceElement.getInstanceName());
-		this.moduleInstanceElement = moduleInstanceElement;
+						  @NotNull ImmutableMap<String, InstancePort> ports) {
+		super(moduleInstanceDefinitionElement.getIdentifier());
+		this.moduleInstanceDefinitionElement = moduleInstanceDefinitionElement;
 		this.moduleElement = moduleElement;
 		this.ports = ports;
-		this.portConnections = portConnections;
 	}
 
 	@NotNull
-	public ImplementationItem_ModuleInstance getModuleInstanceElement() {
-		return moduleInstanceElement;
+	public ModuleInstanceDefinition getModuleInstanceDefinitionElement() {
+		return moduleInstanceDefinitionElement;
 	}
 
 	@NotNull
@@ -53,16 +48,8 @@ public final class ModuleInstance extends Named {
 		return ports;
 	}
 
-	@NotNull
-	public ImmutableMap<String, PortConnection> getPortConnections() {
-		return portConnections;
-	}
-
 	@Override
 	public void processExpressions(@NotNull ExpressionProcessor expressionProcessor) {
-		for (PortConnection connection : portConnections.values()) {
-			connection.processExpressions(expressionProcessor);
-		}
 	}
 
 }

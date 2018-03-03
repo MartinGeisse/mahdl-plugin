@@ -142,24 +142,24 @@ public final class ModuleVerilogGenerator {
 				builder.append(' ');
 				builder.append(instance.getName());
 				builder.append("(");
-				boolean firstPort = true;
-				for (PortConnection portConnection : instance.getPortConnections().values()) {
-					if (firstPort) {
-						firstPort = false;
-					} else {
-						builder.append(',');
-					}
-					builder.append('\n');
-					builder.append("\t\t.");
-					builder.append(portConnection.getPort().getName());
-					builder.append('(');
-					if (portConnection.getPort().getDirection() == PortDirection.IN) {
-						expressionVerilogGenerator.generate(portConnection.getProcessedExpression(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
-					} else {
-						variableVerilogGenerator.generate(portConnection.getProcessedExpression(), builder);
-					}
-					builder.append(')');
-				}
+//				boolean firstPort = true;
+//				for (PortConnection portConnection : instance.getPortConnections().values()) {
+//					if (firstPort) {
+//						firstPort = false;
+//					} else {
+//						builder.append(',');
+//					}
+//					builder.append('\n');
+//					builder.append("\t\t.");
+//					builder.append(portConnection.getPort().getName());
+//					builder.append('(');
+//					if (portConnection.getPort().getDirection() == PortDirection.IN) {
+//						expressionVerilogGenerator.generate(portConnection.getProcessedExpression(), builder, ExpressionVerilogGenerator.NESTING_TOPLEVEL);
+//					} else {
+//						variableVerilogGenerator.generate(portConnection.getProcessedExpression(), builder);
+//					}
+//					builder.append(')');
+//				}
 				builder.append("\n\t);\n");
 			});
 			out.println(builder);

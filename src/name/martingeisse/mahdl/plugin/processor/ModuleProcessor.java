@@ -6,16 +6,11 @@ package name.martingeisse.mahdl.plugin.processor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import name.martingeisse.mahdl.plugin.MahdlFileType;
-import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.definition.*;
-import name.martingeisse.mahdl.plugin.processor.definition.PortConnection;
 import name.martingeisse.mahdl.plugin.processor.definition.PortDirection;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessorImpl;
@@ -23,7 +18,6 @@ import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
 import name.martingeisse.mahdl.plugin.processor.statement.StatementProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessor;
 import name.martingeisse.mahdl.plugin.processor.type.DataTypeProcessorImpl;
-import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -113,10 +107,21 @@ public final class ModuleProcessor {
 		statementProcessor = new StatementProcessor(errorHandler, expressionProcessor, assignmentValidator);
 		processedDoBlocks = new ArrayList<>();
 		for (Named item : getDefinitions().values()) {
-			runnables.add(Pair.of(() -> {
-				processDefinition(item);
-				assignmentValidator.finishSection();
-			}, item.getNameElement()));
+			// Inconsistencies regarding signal-likes in the initializer vs. other assignments:
+			// - ports cannot have an initializer
+			// - constants cannot be assigned to other than the initializer (the assignment validator ensures that
+			//   already while checking expressions)
+			// - signals must be checked here
+			// - for registers, the initializer does not conflict with other assignments
+			if (item instanceof Signal) {
+				Signal signal = (Signal)item;
+				if (signal.getInitializer() != null) {
+					runnables.add(Pair.of(() -> {
+						assignmentValidator.considerAssignedTo(signal, signal.getInitializer());
+						assignmentValidator.finishSection();
+					}, signal.getNameElement()));
+				}
+			}
 		}
 		for (ImplementationItem implementationItem : module.getImplementationItems().getAll()) {
 			runnables.add(Pair.of(() -> {
@@ -165,40 +170,6 @@ public final class ModuleProcessor {
 			return kind instanceof SignalLikeKind_Constant;
 		} else {
 			return false;
-		}
-	}
-
-	private void processDefinition(@NotNull Named item) {
-		if (item instanceof SignalLike) {
-
-			// Inconsistencies in the initializer vs. other assignments:
-			// - ports cannot have an initializer
-			// - constants cannot be assigned to other than the initializer (the assignment validator ensures that
-			//   already while checking expressions)
-			// - signals must be checked here
-			// - for registers, the initializer does not conflict with other assignments
-			SignalLike signalLike = (SignalLike) item;
-			if (signalLike instanceof Signal && signalLike.getInitializer() != null) {
-				assignmentValidator.considerAssignedTo(signalLike, signalLike.getInitializer());
-			}
-
-		} else if (item instanceof ModuleInstance) {
-
-			// process port assignments
-			ModuleInstance moduleInstance = (ModuleInstance) item;
-			for (PortConnection portConnection : moduleInstance.getPortConnections().values()) {
-				if (portConnection.getPort().getDirection() == PortDirection.IN) {
-					assignmentValidator.validateAssignmentToInstancePort(moduleInstance,
-						portConnection.getPort(), portConnection.getPortNameElement());
-				} else {
-					if (portConnection.getProcessedExpression() == null) {
-						errorHandler.onError(portConnection.getExpressionElement(), "internal error: no processed expression");
-					} else {
-						assignmentValidator.validateAssignmentTo(portConnection.getProcessedExpression(), AssignmentValidator.TriggerKind.CONTINUOUS);
-					}
-				}
-			}
-
 		}
 	}
 
