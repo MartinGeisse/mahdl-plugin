@@ -11,6 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.indexing.FileBasedIndex;
+import name.martingeisse.mahdl.plugin.MahdlModuleIndex;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
@@ -21,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -112,14 +115,21 @@ public class ModuleReference implements PsiReference {
 
 		// note: if this returns PSI elements, they must be PsiNamedElement or contain the name in meta-data
 
+		FileBasedIndex index = FileBasedIndex.getInstance();
+		// TODO does not remove keys from the index!
+		// TODO -> because of this, a file-based index is probably not a useful solution here!
+		// EverythingGlobalScope
+		return index.getAllKeys(MahdlModuleIndex.NAME, moduleName.getProject()).toArray();
+
+
 		// TODO this should use a file-based index!
 
-		List<Object> variants = new ArrayList<>();
-		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
-		if (sourceRoot != null) {
-			findModules(null, sourceRoot, variants);
-		}
-		return variants.toArray();
+//		List<Object> variants = new ArrayList<>();
+//		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
+//		if (sourceRoot != null) {
+//			findModules(null, sourceRoot, variants);
+//		}
+//		return variants.toArray();
 	}
 
 	private void findModules(@Nullable String prefix, @NotNull VirtualFile folder, @NotNull List<Object> variants) {
