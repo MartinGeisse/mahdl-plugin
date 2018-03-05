@@ -89,7 +89,7 @@ portDirection ::= {
 
 implementationItem ::= {
 	signalLikeDefinitionGroup ::= signalLikeKind:kind dataType:dataType (signalLikeDefinition, COMMA)+:definitions SEMICOLON;
-	moduleInstance ::= qualifiedModuleName:moduleName IDENTIFIER:instanceName OPENING_CURLY_BRACE portConnection*:portConnections CLOSING_CURLY_BRACE;
+	moduleInstanceDefinitionGroup ::= qualifiedModuleName:moduleName (moduleInstanceDefinition, COMMA)+:definitions SEMICOLON;
 	doBlock ::= KW_DO OPENING_PARENTHESIS doBlockTrigger:trigger CLOSING_PARENTHESIS statement:statement;
 	error ::= %error; // synchronizes on the start of the next item
 }
@@ -113,19 +113,12 @@ signalLikeDefinition ::= {
 }
 
 
+
 //
 // module instances
 //
 
-qualifiedModuleName ::= (IDENTIFIER, DOT)+:segments;
-
-portConnection ::= {
-		valid ::= instancePortName:portName COLON extendedExpression:expression SEMICOLON;
-		error1 ::= %error SEMICOLON;
-		error2 ::= %error;
-}
-
-instancePortName ::= IDENTIFIER:identifier %reduceOnError;
+moduleInstanceDefinition ::= IDENTIFIER:identifier;
 
 
 //
@@ -220,6 +213,7 @@ literal ::= {
 
 instanceReferenceName ::= IDENTIFIER:identifier;
 
+instancePortName ::= IDENTIFIER:identifier %reduceOnError;
 
 //
 // common
@@ -232,3 +226,5 @@ dataType ::= {
 	integer ::= KW_INTEGER;
 	text ::= KW_TEXT;
 }
+
+qualifiedModuleName ::= (IDENTIFIER, DOT)+:segments;

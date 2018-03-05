@@ -6,7 +6,6 @@ package name.martingeisse.mahdl.plugin.processor.definition;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import name.martingeisse.mahdl.plugin.input.psi.*;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ExpressionProcessor;
@@ -52,7 +51,7 @@ public final class DefinitionProcessor {
 	public void processPorts(@NotNull ListNode<PortDefinitionGroup> psiPortList) {
 		for (PortDefinitionGroup untypedPortDefinitionGroup : psiPortList.getAll()) {
 			if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
-				PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+				PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid) untypedPortDefinitionGroup;
 				for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 					DataType dataType = portDefinitionGroup.getDataType();
 					ProcessedDataType processedDataType = dataTypeProcessor.processDataType(dataType);
@@ -134,18 +133,21 @@ public final class DefinitionProcessor {
 				}
 
 			}
-		} else if (implementationItem instanceof ImplementationItem_ModuleInstance) {
-			ImplementationItem_ModuleInstance moduleInstanceElement = (ImplementationItem_ModuleInstance) implementationItem;
+		} else if (implementationItem instanceof ImplementationItem_ModuleInstanceDefinitionGroup) {
+			ImplementationItem_ModuleInstanceDefinitionGroup moduleInstanceDefinitionGroupElement = (ImplementationItem_ModuleInstanceDefinitionGroup) implementationItem;
 
 			// resolve the module definition
 			Module resolvedModule;
 			{
-				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
+				PsiElement untypedResolvedModule = moduleInstanceDefinitionGroupElement.getModuleName().getReference().resolve();
 				if (untypedResolvedModule instanceof Module) {
 					resolvedModule = (Module) untypedResolvedModule;
 				} else {
-					errorHandler.onError(moduleInstanceElement.getModuleName(), "unknown module: '" + moduleInstanceElement.getModuleName().getReference().getCanonicalText() + "'");
-					add(new ModuleInstanceWithMissingDefinition(moduleInstanceElement));
+					errorHandler.onError(moduleInstanceDefinitionGroupElement.getModuleName(), "unknown module: '" +
+						moduleInstanceDefinitionGroupElement.getModuleName().getReference().getCanonicalText() + "'");
+					for (ModuleInstanceDefinition definition : moduleInstanceDefinitionGroupElement.getDefinitions().getAll()) {
+						add(new ModuleInstanceWithMissingDefinition(moduleInstanceDefinitionGroupElement.getModuleName(), definition));
+					}
 					return;
 				}
 			}
@@ -154,7 +156,7 @@ public final class DefinitionProcessor {
 			Map<String, InstancePort> ports = new HashMap<>();
 			for (PortDefinitionGroup untypedPortDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
 				if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
-					PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+					PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid) untypedPortDefinitionGroup;
 					for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
 						String portName = portDefinition.getName();
 						if (portName != null) {
@@ -175,23 +177,11 @@ public final class DefinitionProcessor {
 				}
 			}
 
-			// build port connections
-			Map<String, PortConnection> portConnections = new HashMap<>();
-			for (name.martingeisse.mahdl.plugin.input.psi.PortConnection untypedPsiPortConnection : moduleInstanceElement.getPortConnections().getAll()) {
-				if (untypedPsiPortConnection instanceof PortConnection_Valid) {
-					PortConnection_Valid psiPortConnection = (PortConnection_Valid)untypedPsiPortConnection;
-					LeafPsiElement portNameElement = psiPortConnection.getPortName().getIdentifier();
-					String portName = portNameElement.getText();
-					InstancePort port = ports.get(portName);
-					if (port == null) {
-						expressionProcessor.getErrorHandler().onError(psiPortConnection.getPortName().getIdentifier(), "unknown port: '" + portName + "'");
-						continue;
-					}
-					portConnections.put(portName, new PortConnection(port, portNameElement, psiPortConnection.getExpression()));
-				}
+			// add a module instance definition for each instance identifier
+			for (ModuleInstanceDefinition definition : moduleInstanceDefinitionGroupElement.getDefinitions().getAll()) {
+				add(new ModuleInstance(definition, resolvedModule, ImmutableMap.copyOf(ports)));
 			}
 
-			add(new ModuleInstance(moduleInstanceElement, resolvedModule, ImmutableMap.copyOf(ports), ImmutableMap.copyOf(portConnections)));
 		}
 	}
 

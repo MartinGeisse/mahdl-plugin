@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.TokenSet;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
+import name.martingeisse.mahdl.plugin.input.psi.ModuleInstanceDefinition;
 import name.martingeisse.mahdl.plugin.input.psi.PortDefinition;
 import name.martingeisse.mahdl.plugin.input.psi.SignalLikeDefinition;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public class MahdlFindUsagesProvider implements FindUsagesProvider {
 	@Override
 	public boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
 		return (psiElement instanceof Module || psiElement instanceof PortDefinition ||
-			psiElement instanceof SignalLikeDefinition || psiElement instanceof ImplementationItem_ModuleInstance);
+			psiElement instanceof SignalLikeDefinition || psiElement instanceof ModuleInstanceDefinition);
 	}
 
 	@Nullable

@@ -21,20 +21,14 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
-public final class ImplementationItem_ModuleInstance extends ImplementationItem implements PsiNameIdentifierOwner {
+public final class ModuleInstanceDefinition extends ASTWrapperPsiElement implements PsiNameIdentifierOwner {
 
-    public ImplementationItem_ModuleInstance(@NotNull ASTNode node) {
+    public ModuleInstanceDefinition(@NotNull ASTNode node) {
         super(node);
     }
 
-        public QualifiedModuleName getModuleName() {
-            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 0);
-        }
-        public LeafPsiElement getInstanceName() {
-            return (LeafPsiElement)InternalPsiUtil.getChild(this, 1);
-        }
-        public ListNode<PortConnection> getPortConnections() {
-            return (ListNode<PortConnection>)InternalPsiUtil.getChild(this, 3);
+        public LeafPsiElement getIdentifier() {
+            return (LeafPsiElement)InternalPsiUtil.getChild(this, 0);
         }
     
 		

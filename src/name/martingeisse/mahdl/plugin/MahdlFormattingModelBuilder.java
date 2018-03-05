@@ -18,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import name.martingeisse.mahdl.plugin.input.NonterminalGroups;
 import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.TokenGroups;
-import name.martingeisse.mahdl.plugin.input.psi.ImplementationItem_ModuleInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 
 	private static final TokenSet NORMALLY_INDENTED_SYMBOLS = TokenSet.create(
 		Symbols.synthetic_List_PortDefinitionGroup,
-		Symbols.synthetic_List_PortConnection,
 		Symbols.synthetic_List_Statement,
 		Symbols.synthetic_List_StatementCaseItem_Nonempty,
 		Symbols.synthetic_List_ExpressionCaseItem_Nonempty
@@ -41,7 +39,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 
 	private static final TokenSet POSSIBLE_PARENTS_OF_NORMALLY_INDENTED_SYMBOLS = TokenSet.create(
 		Symbols.module,
-		Symbols.implementationItem_ModuleInstance,
 		Symbols.statement_Block,
 		Symbols.statementCaseItem_Default,
 		Symbols.statementCaseItem_Value,
@@ -59,9 +56,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.portDefinitionGroup_Valid,
 		Symbols.portDefinitionGroup_Error1,
 		Symbols.portDefinitionGroup_Error2,
-		Symbols.portConnection_Valid,
-		Symbols.portConnection_Error1,
-		Symbols.portConnection_Error2,
 		// all statements -- merged into the TokenSet above
 		Symbols.statementCaseItem_Default,
 		Symbols.expressionCaseItem_Default,
@@ -78,7 +72,7 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 		Symbols.KW_REGISTER,
 		Symbols.implementationItem_DoBlock,
 		Symbols.KW_DO,
-		Symbols.implementationItem_ModuleInstance
+		Symbols.implementationItem_ModuleInstanceDefinitionGroup
 
 	));
 
@@ -139,7 +133,9 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 			if (myNode.getTreeParent() == null) {
 				return Indent.getNoneIndent();
 			}
+			@SuppressWarnings("unused")
 			IElementType type = myNode.getElementType();
+			@SuppressWarnings("unused")
 			IElementType parentType = myNode.getTreeParent().getElementType();
 
 			if (TokenGroups.WHITESPACE.contains(type)) {
@@ -170,6 +166,7 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 			return null;
 		}
 
+		@SuppressWarnings("unused")
 		private boolean isInside(ASTNode node, IElementType type) {
 			while (node != null) {
 				if (node.getElementType() == type) {
@@ -232,8 +229,6 @@ public class MahdlFormattingModelBuilder implements FormattingModelBuilder {
 				return new ChildAttributes(Indent.getNoneIndent(), null);
 			}
 			if (type == Symbols.module) {
-				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
-			} else if (type == Symbols.implementationItem_ModuleInstance) {
 				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);
 			} else if (type == Symbols.statement_Switch) {
 				return getChildAttributes(newChildIndex, children, Symbols.OPENING_CURLY_BRACE, Symbols.CLOSING_CURLY_BRACE);

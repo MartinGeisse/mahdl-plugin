@@ -130,7 +130,15 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			processedCases.add(new ProcessedSwitchExpression.Case(aCase.getSelectorValues(), converted));
 		}
 
-		// in case of errors, don't return a swtch expression
+		// check for missing selector values
+		if (processedDefaultCase == null) {
+			int selectorSize = ((ProcessedDataType.Vector)selector.getDataType()).getSize();
+			if (foundSelectorValues.size() != (1 << selectorSize)) {
+				return error(expression, "incomplete switch expression");
+			}
+		}
+
+		// in case of errors, don't return a switch expression
 		if (!selectorOkay || errorInCases) {
 			return new UnknownExpression(expression);
 		}
@@ -204,8 +212,8 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			} else if (moduleInstanceCandidate instanceof ModuleInstance) {
 				moduleInstance = (ModuleInstance) moduleInstanceCandidate;
 			} else if (moduleInstanceCandidate instanceof ModuleInstanceWithMissingDefinition) {
-				ImplementationItem_ModuleInstance moduleInstanceElement = ((ModuleInstanceWithMissingDefinition) moduleInstanceCandidate).getModuleInstanceElement();
-				String moduleName = PsiUtil.canonicalizeQualifiedModuleName(moduleInstanceElement.getModuleName());
+				QualifiedModuleName moduleNameElement = ((ModuleInstanceWithMissingDefinition) moduleInstanceCandidate).getModuleNameElement();
+				String moduleName = PsiUtil.canonicalizeQualifiedModuleName(moduleNameElement);
 				return error(expression.getInstanceName(), "missing module '" + moduleName + "' for instance '" + instanceName + "'");
 			} else {
 				return error(expression.getInstanceName(), instanceName + " is not a module instance");

@@ -40,8 +40,8 @@ public class PsiFactory {
                     if (type == Symbols.implementationItem_SignalLikeDefinitionGroup) {
                 return new ImplementationItem_SignalLikeDefinitionGroup(node);
             }
-                    if (type == Symbols.implementationItem_ModuleInstance) {
-                return new ImplementationItem_ModuleInstance(node);
+                    if (type == Symbols.implementationItem_ModuleInstanceDefinitionGroup) {
+                return new ImplementationItem_ModuleInstanceDefinitionGroup(node);
             }
                     if (type == Symbols.implementationItem_DoBlock) {
                 return new ImplementationItem_DoBlock(node);
@@ -51,15 +51,6 @@ public class PsiFactory {
             }
                     if (type == Symbols.qualifiedModuleName) {
                 return new QualifiedModuleName(node);
-            }
-                    if (type == Symbols.portConnection_Valid) {
-                return new PortConnection_Valid(node);
-            }
-                    if (type == Symbols.portConnection_Error1) {
-                return new PortConnection_Error1(node);
-            }
-                    if (type == Symbols.portConnection_Error2) {
-                return new PortConnection_Error2(node);
             }
                     if (type == Symbols.synthetic_List_Statement_Nonempty) {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Error1, Symbols.statement_Error2), Statement.class);
@@ -107,7 +98,13 @@ public class PsiFactory {
                 return new ExpressionCaseItem_Default(node);
             }
                     if (type == Symbols.synthetic_List_ImplementationItem) {
-                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstance, Symbols.implementationItem_DoBlock, Symbols.implementationItem_Error), ImplementationItem.class);
+                return new ListNode<ImplementationItem>(node, TokenSet.create(Symbols.implementationItem_SignalLikeDefinitionGroup, Symbols.implementationItem_ModuleInstanceDefinitionGroup, Symbols.implementationItem_DoBlock, Symbols.implementationItem_Error), ImplementationItem.class);
+            }
+                    if (type == Symbols.synthetic_SeparatedList_ModuleInstanceDefinition_COMMA_Nonempty) {
+                return new ListNode<ModuleInstanceDefinition>(node, TokenSet.create(Symbols.moduleInstanceDefinition), ModuleInstanceDefinition.class);
+            }
+                    if (type == Symbols.moduleInstanceDefinition) {
+                return new ModuleInstanceDefinition(node);
             }
                     if (type == Symbols.expression_Literal) {
                 return new Expression_Literal(node);
@@ -264,9 +261,6 @@ public class PsiFactory {
             }
                     if (type == Symbols.instancePortName) {
                 return new InstancePortName(node);
-            }
-                    if (type == Symbols.synthetic_List_PortConnection) {
-                return new ListNode<PortConnection>(node, TokenSet.create(Symbols.portConnection_Valid, Symbols.portConnection_Error1, Symbols.portConnection_Error2), PortConnection.class);
             }
                     if (type == Symbols.synthetic_SeparatedList_PortDefinition_COMMA_Nonempty) {
                 return new ListNode<PortDefinition>(node, TokenSet.create(Symbols.portDefinition), PortDefinition.class);

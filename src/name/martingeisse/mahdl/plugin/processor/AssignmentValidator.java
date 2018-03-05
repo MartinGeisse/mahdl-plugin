@@ -53,19 +53,15 @@ public final class AssignmentValidator {
 			} else if (definition instanceof ModuleInstance) {
 				ModuleInstance moduleInstance = (ModuleInstance) definition;
 				String instanceName = moduleInstance.getName();
-				ImplementationItem_ModuleInstance moduleInstanceElement = moduleInstance.getModuleInstanceElement();
-				PsiElement untypedResolvedModule = moduleInstanceElement.getModuleName().getReference().resolve();
-				if (untypedResolvedModule instanceof Module) {
-					Module resolvedModule = (Module) untypedResolvedModule;
-					for (PortDefinitionGroup untypedPortDefinitionGroup : resolvedModule.getPortDefinitionGroups().getAll()) {
-						if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
-							PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
-							if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
-								for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
-									String prefixedPortName = instanceName + '.' + portDefinition.getName();
-									if (!previouslyAssignedSignals.contains(prefixedPortName)) {
-										errorHandler.onError(moduleInstanceElement, "missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
-									}
+				for (PortDefinitionGroup untypedPortDefinitionGroup : moduleInstance.getModuleElement().getPortDefinitionGroups().getAll()) {
+					if (untypedPortDefinitionGroup instanceof PortDefinitionGroup_Valid) {
+						PortDefinitionGroup_Valid portDefinitionGroup = (PortDefinitionGroup_Valid)untypedPortDefinitionGroup;
+						if (portDefinitionGroup.getDirection() instanceof PortDirection_In) {
+							for (PortDefinition portDefinition : portDefinitionGroup.getDefinitions().getAll()) {
+								String prefixedPortName = instanceName + '.' + portDefinition.getName();
+								if (!previouslyAssignedSignals.contains(prefixedPortName)) {
+									errorHandler.onError(moduleInstance.getModuleInstanceDefinitionElement(),
+										"missing assignment for port '" + portDefinition.getName() + "' in instance '" + instanceName + "'");
 								}
 							}
 						}
@@ -165,7 +161,7 @@ public final class AssignmentValidator {
 
 	private void considerAssignedTo(@NotNull String signalName, @NotNull PsiElement errorSource) {
 		if (previouslyAssignedSignals.contains(signalName)) {
-			errorHandler.onError(errorSource, "'" + signalName + "' was already assigned to in another do-block");
+			errorHandler.onError(errorSource, "'" + signalName + "' has already been assigned to");
 		}
 		newlyAssignedSignals.add(signalName);
 	}
