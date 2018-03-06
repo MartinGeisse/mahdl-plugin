@@ -115,21 +115,16 @@ public class ModuleReference implements PsiReference {
 
 		// note: if this returns PSI elements, they must be PsiNamedElement or contain the name in meta-data
 
-		FileBasedIndex index = FileBasedIndex.getInstance();
-		// TODO does not remove keys from the index!
-		// TODO -> because of this, a file-based index is probably not a useful solution here!
-		// EverythingGlobalScope
-		return index.getAllKeys(MahdlModuleIndex.NAME, moduleName.getProject()).toArray();
-
-
-		// TODO this should use a file-based index!
-
-//		List<Object> variants = new ArrayList<>();
-//		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
-//		if (sourceRoot != null) {
-//			findModules(null, sourceRoot, variants);
-//		}
-//		return variants.toArray();
+		// A simple file-based index doesn't work here since it doesn't delete obsolete keys, and we can't
+		// distinguish those from real ones. If performance becomes a problem, use stub trees (stub-backed PSI
+		// instead of AST-backed PSI) and stub indexes.
+		List<Object> variants = new ArrayList<>();
+		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
+		if (sourceRoot != null) {
+			findModules(null, sourceRoot, variants);
+		}
+		return variants.toArray();
+		
 	}
 
 	private void findModules(@Nullable String prefix, @NotNull VirtualFile folder, @NotNull List<Object> variants) {
