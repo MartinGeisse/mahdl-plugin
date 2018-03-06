@@ -5,7 +5,9 @@
 package name.martingeisse.mahdl.plugin.input.reference;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -121,24 +123,23 @@ public class ModuleReference implements PsiReference {
 		List<Object> variants = new ArrayList<>();
 		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
 		if (sourceRoot != null) {
-			findModules(null, sourceRoot, variants);
+			VfsUtilCore.visitChildrenRecursively(sourceRoot, new VirtualFileVisitor<Object>() {
+				@Override
+				public boolean visitFile(@NotNull VirtualFile file) {
+					String name = file.getName();
+					String prefix = (String)getCurrentValue();
+					if (!file.isDirectory() && name.endsWith(".mahdl")) {
+						String simpleModuleName = name.substring(0, name.length() - ".mahdl".length());
+						String fullModuleName = (prefix == null ? simpleModuleName : (prefix + '.' + simpleModuleName));
+						variants.add(fullModuleName);
+					}
+					setValueForChildren(prefix == null ? name : (prefix + '.' + name));
+					return (name.indexOf('.') < 0);
+				}
+			});
 		}
 		return variants.toArray();
-		
-	}
 
-	private void findModules(@Nullable String prefix, @NotNull VirtualFile folder, @NotNull List<Object> variants) {
-		for (VirtualFile child : folder.getChildren()) { // TODO warning
-			String childName = child.getName();
-			if (child.isDirectory() && childName.indexOf('.') < 0) {
-				String childPrefix = (prefix == null ? childName : (prefix + '.' + childName));
-				findModules(prefix, child, variants);
-			} else if (childName.endsWith(".mahdl")) {
-				String simpleModuleName = childName.substring(0, childName.length() - ".mahdl".length());
-				String fullModuleName = (prefix == null ? simpleModuleName : (prefix + '.' + simpleModuleName));
-				variants.add(fullModuleName);
-			}
-		}
 	}
 
 	@Override
