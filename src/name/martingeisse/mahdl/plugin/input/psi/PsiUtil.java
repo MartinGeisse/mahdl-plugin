@@ -167,7 +167,6 @@ public final class PsiUtil {
 	// reference support
 	//
 
-	// TODO autocomplete for module name in instance decl doesn't work
 	@NotNull
 	public static PsiReference getReference(@NotNull QualifiedModuleName node) {
 		return new ModuleReference(node);

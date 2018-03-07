@@ -123,7 +123,7 @@ public class ModuleReference implements PsiReference {
 		List<Object> variants = new ArrayList<>();
 		VirtualFile sourceRoot = PsiUtil.getSourceRoot(moduleName);
 		if (sourceRoot != null) {
-			VfsUtilCore.visitChildrenRecursively(sourceRoot, new VirtualFileVisitor<Object>() {
+			VfsUtilCore.visitChildrenRecursively(sourceRoot, new VirtualFileVisitor<Object>(VirtualFileVisitor.SKIP_ROOT) {
 				@Override
 				public boolean visitFile(@NotNull VirtualFile file) {
 					String name = file.getName();
