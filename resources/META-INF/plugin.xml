@@ -29,6 +29,8 @@
         <lang.foldingBuilder language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlFoldingBuilder" />
         <lang.commenter language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlCommenter" />
         <fileBasedIndex implementation="name.martingeisse.mahdl.plugin.MahdlModuleIndex" />
+        <renamePsiElementProcessor implementation="name.martingeisse.mahdl.plugin.MahdlModuleNameRenamePsiElementProcessor" />
+        <renameInputValidator implementation="name.martingeisse.mahdl.plugin.MahdlModuleNameRenameInputValidator" />
     </extensions>
 
     <actions>
