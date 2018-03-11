@@ -17,6 +17,8 @@
     <depends>com.intellij.modules.platform</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+
+        <!-- MaHDL extensions -->
         <fileTypeFactory implementation="name.martingeisse.mahdl.plugin.MahdlFileTypeFactory" />
         <lang.syntaxHighlighterFactory language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.MahdlSyntaxHighlighterFactory" />
         <lang.parserDefinition language="MAHDL" implementationClass="name.martingeisse.mahdl.plugin.input.MahdlParserDefinition" />
@@ -31,15 +33,28 @@
         <fileBasedIndex implementation="name.martingeisse.mahdl.plugin.MahdlModuleIndex" />
         <renamePsiElementProcessor implementation="name.martingeisse.mahdl.plugin.MahdlModuleNameRenamePsiElementProcessor" />
         <renameInputValidator implementation="name.martingeisse.mahdl.plugin.MahdlModuleNameRenameInputValidator" />
+
+        <!-- Picoblaze extensions -->
+        <fileTypeFactory implementation="name.martingeisse.picoblaze.assembler.PicoblazeAssemblerFileTypeFactory" />
+
     </extensions>
 
     <actions>
+
+        <!-- MaHDL actions -->
         <action id="mapag.generateVerilog" class="name.martingeisse.mahdl.plugin.actions.GenerateVerilogAction" text="generate verilog">
             <add-to-group group-id="ProjectViewPopupMenu" />
         </action>
         <action id="mapag.generateIseBuild" class="name.martingeisse.mahdl.plugin.ise_build.GenerateIseBuildAction" text="generate ISE build">
             <add-to-group group-id="ProjectViewPopupMenu" />
         </action>
+
+        <!-- Picoblaze actions -->
+        <action id="picoblaze.assemble" class="name.martingeisse.picoblaze.assembler.PicoblazeAssemblerAction" text="Assemble Picoblaze Code">
+            <add-to-group group-id="ProjectViewPopupMenu" />
+        </action>
+
+
     </actions>
 
 </idea-plugin>

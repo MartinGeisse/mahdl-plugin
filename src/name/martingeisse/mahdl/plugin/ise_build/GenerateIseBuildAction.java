@@ -9,16 +9,14 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
-import name.martingeisse.mahdl.plugin.actions.AbstractModuleAndConsoleAction;
+import name.martingeisse.mahdl.plugin.actions.AbstractModuleAndConsoleMahdlFileAction;
 import name.martingeisse.mahdl.plugin.actions.Configuration;
 import name.martingeisse.mahdl.plugin.actions.FlatVerilogFolderOutputConsumer;
 import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -31,7 +29,7 @@ import java.util.function.Consumer;
 /**
  *
  */
-public class GenerateIseBuildAction extends AbstractModuleAndConsoleAction {
+public class GenerateIseBuildAction extends AbstractModuleAndConsoleMahdlFileAction {
 
 	public GenerateIseBuildAction() {
 		super("generate ISE build");

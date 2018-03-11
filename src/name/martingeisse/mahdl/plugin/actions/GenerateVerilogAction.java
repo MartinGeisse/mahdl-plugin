@@ -8,24 +8,19 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.codegen.DesignVerilogGenerator;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
-import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 /**
  *
  */
-public class GenerateVerilogAction extends AbstractModuleAndConsoleAction {
+public class GenerateVerilogAction extends AbstractModuleAndConsoleMahdlFileAction {
 
 	public GenerateVerilogAction() {
 		super("generate verilog");

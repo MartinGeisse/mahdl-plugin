@@ -17,10 +17,6 @@ import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import name.martingeisse.mahdl.plugin.MahdlLanguage;
-import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.util.SelfDescribingRuntimeException;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -29,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.function.Consumer;
@@ -55,16 +50,6 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 	}
 
 	@Override
-	public void update(@Nullable AnActionEvent event) {
-		if (event == null) {
-			return;
-		}
-		PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
-		boolean enabled = psiFile != null && psiFile.getLanguage() == MahdlLanguage.INSTANCE;
-		event.getPresentation().setEnabledAndVisible(enabled);
-	}
-
-	@Override
 	public void actionPerformed(@Nullable AnActionEvent event) {
 		if (event == null) {
 			return;
@@ -79,16 +64,9 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 		ConsoleViewImpl console = (ConsoleViewImpl) runContentDescriptor.getExecutionConsole();
 		onConsoleOpened(event, console);
 
-		// we need a MaHDL input file to process
-		PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
-		if (!(psiFile instanceof MahdlSourceFile)) {
-			console.print("The input file is not a MaHDL module file", ConsoleViewContentType.ERROR_OUTPUT);
-			return;
-		}
-
 		// do it!
 		try {
-			execute(event, console, (MahdlSourceFile)psiFile);
+			actionPerformed(event, console);
 		} catch (UserMessageException e) {
 			console.print(e.getMessage(), ConsoleViewContentType.ERROR_OUTPUT);
 		} catch (SelfDescribingRuntimeException e) {
@@ -100,13 +78,13 @@ public abstract class AbstractModuleAndConsoleAction extends AnAction {
 
 	}
 
+	protected abstract void actionPerformed(@NotNull AnActionEvent event, ConsoleViewImpl console) throws Exception;
+
 	@NotNull
 	protected abstract String getConsoleTitle(@NotNull AnActionEvent event);
 
 	protected void onConsoleOpened(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console) {
 	}
-
-	protected abstract void execute(@NotNull AnActionEvent event, @NotNull ConsoleViewImpl console, @NotNull MahdlSourceFile sourceFile) throws Exception;
 
 	@NotNull
 	private static RunContentDescriptor createConsole(@NotNull Project project, @NotNull String title) {
