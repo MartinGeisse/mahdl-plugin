@@ -14,6 +14,7 @@ import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.HeadBodyReader;
 import name.martingeisse.mahdl.plugin.util.LiteralParser;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -41,6 +42,12 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 
 	@NotNull
 	@Override
+	public String getName() {
+		return "loadMatrix";
+	}
+
+	@NotNull
+	@Override
 	protected ProcessedDataType internalCheckType(@NotNull List<ProcessedExpression> arguments, ErrorHandler errorHandler) {
 		ProcessedExpression.FormallyConstantEvaluationContext context = new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler);
 		int firstSize = arguments.get(1).evaluateFormallyConstant(context).convertToInteger().intValueExact();
@@ -62,7 +69,7 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 		}
 
 		// read the file
-		ConstantValue value;
+		MutableObject<BitSet> resultBitSetHolder = new MutableObject();
 		try (InputStream inputStream = file.getInputStream()) {
 			try (InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
 				new HeadBodyReader() {
@@ -73,18 +80,25 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 
 					@Override
 					protected void onHeadProperty(String key, String value) throws FormatException {
-						if (key.equals("rows")) {
-							if (expectNonNegativeInteger(key, value) != rows) {
-								throw new FormatException("mismatching number of rows");
-							}
-							rowsOk = true;
-						} else if (key.equals("columns")) {
-							if (expectNonNegativeInteger(key, value) != columns) {
-								throw new FormatException("mismatching number of columns");
-							}
-							columnsOk = true;
-						} else {
-							throw new FormatException("unknown property: " + key);
+						switch (key) {
+
+							case "rows":
+								if (expectNonNegativeInteger(key, value) != rows) {
+									throw new FormatException("mismatching number of rows");
+								}
+								rowsOk = true;
+								break;
+
+							case "columns":
+								if (expectNonNegativeInteger(key, value) != columns) {
+									throw new FormatException("mismatching number of columns");
+								}
+								columnsOk = true;
+								break;
+
+							default:
+								throw new FormatException("unknown property: " + key);
+
 						}
 					}
 
@@ -97,6 +111,7 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 							throw new FormatException("missing 'columns' property");
 						}
 						bits = new BitSet(rows * columns);
+						resultBitSetHolder.setValue(bits);
 					}
 
 					@Override
@@ -121,9 +136,11 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 							// shouldn't happen since that line passed the ROW_PATTERN already
 							throw new FormatException("unexpected exception while parsing line " + totalLineIndex + ": " + e.toString());
 						}
-						// TODO
-						// value = parseFileContents(inputStream, firstSize, secondSize, errorSource, context);
-						// ROW_PATTERN
+						BitSet rowBits = rowValue.getBits();
+						int rowBaseIndex = bodyLineIndex * columns;
+						for (int i = 0; i < columns; i++) {
+							bits.set(rowBaseIndex + i, rowBits.get(i));
+						}
 					}
 
 					private int expectNonNegativeInteger(String key, String text) throws FormatException {
@@ -146,15 +163,7 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 		} catch (IOException e) {
 			return context.error(errorSource, e.toString());
 		}
-
-		// Make sure the file contents correspond to the return type. This fills with zeroes if there are too few rows,
-		// but fails if there are too few columns or too many rows or columns.
-		if (value instanceof ConstantValue.Unknown) {
-			return value;
-		}
-		ConstantValue.Matrix matrixValue = (ConstantValue.Matrix) value;
-		return new ConstantValue.Matrix(firstSize, secondSize, matrixValue.getBits());
-
+		return new ConstantValue.Matrix(rows, columns, resultBitSetHolder.getValue());
 	}
 
 	private VirtualFile locateFile(@NotNull PsiElement anchor, String filename, @NotNull ProcessedExpression.FormallyConstantEvaluationContext context) {
@@ -180,11 +189,5 @@ public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 		}
 		return file;
 	}
-
-	protected abstract ConstantValue parseFileContents(@NotNull InputStream inputStream,
-													   int firstSize,
-													   int secondSize,
-													   @NotNull PsiElement errorSource,
-													   @NotNull ProcessedExpression.FormallyConstantEvaluationContext context);
 
 }

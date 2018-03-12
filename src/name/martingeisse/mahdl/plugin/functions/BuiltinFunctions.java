@@ -24,6 +24,7 @@ public final class BuiltinFunctions {
 		List<BuiltinFunction> functions = new ArrayList<>();
 		functions.add(new AsciiFunction());
 		functions.add(new AsciizFunction());
+		functions.add(new LoadMahdlMatrixFileFunction());
 
 		ImmutableMap.Builder<String, BuiltinFunction> builder = ImmutableMap.builder();
 		for (BuiltinFunction function : functions) {
