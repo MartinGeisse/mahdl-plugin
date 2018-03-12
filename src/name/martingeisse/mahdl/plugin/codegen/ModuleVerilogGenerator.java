@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import name.martingeisse.mahdl.plugin.processor.definition.*;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedSwitchExpression;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedDoBlock;
@@ -13,6 +14,8 @@ import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -25,17 +28,21 @@ public final class ModuleVerilogGenerator {
 	private final VariableVerilogGenerator variableVerilogGenerator;
 	private final StatementVerilogGenerator statementVerilogGenerator;
 	private int helperSignalNameGenerationCounter = 0;
+	private final Map<ConstantValue.Matrix, String> romContentsToName = new HashMap<>();
+	private int memoryFileGenerationCounter = 0;
+	private final MemoryFileGenerator memoryFileGenerator;
 
-	public ModuleVerilogGenerator(ModuleDefinition module, Writer out) {
-		this(module, new PrintWriter(out));
+	public ModuleVerilogGenerator(ModuleDefinition module, Writer out, MemoryFileGenerator memoryFileGenerator) {
+		this(module, new PrintWriter(out), memoryFileGenerator);
 	}
 
-	public ModuleVerilogGenerator(ModuleDefinition module, PrintWriter out) {
+	public ModuleVerilogGenerator(ModuleDefinition module, PrintWriter out, MemoryFileGenerator memoryFileGenerator) {
 		this.module = module;
 		this.out = out;
-		this.expressionVerilogGenerator = new ExpressionVerilogGenerator(this::extractExpression);
+		this.expressionVerilogGenerator = new ExpressionVerilogGenerator(this::extractExpression, this::extractRom);
 		this.variableVerilogGenerator = new VariableVerilogGenerator(expressionVerilogGenerator);
 		this.statementVerilogGenerator = new StatementVerilogGenerator(expressionVerilogGenerator, variableVerilogGenerator);
+		this.memoryFileGenerator = memoryFileGenerator;
 	}
 
 	public void run() {
@@ -86,27 +93,30 @@ public final class ModuleVerilogGenerator {
 		});
 
 		// print continuous assignments from signal initializers
+		// TODO where does the code for ROMs get generated? It seems to happen nowhere right now.
 		out.println();
 		foreachDefinition(Signal.class, (signal, first) -> {
 			if (signal.getInitializer() != null) {
-				if (!(signal.getProcessedDataType() instanceof ProcessedDataType.Matrix)) {
-					StringBuilder builder = new StringBuilder();
-					builder.append("\tassign ");
-					builder.append(signal.getName());
-					builder.append(" = ");
-					expressionVerilogGenerator.generate(signal.getProcessedInitializer(), builder);
-					builder.append(';');
-					out.println(builder);
-				}
+				// note: the ModuleProcessor ensures that signals don't have matrix type
+				StringBuilder builder = new StringBuilder();
+				builder.append("\tassign ");
+				builder.append(signal.getName());
+				builder.append(" = ");
+				expressionVerilogGenerator.generate(signal.getProcessedInitializer(), builder);
+				builder.append(';');
+				out.println(builder);
 			}
 		});
 
-		// print register initializers (initial blocks). TODO matrix initializers / file loading
+		// print register initializers (initial blocks)
 		{
 			StringBuilder builder = new StringBuilder();
 			foreachDefinition(Register.class, (register, first) -> {
 				if (register.getInitializer() != null) {
-					if (!(register.getProcessedDataType() instanceof ProcessedDataType.Matrix)) {
+					if (register.getProcessedDataType() instanceof ProcessedDataType.Matrix) {
+						ConstantValue.Matrix value = (ConstantValue.Matrix) register.getInitializerValue();
+						initializeMatrix(register.getName(), value);
+					} else {
 						builder.append("\t\t");
 						builder.append(register.getName());
 						builder.append(" <= ");
@@ -171,9 +181,11 @@ public final class ModuleVerilogGenerator {
 	// A switch expression will always be extracted, even when it could be turned into a switch statement in-place
 	// because it is already a toplevel expression, but for generated code it's okay for now.
 	private String extractExpression(ProcessedExpression expression) {
-
-		// TODO matrix expressions
-
+		if (expression.getDataType() instanceof ProcessedDataType.Matrix) {
+			// note: selecting a bit or vector from a matrix is allowed at runtime and won't call this method in the
+			// first place since the matrix appears as a SignalLikeReference, which won't be extracted
+			throw new ModuleCannotGenerateCodeException("cannot handle matrix-valued expression at runtime: " + expression);
+		}
 		String name = getNextHelperSignalName();
 		StringBuilder builder = new StringBuilder();
 		if (expression instanceof ProcessedSwitchExpression) {
@@ -197,8 +209,33 @@ public final class ModuleVerilogGenerator {
 			builder.append(";\n");
 
 		}
-		ModuleVerilogGenerator.this.out.println(builder);
+		out.println(builder);
 		return name;
+	}
+
+	private String extractRom(ConstantValue.Matrix value) {
+		String existingRomName = romContentsToName.get(value);
+		if (existingRomName != null) {
+			return existingRomName;
+		}
+		String romName = "anonymous_rom_" + memoryFileGenerationCounter;
+		// TODO wrong syntax
+		out.print("reg[" + (value.getFirstSize() - 1) + ":0][" + (value.getSecondSize() - 1) + ":0] " + romName + ';');
+		initializeMatrix(romName, value);
+		romContentsToName.put(value, romName);
+		return romName;
+	}
+
+	private void initializeMatrix(String destinationName, ConstantValue.Matrix matrixValue) {
+		String filename = module.getName() + memoryFileGenerationCounter + ".mif";
+		try {
+			memoryFileGenerator.generateMemoryFile(filename, matrixValue);
+		} catch (Exception e) {
+			throw new ModuleCannotGenerateCodeException("could not generate memory file '" + filename + "': " + e.toString());
+		}
+		out.println("initial $readmemh(\"" + filename + "\", " + destinationName + ", 0, " +
+			(matrixValue.getFirstSize() - 1) + ");");
+		memoryFileGenerationCounter++;
 	}
 
 	//
@@ -239,4 +276,13 @@ public final class ModuleVerilogGenerator {
 			}
 		}
 	}
+
+	//
+	// injected services
+	//
+
+	public interface MemoryFileGenerator {
+		void generateMemoryFile(String filename, ConstantValue.Matrix matrix) throws Exception;
+	}
+
 }

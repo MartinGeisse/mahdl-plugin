@@ -23,11 +23,10 @@ public class FlatVerilogFolderOutputConsumer implements DesignVerilogGenerator.O
 	}
 
 	@Override
-	public void consume(String moduleName, String generatedCode) throws Exception {
+	public void consume(String fileName, String contents) throws Exception {
 		MutableObject<Exception> exceptionHolder = new MutableObject<>();
 		ApplicationManager.getApplication().runWriteAction(() -> {
 			try {
-				String fileName = moduleName + ".v";
 				VirtualFile outputFile = folder.findChild(fileName);
 				if (outputFile == null) {
 					outputFile = folder.createChildData(this, fileName);
@@ -36,7 +35,7 @@ public class FlatVerilogFolderOutputConsumer implements DesignVerilogGenerator.O
 				}
 				try (OutputStream outputStream = outputFile.getOutputStream(this)) {
 					try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
-						outputStreamWriter.write(generatedCode);
+						outputStreamWriter.write(contents);
 					}
 				}
 			} catch (IOException e) {

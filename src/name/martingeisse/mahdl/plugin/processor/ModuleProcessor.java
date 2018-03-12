@@ -42,6 +42,7 @@ import java.util.Map;
 public final class ModuleProcessor {
 
 	private final Module module;
+	private final String canonicalModuleName;
 	private final ErrorHandler errorHandler;
 
 	private DataTypeProcessor dataTypeProcessor;
@@ -54,6 +55,7 @@ public final class ModuleProcessor {
 
 	public ModuleProcessor(@NotNull Module module, @NotNull ErrorHandler errorHandler) {
 		this.module = module;
+		this.canonicalModuleName = PsiUtil.canonicalizeQualifiedModuleName(module.getModuleName());
 		this.errorHandler = errorHandler;
 	}
 
@@ -138,12 +140,11 @@ public final class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
-		return new ModuleDefinition(module.getModuleName().getText(), ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
+		return new ModuleDefinition(canonicalModuleName, ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
 	}
 
 	private void validateModuleNameAgainstFilePath() {
 		QualifiedModuleName name = module.getModuleName();
-		String canonicalName = PsiUtil.canonicalizeQualifiedModuleName(name);
 		Module moduleForName;
 		try {
 			moduleForName = PsiUtil.resolveModuleName(name, PsiUtil.ModuleNameResolutionUseCase.NAME_DECLARATION_VALIDATION);
@@ -154,7 +155,7 @@ public final class ModuleProcessor {
 		if (moduleForName != module) {
 			VirtualFile fileForName = PsiUtil.getVirtualFile(moduleForName);
 			String path = (fileForName == null ? "(null)" : fileForName.getPath());
-			errorHandler.onError(name, "module name '" + canonicalName + "' refers to different file " + path);
+			errorHandler.onError(name, "module name '" + canonicalModuleName + "' refers to different file " + path);
 		}
 	}
 

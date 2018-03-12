@@ -93,10 +93,12 @@ public final class ExpressionVerilogGenerator {
 		EXTRACTION_NEEDED_NESTING_LEVELS = builder.build();
 	}
 
-	private final Extractor extractor;
+	private final ExpressionExtractor expressionExtractor;
+	private final RomExtractor romExtractor;
 
-	public ExpressionVerilogGenerator(Extractor extractor) {
-		this.extractor = extractor;
+	public ExpressionVerilogGenerator(ExpressionExtractor expressionExtractor, RomExtractor romExtractor) {
+		this.expressionExtractor = expressionExtractor;
+		this.romExtractor = romExtractor;
 	}
 
 	/**
@@ -128,9 +130,7 @@ public final class ExpressionVerilogGenerator {
 		// constant folding
 		ConstantValue value = fold(expression);
 		if (!(value instanceof ConstantValue.Unknown)) {
-			if (!generate(value, builder)) {
-				extract(expression, builder);
-			}
+			generate(value, builder);
 			return;
 		}
 
@@ -256,20 +256,17 @@ public final class ExpressionVerilogGenerator {
 		}
 	}
 
-	public boolean generate(ConstantValue value, StringBuilder builder) {
+	public void generate(ConstantValue value, StringBuilder builder) {
 		if (value instanceof ConstantValue.Bit) {
 			boolean set = ((ConstantValue.Bit) value).isSet();
 			builder.append(set ? "1" : "0");
-			return true;
 		} else if (value instanceof ConstantValue.Vector) {
 			ConstantValue.Vector vector = (ConstantValue.Vector) value;
 			builder.append(vector.getSize()).append("'h").append(vector.getHexLiteral());
-			return true;
 		} else if (value instanceof ConstantValue.Matrix) {
-			return false;
+			builder.append(romExtractor.extract((ConstantValue.Matrix)value));
 		} else if (value instanceof ConstantValue.Integer) {
 			builder.append(((ConstantValue.Integer) value).getValue());
-			return true;
 		} else {
 			throw new ModuleCannotGenerateCodeException("invalid run-time constant: " + value);
 		}
@@ -319,12 +316,16 @@ public final class ExpressionVerilogGenerator {
 		} else if (expression instanceof SyntheticSignalLikeExpression) {
 			builder.append(((SyntheticSignalLikeExpression) expression).getName());
 		} else {
-			builder.append(extractor.extract(expression));
+			builder.append(expressionExtractor.extract(expression));
 		}
 	}
 
-	public interface Extractor {
+	public interface ExpressionExtractor {
 		String extract(ProcessedExpression expression);
+	}
+
+	public interface RomExtractor {
+		String extract(ConstantValue.Matrix value);
 	}
 
 }

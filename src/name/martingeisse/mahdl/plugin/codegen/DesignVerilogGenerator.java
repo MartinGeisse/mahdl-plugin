@@ -9,6 +9,7 @@ import name.martingeisse.mahdl.plugin.processor.ModuleProcessor;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleDefinition;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import name.martingeisse.mahdl.plugin.processor.definition.Named;
+import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.util.UserMessageException;
 
 import java.io.StringWriter;
@@ -61,8 +62,16 @@ public class DesignVerilogGenerator {
 		});
 		ModuleDefinition moduleDefinition = moduleProcessor.process();
 		StringWriter writer = new StringWriter();
-		new ModuleVerilogGenerator(moduleDefinition, writer).run();
-		outputConsumer.consume(module.getName(), writer.toString());
+		ModuleVerilogGenerator.MemoryFileGenerator memoryFileGenerator = (fileName, matrix) -> {
+			StringBuilder builder = new StringBuilder();
+			for (int rowIndex = 0; rowIndex < matrix.getFirstSize(); rowIndex++) {
+				ConstantValue.Vector row = (ConstantValue.Vector)matrix.selectIndex(rowIndex);
+				builder.append(row.getHexLiteral()).append('\n');
+			}
+			outputConsumer.consume(fileName, builder.toString());
+		};
+		new ModuleVerilogGenerator(moduleDefinition, writer, memoryFileGenerator).run();
+		outputConsumer.consume(module.getName() + ".v", writer.toString());
 		for (Named definition : moduleDefinition.getDefinitions().values()) {
 			if (definition instanceof ModuleInstance) {
 				ModuleInstance moduleInstance = (ModuleInstance) definition;
@@ -72,7 +81,8 @@ public class DesignVerilogGenerator {
 	}
 
 	public interface OutputConsumer {
-		void consume(String moduleName, String generatedCode) throws Exception;
+		void consume(String fileName, String contents) throws Exception;
 	}
+
 
 }
