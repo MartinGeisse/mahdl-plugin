@@ -85,7 +85,7 @@ public final class ModuleVerilogGenerator {
 			out.println(';');
 		});
 
-		// print continuous assignments from signal initializers TODO matrix initializers / file loading
+		// print continuous assignments from signal initializers
 		out.println();
 		foreachDefinition(Signal.class, (signal, first) -> {
 			if (signal.getInitializer() != null) {

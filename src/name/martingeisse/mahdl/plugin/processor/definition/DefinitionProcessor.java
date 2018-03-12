@@ -118,11 +118,17 @@ public final class DefinitionProcessor {
 					}
 					add(constant);
 				} else if (kind instanceof SignalLikeKind_Signal || kind instanceof SignalLikeKind_Register) {
-					if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
+					String kindString = (kind instanceof SignalLikeKind_Signal ? "signal" : "register");
+					if (dataTypeFamily == ProcessedDataType.Family.MATRIX) {
+						if (kind instanceof SignalLikeKind_Signal) {
+							errorHandler.onError(dataType, "matrix type not allowed for signal");
+							processedDataType = ProcessedDataType.Unknown.INSTANCE;
+						}
+					} else if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&
 						dataTypeFamily != ProcessedDataType.Family.BIT &&
-						dataTypeFamily != ProcessedDataType.Family.VECTOR &&
-						dataTypeFamily != ProcessedDataType.Family.MATRIX) {
-						errorHandler.onError(dataType, dataTypeFamily.getDisplayString() + " type not allowed for signals and registers");
+						dataTypeFamily != ProcessedDataType.Family.VECTOR) {
+
+						errorHandler.onError(dataType, dataTypeFamily.getDisplayString() + " type not allowed for " + kindString);
 						processedDataType = ProcessedDataType.Unknown.INSTANCE;
 					}
 					if (kind instanceof SignalLikeKind_Signal) {
