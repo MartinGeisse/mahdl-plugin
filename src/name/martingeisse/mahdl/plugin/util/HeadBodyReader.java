@@ -43,6 +43,8 @@ public abstract class HeadBodyReader {
 
 	protected abstract void onHeadProperty(String key, String value) throws FormatException;
 
+	protected abstract void onStartBody() throws FormatException;
+
 	protected abstract void onBodyLine(int totalLineIndex, int bodyLineIndex, String line) throws FormatException;
 
 	public static class FormatException extends Exception {

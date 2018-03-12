@@ -116,6 +116,9 @@ public class PicoblazeAssemblerAction extends AbstractModuleAndConsoleAction {
 			// write to output file
 			try (OutputStream outputStream = outputFile.getOutputStream(this)) {
 				try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8)) {
+					outputStreamWriter.write("rows: 1024\n");
+					outputStreamWriter.write("columns: 18\n");
+					outputStreamWriter.write("\n");
 					for (final int instruction : encodedInstructions) {
 						final String hex = Integer.toHexString(instruction);
 						final String zeros = "00000".substring(hex.length());

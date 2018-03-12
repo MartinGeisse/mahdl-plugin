@@ -31,7 +31,7 @@ public class LiteralParser {
 	public static ConstantValue parseLiteral(@NotNull Literal literal) throws ParseException {
 		try {
 			if (literal instanceof Literal_Vector) {
-				return parseVector(((Literal_Vector) literal).getValue());
+				return parseVector(((Literal_Vector) literal).getValue().getText());
 			} else if (literal instanceof Literal_Integer) {
 				String text = ((Literal_Integer) literal).getValue().getText();
 				return new ConstantValue.Integer(new BigInteger(text));
@@ -48,9 +48,8 @@ public class LiteralParser {
 	}
 
 	@NotNull
-	private static ConstantValue parseVector(@NotNull LeafPsiElement textElement) throws ParseException {
-		String text = textElement.getText();
-		Matcher matcher = VECTOR_PATTERN.matcher(text);
+	public static ConstantValue.Vector parseVector(@NotNull String literalText) throws ParseException {
+		Matcher matcher = VECTOR_PATTERN.matcher(literalText);
 		if (!matcher.matches()) {
 			throw new ParseException("malformed vector");
 		}

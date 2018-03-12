@@ -12,18 +12,26 @@ import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
+import name.martingeisse.mahdl.plugin.util.HeadBodyReader;
+import name.martingeisse.mahdl.plugin.util.LiteralParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.BitSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  *
  */
-public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
+public final class LoadMahdlMatrixFileFunction extends FixedSignatureFunction {
 
-	public LoadMatrixFileFunction() {
+	private static final Pattern ROW_PATTERN = Pattern.compile("[0-9a-fA-F]+");
+
+	public LoadMahdlMatrixFileFunction() {
 		super(ImmutableList.of(
 			ProcessedDataType.Text.INSTANCE,
 			ProcessedDataType.Integer.INSTANCE,
@@ -44,8 +52,8 @@ public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
 	@Override
 	public ConstantValue applyToConstantValues(@NotNull PsiElement errorSource, @NotNull List<ConstantValue> arguments, @NotNull ProcessedExpression.FormallyConstantEvaluationContext context) {
 		String filename = arguments.get(0).convertToString();
-		int firstSize = arguments.get(1).convertToInteger().intValueExact();
-		int secondSize = arguments.get(2).convertToInteger().intValueExact();
+		int rows = arguments.get(1).convertToInteger().intValueExact();
+		int columns = arguments.get(2).convertToInteger().intValueExact();
 
 		// locate the file
 		VirtualFile file = locateFile(errorSource, filename, context);
@@ -56,7 +64,85 @@ public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
 		// read the file
 		ConstantValue value;
 		try (InputStream inputStream = file.getInputStream()) {
-			value = parseFileContents(inputStream, firstSize, secondSize, errorSource, context);
+			try (InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+				new HeadBodyReader() {
+
+					private boolean rowsOk = false, columnsOk = false;
+					private BitSet bits;
+					private int firstEmptyBodyLine = -1;
+
+					@Override
+					protected void onHeadProperty(String key, String value) throws FormatException {
+						if (key.equals("rows")) {
+							if (expectNonNegativeInteger(key, value) != rows) {
+								throw new FormatException("mismatching number of rows");
+							}
+							rowsOk = true;
+						} else if (key.equals("columns")) {
+							if (expectNonNegativeInteger(key, value) != columns) {
+								throw new FormatException("mismatching number of columns");
+							}
+							columnsOk = true;
+						} else {
+							throw new FormatException("unknown property: " + key);
+						}
+					}
+
+					@Override
+					protected void onStartBody() throws FormatException {
+						if (!rowsOk) {
+							throw new FormatException("missing 'rows' property");
+						}
+						if (!columnsOk) {
+							throw new FormatException("missing 'columns' property");
+						}
+						bits = new BitSet(rows * columns);
+					}
+
+					@Override
+					protected void onBodyLine(int totalLineIndex, int bodyLineIndex, String line) throws FormatException {
+						line = line.trim();
+						if (line.isEmpty()) {
+							if (firstEmptyBodyLine == -1) {
+								firstEmptyBodyLine = totalLineIndex;
+							}
+							return;
+						}
+						if (firstEmptyBodyLine != -1) {
+							throw new FormatException("body contains empty line(s) starting at line " + firstEmptyBodyLine);
+						}
+						if (!ROW_PATTERN.matcher(line).matches()) {
+							throw new FormatException("invalid value at line " + totalLineIndex);
+						}
+						ConstantValue.Vector rowValue;
+						try {
+							rowValue = LiteralParser.parseVector(columns + "h" + line);
+						} catch (LiteralParser.ParseException e) {
+							// shouldn't happen since that line passed the ROW_PATTERN already
+							throw new FormatException("unexpected exception while parsing line " + totalLineIndex + ": " + e.toString());
+						}
+						// TODO
+						// value = parseFileContents(inputStream, firstSize, secondSize, errorSource, context);
+						// ROW_PATTERN
+					}
+
+					private int expectNonNegativeInteger(String key, String text) throws FormatException {
+						int value;
+						try {
+							value = Integer.parseInt(text);
+						} catch (NumberFormatException e) {
+							throw new FormatException("invalid value for property '" + key + "'");
+						}
+						if (value < 0) {
+							throw new FormatException("property '" + key + "' cannot be negative");
+						}
+						return value;
+					}
+
+				}.readFrom(inputStreamReader);
+			}
+		} catch (HeadBodyReader.FormatException e) {
+			return context.error(errorSource, e.getMessage());
 		} catch (IOException e) {
 			return context.error(errorSource, e.toString());
 		}
@@ -66,18 +152,7 @@ public abstract class LoadMatrixFileFunction extends FixedSignatureFunction {
 		if (value instanceof ConstantValue.Unknown) {
 			return value;
 		}
-		if (!(value instanceof ConstantValue.Matrix)) {
-			return context.error(errorSource, "file loader returned value of type " + value.getDataTypeFamily());
-		}
 		ConstantValue.Matrix matrixValue = (ConstantValue.Matrix) value;
-		if (matrixValue.getSecondSize() != secondSize) {
-			return context.error(errorSource, "file loader returned matrix with " +
-				matrixValue.getSecondSize() + " columns, expected " + secondSize);
-		}
-		if (matrixValue.getFirstSize() > firstSize) {
-			return context.error(errorSource, "file loader returned matrix with " + matrixValue.getFirstSize() +
-				" rows, expected at most " + firstSize);
-		}
 		return new ConstantValue.Matrix(firstSize, secondSize, matrixValue.getBits());
 
 	}
