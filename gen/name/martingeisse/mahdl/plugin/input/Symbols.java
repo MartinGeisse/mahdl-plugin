@@ -28,6 +28,7 @@ public class Symbols {
 	public static final MahdlElementType KW_INTERFACE = new MahdlElementType("KW_INTERFACE");
 	public static final MahdlElementType KW_MATRIX = new MahdlElementType("KW_MATRIX");
 	public static final MahdlElementType KW_MODULE = new MahdlElementType("KW_MODULE");
+	public static final MahdlElementType KW_NATIVE = new MahdlElementType("KW_NATIVE");
 	public static final MahdlElementType KW_OUT = new MahdlElementType("KW_OUT");
 	public static final MahdlElementType KW_REGISTER = new MahdlElementType("KW_REGISTER");
 	public static final MahdlElementType KW_SIGNAL = new MahdlElementType("KW_SIGNAL");
@@ -145,6 +146,7 @@ public class Symbols {
 	public static final MahdlElementType synthetic_List_Statement = new MahdlElementType("synthetic_List_Statement");
 	public static final MahdlElementType synthetic_List_StatementCaseItem_Nonempty = new MahdlElementType("synthetic_List_StatementCaseItem_Nonempty");
 	public static final MahdlElementType synthetic_List_Statement_Nonempty = new MahdlElementType("synthetic_List_Statement_Nonempty");
+	public static final MahdlElementType synthetic_Optional_KWNATIVE = new MahdlElementType("synthetic_Optional_KWNATIVE");
 	public static final MahdlElementType synthetic_SeparatedList_Expression_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_Expression_COMMA_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty = new MahdlElementType("synthetic_SeparatedList_IDENTIFIER_DOT_Nonempty");
 	public static final MahdlElementType synthetic_SeparatedList_ModuleInstanceDefinition_COMMA_Nonempty = new MahdlElementType("synthetic_SeparatedList_ModuleInstanceDefinition_COMMA_Nonempty");

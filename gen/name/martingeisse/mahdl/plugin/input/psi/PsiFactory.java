@@ -25,6 +25,9 @@ public class PsiFactory {
                     if (type == Symbols.synthetic_List_Statement) {
                 return new ListNode<Statement>(node, TokenSet.create(Symbols.statement_Assignment, Symbols.statement_IfThen, Symbols.statement_IfThenElse, Symbols.statement_Switch, Symbols.statement_Block, Symbols.statement_Error1, Symbols.statement_Error2), Statement.class);
             }
+                    if (type == Symbols.synthetic_Optional_KWNATIVE) {
+                return new Optional<LeafPsiElement>(node);
+            }
                     if (type == Symbols.synthetic_List_ExpressionCaseItem_Nonempty) {
                 return new ListNode<ExpressionCaseItem>(node, TokenSet.create(Symbols.expressionCaseItem_Value, Symbols.expressionCaseItem_Default), ExpressionCaseItem.class);
             }
