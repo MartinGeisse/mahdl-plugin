@@ -82,7 +82,13 @@ public final class ModuleVerilogGenerator {
 					out.print("\twire");
 				}
 			} else if (signalLike instanceof Register) {
-				out.print("\treg");
+				if (signalLike.getProcessedDataType() instanceof ProcessedDataType.Matrix) {
+					ProcessedDataType.Matrix type = (ProcessedDataType.Matrix)signalLike.getProcessedDataType();
+					out.print("reg[" + (type.getSecondSize() - 1) + ":0] " + signalLike.getName() + "[" + (type.getFirstSize() - 1) + ":0];");
+					return;
+				} else {
+					out.print("\treg");
+				}
 			} else {
 				return;
 			}
@@ -93,7 +99,6 @@ public final class ModuleVerilogGenerator {
 		});
 
 		// print continuous assignments from signal initializers
-		// TODO where does the code for ROMs get generated? It seems to happen nowhere right now.
 		out.println();
 		foreachDefinition(Signal.class, (signal, first) -> {
 			if (signal.getInitializer() != null) {
@@ -152,6 +157,7 @@ public final class ModuleVerilogGenerator {
 				builder.append(' ');
 				builder.append(instance.getName());
 				builder.append("(");
+				// TODO remove if all kinds of ports work the way they are generated now
 //				boolean firstPort = true;
 //				for (PortConnection portConnection : instance.getPortConnections().values()) {
 //					if (firstPort) {
@@ -219,8 +225,7 @@ public final class ModuleVerilogGenerator {
 			return existingRomName;
 		}
 		String romName = "anonymous_rom_" + memoryFileGenerationCounter;
-		// TODO wrong syntax
-		out.print("reg[" + (value.getFirstSize() - 1) + ":0][" + (value.getSecondSize() - 1) + ":0] " + romName + ';');
+		out.print("reg[" + (value.getSecondSize() - 1) + ":0] " + romName + "[" + (value.getFirstSize() - 1) + ":0];");
 		initializeMatrix(romName, value);
 		romContentsToName.put(value, romName);
 		return romName;
