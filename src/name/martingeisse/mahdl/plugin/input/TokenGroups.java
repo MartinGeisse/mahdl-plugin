@@ -17,6 +17,7 @@ public final class TokenGroups {
 	}
 
 	public static final TokenSet KEYWORDS = TokenSet.create(
+		Symbols.KW_NATIVE,
 		Symbols.KW_MODULE,
 		Symbols.KW_INTERFACE,
 		Symbols.KW_IN,
