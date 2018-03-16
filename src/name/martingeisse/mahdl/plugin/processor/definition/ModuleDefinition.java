@@ -14,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class ModuleDefinition {
 
+	private final boolean isNative;
+
 	@NotNull
 	private final String name;
 
@@ -23,10 +25,15 @@ public final class ModuleDefinition {
 	@NotNull
 	private final ImmutableList<ProcessedDoBlock> doBlocks;
 
-	public ModuleDefinition(@NotNull String name, @NotNull ImmutableMap<String, Named> definitions, @NotNull ImmutableList<ProcessedDoBlock> doBlocks) {
+	public ModuleDefinition(boolean isNative, @NotNull String name, @NotNull ImmutableMap<String, Named> definitions, @NotNull ImmutableList<ProcessedDoBlock> doBlocks) {
+		this.isNative = isNative;
 		this.name = name;
 		this.definitions = definitions;
 		this.doBlocks = doBlocks;
+	}
+
+	public boolean isNative() {
+		return isNative;
 	}
 
 	@NotNull

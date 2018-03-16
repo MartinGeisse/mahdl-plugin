@@ -61,6 +61,9 @@ public class DesignVerilogGenerator {
 			throw new UserMessageException(message);
 		});
 		ModuleDefinition moduleDefinition = moduleProcessor.process();
+		if (moduleDefinition.isNative()) {
+			return;
+		}
 		StringWriter writer = new StringWriter();
 		ModuleVerilogGenerator.MemoryFileGenerator memoryFileGenerator = (fileName, matrix) -> {
 			StringBuilder builder = new StringBuilder();

@@ -83,6 +83,7 @@ UnsignedInteger = "0" | {PositiveInteger}
 \_ { return Symbols.OP_CONCAT; }
 
 // module and interface keywords
+native { return Symbols.KW_NATIVE; }
 module { return Symbols.KW_MODULE; }
 interface { return Symbols.KW_INTERFACE; }
 in { return Symbols.KW_IN; }

@@ -19,7 +19,7 @@
 	OP_CONDITIONAL, OP_CONCAT,
 
 	// keywords
-	KW_MODULE, KW_INTERFACE, KW_IN, KW_OUT,
+	KW_NATIVE, KW_MODULE, KW_INTERFACE, KW_IN, KW_OUT,
 	KW_CONSTANT, KW_SIGNAL, KW_REGISTER,
 	KW_BIT, KW_VECTOR, KW_MATRIX, KW_INTEGER, KW_TEXT,
 	KW_DO, KW_IF, KW_ELSE, KW_SWITCH, KW_CASE, KW_DEFAULT,
@@ -61,7 +61,7 @@
 // toplevel / modules
 //
 
-module ::= KW_MODULE qualifiedModuleName:moduleName SEMICOLON
+module ::= KW_NATIVE?:nativeness KW_MODULE qualifiedModuleName:moduleName SEMICOLON
 		KW_INTERFACE OPENING_CURLY_BRACE portDefinitionGroup*:portDefinitionGroups CLOSING_CURLY_BRACE
 		implementationItem*:implementationItems;
 

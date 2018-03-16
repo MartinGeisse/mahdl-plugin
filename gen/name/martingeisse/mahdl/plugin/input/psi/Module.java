@@ -27,14 +27,17 @@ public final class Module extends ASTWrapperPsiElement implements PsiNamedElemen
         super(node);
     }
 
+        public Optional<LeafPsiElement> getNativeness() {
+            return (Optional<LeafPsiElement>)InternalPsiUtil.getChild(this, 0);
+        }
         public QualifiedModuleName getModuleName() {
-            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 1);
+            return (QualifiedModuleName)InternalPsiUtil.getChild(this, 2);
         }
         public ListNode<PortDefinitionGroup> getPortDefinitionGroups() {
-            return (ListNode<PortDefinitionGroup>)InternalPsiUtil.getChild(this, 5);
+            return (ListNode<PortDefinitionGroup>)InternalPsiUtil.getChild(this, 6);
         }
         public ListNode<ImplementationItem> getImplementationItems() {
-            return (ListNode<ImplementationItem>)InternalPsiUtil.getChild(this, 7);
+            return (ListNode<ImplementationItem>)InternalPsiUtil.getChild(this, 8);
         }
     
 	

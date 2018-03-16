@@ -69,6 +69,15 @@ public final class ModuleProcessor {
 		// make sure the module name matches the file name and sits in the right folder
 		validateModuleNameAgainstFilePath();
 
+		// validate nativeness (but still continue even if violated, since the keyword may be misplaced)
+		boolean isNative = module.getNativeness().getIt() != null;
+		if (isNative) {
+			ImmutableList<ImplementationItem> implementationItems = module.getImplementationItems().getAll();
+			if (!implementationItems.isEmpty()) {
+				errorHandler.onError(implementationItems.get(0), "native module cannot contain implementation items");
+			}
+		}
+
 		// Create helper objects. These objects work together, especially during constant definition analysis, due to
 		// a mutual dependency between the type system, constant evaluation and expression processing. Note the
 		// LocalDefinitionResolver parameter to the ExpressionProcessorImpl calling getDefinitions() on the fly,
@@ -140,7 +149,7 @@ public final class ModuleProcessor {
 		// now check that all ports and signals without initializer have been assigned to
 		assignmentValidator.checkMissingAssignments(getDefinitions().values());
 
-		return new ModuleDefinition(canonicalModuleName, ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
+		return new ModuleDefinition(isNative, canonicalModuleName, ImmutableMap.copyOf(getDefinitions()), ImmutableList.copyOf(processedDoBlocks));
 	}
 
 	private void validateModuleNameAgainstFilePath() {
