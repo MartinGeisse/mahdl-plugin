@@ -17,6 +17,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import name.martingeisse.mahdl.plugin.MahdlModuleIndex;
 import name.martingeisse.mahdl.plugin.MahdlSourceFile;
 import name.martingeisse.mahdl.plugin.input.ReferenceResolutionException;
+import name.martingeisse.mahdl.plugin.input.Symbols;
 import name.martingeisse.mahdl.plugin.input.psi.Module;
 import name.martingeisse.mahdl.plugin.input.psi.PsiUtil;
 import name.martingeisse.mahdl.plugin.input.psi.QualifiedModuleName;
@@ -72,21 +73,10 @@ public class ModuleReference implements PsiReference {
 	@Override
 	@NotNull
 	public PsiElement handleElementRename(@Nullable String newName) throws IncorrectOperationException {
-
-		// TODO have to see if the argument is a fully qualified name or a simple name. Especially
-		// when the newName does not contain a dot, we need to know if it's a local rename or if the
-		// module got moved to the root package (and potentially renamed).
-
-//		if (newName.indexOf('.') < 0) {
-//			ImmutableList<LeafPsiElement> segments = moduleName.getSegments().getAll();
-//			LeafPsiElement lastSegment = segments
-//
-//			String lastSegment = PsiUtil.getSimpleModuleName(moduleName);
-//			newName = StringUtils.
-//		}
-//		return PsiUtil.setText(expression.getIdentifier(), newName);
-
-		throw new IncorrectOperationException("TODO");
+		// TODO check PSI afterwards
+		// return (PsiElement) moduleName.replaceWithText(newName);
+		// moduleName.getNode().addLeaf(Symbols.qualifiedModuleName, "foo.bar", null);
+		throw new IncorrectOperationException("not yet supported");
 	}
 
 	@Override
