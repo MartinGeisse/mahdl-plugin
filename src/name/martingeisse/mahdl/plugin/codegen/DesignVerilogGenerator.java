@@ -74,7 +74,7 @@ public class DesignVerilogGenerator {
 			outputConsumer.consume(fileName, builder.toString());
 		};
 		new ModuleVerilogGenerator(moduleDefinition, writer, memoryFileGenerator).run();
-		outputConsumer.consume(module.getName() + ".v", writer.toString());
+		outputConsumer.consume(ModuleNamingStrategy.getVerilogNameForMahdlName(module.getName()) + ".v", writer.toString());
 		for (Named definition : moduleDefinition.getDefinitions().values()) {
 			if (definition instanceof ModuleInstance) {
 				ModuleInstance moduleInstance = (ModuleInstance) definition;

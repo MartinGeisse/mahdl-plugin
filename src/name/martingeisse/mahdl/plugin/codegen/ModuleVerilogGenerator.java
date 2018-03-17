@@ -49,7 +49,7 @@ public final class ModuleVerilogGenerator {
 
 		// print module intro
 		out.println();
-		out.print("module " + module.getName() + "(");
+		out.print("module " + ModuleNamingStrategy.getVerilogNameForMahdlName(module.getName()) + "(");
 		foreachDefinition(ModulePort.class, (port, first) -> {
 			if (!first) {
 				out.print(", ");
@@ -153,7 +153,7 @@ public final class ModuleVerilogGenerator {
 			StringBuilder builder = new StringBuilder();
 			foreachDefinition(ModuleInstance.class, (instance, firstModule) -> {
 				builder.append('\t');
-				builder.append(instance.getModuleElement().getName());
+				builder.append(ModuleNamingStrategy.getVerilogNameForMahdlName(instance.getModuleElement().getName()));
 				builder.append(' ');
 				builder.append(instance.getName());
 				builder.append("(");
@@ -232,7 +232,7 @@ public final class ModuleVerilogGenerator {
 	}
 
 	private void initializeMatrix(String destinationName, ConstantValue.Matrix matrixValue) {
-		String filename = module.getName() + memoryFileGenerationCounter + ".mif";
+		String filename = ModuleNamingStrategy.getVerilogNameForMahdlName(module.getName()) + memoryFileGenerationCounter + ".mif";
 		try {
 			memoryFileGenerator.generateMemoryFile(filename, matrixValue);
 		} catch (Exception e) {

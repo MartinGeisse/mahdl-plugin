@@ -123,11 +123,11 @@ public class GenerateIseBuildAction extends AbstractModuleAndConsoleMahdlFileAct
 	}
 
 	private VirtualFile findAssociatedFile(VirtualFile toplevelModuleFile, String dotExtension) {
-		String grammarFileName = toplevelModuleFile.getName();
-		if (!grammarFileName.endsWith(".mahdl")) {
+		String moduleFileName = toplevelModuleFile.getName();
+		if (!moduleFileName.endsWith(".mahdl")) {
 			throw new UserMessageException("Toplevel module file extension is not .mahdl");
 		}
-		String associatedFileName = grammarFileName.substring(0, grammarFileName.length() - ".mahdl".length()) + dotExtension;
+		String associatedFileName = moduleFileName.substring(0, moduleFileName.length() - ".mahdl".length()) + dotExtension;
 		VirtualFile associatedFile = toplevelModuleFile.getParent().findChild(associatedFileName);
 		if (associatedFile == null) {
 			throw new UserMessageException("Could not find associated " + dotExtension + " file");
