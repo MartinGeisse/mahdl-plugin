@@ -181,6 +181,17 @@ public enum ProcessedBinaryOperator {
 					return leftType;
 				}
 			}
+
+			// predicate operators return a bit
+			if (this == EQUAL || this == NOT_EQUAL || this == LESS_THAN || this == LESS_THAN_OR_EQUAL || this == GREATER_THAN || this == GREATER_THAN_OR_EQUAL) {
+				if (leftType.equals(rightType)) {
+					return ProcessedDataType.Bit.INSTANCE;
+				} else {
+					throw new TypeErrorException();
+				}
+			}
+
+			// the others return their operand type
 			if (leftType instanceof ProcessedDataType.Integer && rightType instanceof ProcessedDataType.Integer) {
 				return leftType;
 			}
