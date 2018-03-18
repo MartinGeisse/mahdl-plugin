@@ -124,6 +124,17 @@ public abstract class TypeConversion extends ProcessedExpression {
 
 	}
 
+	// TODO this class is probably only used for an integer constant that gets initialized with a vector value -- is that useful at all?
+	// Proof:
+	// - conversions to other types (especially BIT will be ommitted here)
+	// - only called by ExpressionProcessorImpl.convertImplicitly
+	//   - called by ExpressionProcessor interface (two process() methods)
+	//     - one of them only handles BIT
+	//     - the other handles:
+	//       - SignalLike initializer, which can only be integer for constants (the only case where this is used!)
+	//       - assignments in do-blocks, but an assignment target cannot be of integer type
+	//   - also called when converting the result of a switch expression, but that will never convert vector to integer, only the other way round
+	//   - also called when converting a switch selector, but for that only vector types are allowed
 	public static final class VectorToInteger extends TypeConversion {
 
 		public VectorToInteger(@NotNull ProcessedExpression operand) throws TypeErrorException {

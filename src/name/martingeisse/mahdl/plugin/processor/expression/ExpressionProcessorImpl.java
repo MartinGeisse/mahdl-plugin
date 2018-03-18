@@ -84,7 +84,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 						errorInCases = true;
 					}
 				}
-				processedCases.add(new ProcessedSwitchExpression.Case(caseSelectorValues, resultValueExpression));
+				processedCases.add(new ProcessedSwitchExpression.Case(ImmutableList.copyOf(caseSelectorValues), resultValueExpression));
 
 			} else if (caseItem instanceof ExpressionCaseItem_Default) {
 
