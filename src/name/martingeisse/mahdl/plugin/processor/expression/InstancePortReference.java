@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.definition.InstancePort;
 import name.martingeisse.mahdl.plugin.processor.definition.ModuleInstance;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +40,21 @@ public class InstancePortReference extends ProcessedExpression {
 	}
 
 	@Override
+	@NotNull
 	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		return context.notConstant(this);
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performFolding(@NotNull ErrorHandler errorHandler) {
+		return this;
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		return this;
 	}
 
 }

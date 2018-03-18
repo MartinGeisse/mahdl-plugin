@@ -6,6 +6,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedAssignment;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedStatement;
 import name.martingeisse.mahdl.plugin.processor.statement.ProcessedSwitchStatement;
@@ -91,27 +92,54 @@ public final class ProcessedSwitchExpression extends ProcessedExpression {
 		return defaultBranch.evaluateFormallyConstant(context);
 	}
 
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression selector = this.selector.performFolding(errorHandler);
+		ProcessedExpression defaultBranch = (this.defaultBranch == null ? null : this.defaultBranch.performFolding(errorHandler));
+		boolean folded = (selector != this.selector || defaultBranch != this.defaultBranch);
+		List<Case> cases = new ArrayList<>();
+		for (Case aCase : this.cases) {
+			Case foldedCase = aCase.performFolding(errorHandler);
+			cases.add(foldedCase);
+			if (foldedCase != aCase) {
+				folded = true;
+			}
+		}
+		try {
+			return folded ? new ProcessedSwitchExpression(getErrorSource(), getDataType(), selector, ImmutableList.copyOf(cases), defaultBranch) : this;
+		} catch (TypeErrorException e) {
+			errorHandler.onError(getErrorSource(), "internal type error during folding of switch expression");
+			return this;
+		}
+	}
+
 	public static final class Case {
 
 		@NotNull
-		private final List<ConstantValue.Vector> selectorValues;
+		private final ImmutableList<ConstantValue.Vector> selectorValues;
 
 		@NotNull
 		private final ProcessedExpression resultValue;
 
-		public Case(@NotNull List<ConstantValue.Vector> selectorValues, @NotNull ProcessedExpression resultValue) {
+		public Case(@NotNull ImmutableList<ConstantValue.Vector> selectorValues, @NotNull ProcessedExpression resultValue) {
 			this.selectorValues = selectorValues;
 			this.resultValue = resultValue;
 		}
 
 		@NotNull
-		public List<ConstantValue.Vector> getSelectorValues() {
+		public ImmutableList<ConstantValue.Vector> getSelectorValues() {
 			return selectorValues;
 		}
 
 		@NotNull
 		public ProcessedExpression getResultValue() {
 			return resultValue;
+		}
+
+		public Case performFolding(ErrorHandler errorHandler) {
+			ProcessedExpression resultValue = this.resultValue.performFolding(errorHandler);
+			return (resultValue == this.resultValue ? this : new Case(selectorValues, resultValue));
 		}
 
 	}

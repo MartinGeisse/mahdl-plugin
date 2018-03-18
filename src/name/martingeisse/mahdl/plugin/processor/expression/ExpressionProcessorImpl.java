@@ -132,7 +132,7 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 
 		// check for missing selector values
 		if (processedDefaultCase == null) {
-			int selectorSize = ((ProcessedDataType.Vector)selector.getDataType()).getSize();
+			int selectorSize = ((ProcessedDataType.Vector) selector.getDataType()).getSize();
 			if (foundSelectorValues.size() != (1 << selectorSize)) {
 				return error(expression, "incomplete switch expression");
 			}
@@ -149,6 +149,10 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 	}
 
 	public ProcessedExpression process(Expression expression) {
+		return processWithoutFolding(expression).performFolding(errorHandler);
+	}
+
+	private ProcessedExpression processWithoutFolding(Expression expression) {
 		try {
 			if (expression instanceof Expression_Literal) {
 				return process((Expression_Literal) expression);

@@ -104,11 +104,9 @@ public final class ModuleProcessor {
 			}
 		}
 
-		// this object detects duplicate or missing assignments
+		// Process do-blocks and check for missing / duplicate assignments. Do so in the original file's order so when
+		// an error message could in principle appear in one of multiple places, it appears in the topmost place.
 		assignmentValidator = new AssignmentValidator(errorHandler);
-
-		// Process named definitions and do-blocks. Do so in the original file's order so when an error message could
-		// in principle appear in one of multiple places, it appears where the user expects it.
 		List<Pair<Runnable, PsiElement>> runnables = new ArrayList<>();
 		for (Named item : getDefinitions().values()) {
 			// Inconsistencies regarding signal-likes in the initializer vs. other assignments:

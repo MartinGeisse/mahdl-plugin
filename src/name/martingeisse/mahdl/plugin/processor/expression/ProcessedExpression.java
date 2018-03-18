@@ -5,6 +5,8 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.codegen.ExpressionVerilogGenerator;
+import name.martingeisse.mahdl.plugin.codegen.ModuleHasErrorsException;
 import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,19 @@ public abstract class ProcessedExpression {
 		return dataType;
 	}
 
+	/**
+	 * If this expression can be used as a bit literal, returns the corresponding expression that *is* a bit literal.
+	 * Otherwise returns null.
+	 * <p>
+	 * The only expressions that can be used as a bit literal (except bit literals themselves) are the integer literals
+	 * 0 and 1. (Any computed integer that is 0 or 1, even if formally constant, cannot be used as a bit literal).
+	 * Before turning an integer literal into a bit literal, make sure you need a bit and not an integer!
+	 */
+	@Nullable
+	public ProcessedExpression recognizeBitLiteral() {
+		return null;
+	}
+
 	public final ConstantValue evaluateFormallyConstant(FormallyConstantEvaluationContext context) {
 		ConstantValue value = evaluateFormallyConstantInternal(context);
 		if (value == null) {
@@ -50,21 +65,40 @@ public abstract class ProcessedExpression {
 		}
 	}
 
-	/**
-	 * If this expression can be used as a bit literal, returns the corresponding expression that *is* a bit literal.
-	 * Otherwise returns null.
-	 * <p>
-	 * The only expressions that can be used as a bit literal (except bit literals themselves) are the integer literals
-	 * 0 and 1. (Any computed integer that is 0 or 1, even if formally constant, cannot be used as a bit literal).
-	 * Before turning an integer literal into a bit literal, make sure you need a bit and not an integer!
-	 */
-	@Nullable
-	public ProcessedExpression recognizeBitLiteral() {
-		return null;
+	@NotNull
+	protected abstract ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context);
+
+	@NotNull
+	protected ProcessedExpression performFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression.FormallyConstantEvaluationContext context = new ProcessedExpression.FormallyConstantEvaluationContext(errorHandler) {
+
+			@Override
+			@NotNull
+			public ConstantValue.Unknown notConstant(@NotNull PsiElement errorSource) {
+				throw new NotConstantException();
+			}
+
+			@Override
+			@NotNull
+			public ConstantValue.Unknown notConstant(@NotNull ProcessedExpression errorSource) {
+				throw new NotConstantException();
+
+			}
+		};
+		ConstantValue value;
+		try {
+			value = evaluateFormallyConstant(context);
+		} catch (NotConstantException e) {
+			return performSubFolding(errorHandler);
+		}
+		return new ProcessedConstantValue(errorSource, value);
+	}
+
+	private static class NotConstantException extends RuntimeException {
 	}
 
 	@NotNull
-	protected abstract ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context);
+	protected abstract ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler);
 
 	public static class FormallyConstantEvaluationContext {
 
