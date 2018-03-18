@@ -157,14 +157,28 @@ public abstract class ConstantValue {
 
 	}
 
+	public final static class TruncateRequiredException extends ArithmeticException {
+		public TruncateRequiredException(String s) {
+			super(s);
+		}
+	}
+
 	// note: the Java BitSet uses the same index values as the MaHDL vector, just the from/to notation is reversed.
 	public static final class Vector extends ConstantValue {
 
 		private final int size;
 		private final BitSet bits;
 
-		public Vector(int size, BigInteger integerValue) {
+		public Vector(int size, BigInteger integerValue, boolean truncate) throws TruncateRequiredException {
 			this(size, IntegerBitUtil.convertToBitSet(integerValue, size), false);
+			if (!truncate) {
+				if (integerValue.compareTo(BigInteger.ZERO) < 0) {
+					throw new TruncateRequiredException("negative value " + integerValue + " not allowed in conversion to vector");
+				}
+				if (integerValue.bitLength() > size) {
+					throw new TruncateRequiredException("value " + integerValue + " too large in conversion to vector of size " + size);
+				}
+			}
 		}
 
 		public Vector(int size, @NotNull BitSet bits) {

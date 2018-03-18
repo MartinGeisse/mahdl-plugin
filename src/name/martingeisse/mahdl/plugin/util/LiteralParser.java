@@ -64,7 +64,11 @@ public class LiteralParser {
 		if (integerValue.bitLength() > size) {
 			throw new ParseException("vector literal contains a value larger than its sepcified size");
 		}
-		return new ConstantValue.Vector(size, integerValue);
+		try {
+			return new ConstantValue.Vector(size, integerValue, false);
+		} catch (ConstantValue.TruncateRequiredException e) {
+			throw new ParseException("internal error while parsing vector constant: " + e);
+		}
 	}
 
 	@NotNull

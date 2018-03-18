@@ -116,7 +116,7 @@ public final class ProcessedBinaryOperation extends ProcessedExpression {
 		if (getDataType() instanceof ProcessedDataType.Integer) {
 			return integerResultValue;
 		} else if (getDataType() instanceof ProcessedDataType.Vector) {
-			return new ConstantValue.Vector(((ProcessedDataType.Vector) getDataType()).getSize(), resultInteger);
+			return new ConstantValue.Vector(((ProcessedDataType.Vector) getDataType()).getSize(), resultInteger, true);
 		} else {
 			return context.evaluationInconsistency(this, "unexpected result type for IVO: " + getDataType());
 		}

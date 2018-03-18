@@ -112,10 +112,11 @@ public abstract class TypeConversion extends ProcessedExpression {
 			BigInteger integer = operandValue.convertToInteger();
 			if (integer == null) {
 				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
-			} else {
-				int size = getVectorDataType().getSize();
-				BitSet bits = IntegerBitUtil.convertToBitSet(integer, size);
-				return new ConstantValue.Vector(size, bits);
+			}
+			try {
+				return new ConstantValue.Vector(getVectorDataType().getSize(), integer, false);
+			} catch (ConstantValue.TruncateRequiredException e) {
+				return context.error(this, e.getMessage());
 			}
 		}
 

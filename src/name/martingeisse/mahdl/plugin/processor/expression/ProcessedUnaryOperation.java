@@ -76,7 +76,7 @@ public final class ProcessedUnaryOperation extends ProcessedExpression {
 		// if the operand was a vector, turn the result into a vector of the same size, otherwise return as integer
 		if (operandValue instanceof ConstantValue.Vector) {
 			int size = ((ConstantValue.Vector) operandValue).getSize();
-			return new ConstantValue.Vector(size, integerResult);
+			return new ConstantValue.Vector(size, integerResult, true);
 		} else {
 			return new ConstantValue.Integer(integerResult);
 		}
