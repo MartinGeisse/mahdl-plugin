@@ -119,8 +119,6 @@ public abstract class TypeConversion extends ProcessedExpression {
 				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
 			}
 			try {
-				// TODO the overflow check is not reported in the IntelliJ annotator because constant folding
-				// isn't invoked there!
 				return new ConstantValue.Vector(getVectorDataType().getSize(), integer, false);
 			} catch (ConstantValue.TruncateRequiredException e) {
 				return context.error(this, e.getMessage());
