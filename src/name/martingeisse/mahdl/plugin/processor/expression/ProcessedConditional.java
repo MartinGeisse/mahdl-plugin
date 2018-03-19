@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,6 +63,24 @@ public final class ProcessedConditional extends ProcessedExpression {
 			return thenValue;
 		} else {
 			return elseValue;
+		}
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression condition = this.condition.performFolding(errorHandler);
+		ProcessedExpression thenBranch = this.thenBranch.performFolding(errorHandler);
+		ProcessedExpression elseBranch = this.elseBranch.performFolding(errorHandler);
+		if (condition != this.condition || thenBranch != this.thenBranch || elseBranch != this.elseBranch) {
+			try {
+				return new ProcessedConditional(getErrorSource(), condition, thenBranch, elseBranch);
+			} catch (TypeErrorException e) {
+				errorHandler.onError(getErrorSource(), "internal type error during folding of conditional expression");
+				return this;
+			}
+		} else {
+			return this;
 		}
 	}
 

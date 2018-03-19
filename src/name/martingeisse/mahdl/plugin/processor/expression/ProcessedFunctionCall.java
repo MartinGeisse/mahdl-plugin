@@ -7,6 +7,7 @@ package name.martingeisse.mahdl.plugin.processor.expression;
 import com.google.common.collect.ImmutableList;
 import com.intellij.psi.PsiElement;
 import name.martingeisse.mahdl.plugin.functions.BuiltinFunction;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -42,7 +43,7 @@ public class ProcessedFunctionCall extends ProcessedExpression {
 
 	@Override
 	@NotNull
-	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
+	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		boolean error = false;
 		List<ConstantValue> argumentValues = new ArrayList<>();
 		for (ProcessedExpression argument : arguments) {
@@ -56,6 +57,18 @@ public class ProcessedFunctionCall extends ProcessedExpression {
 			return ConstantValue.Unknown.INSTANCE;
 		}
 		return function.applyToConstantValues(getErrorSource(), argumentValues, context);
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		List<ProcessedExpression> foldedArguments = new ArrayList<>();
+		boolean folded = false;
+		for (ProcessedExpression originalArgument : this.arguments) {
+			ProcessedExpression foldedArgument = originalArgument.performFolding(errorHandler);
+			folded |= (foldedArgument != originalArgument);
+		}
+		return folded ? new ProcessedFunctionCall(getErrorSource(), getDataType(), function, ImmutableList.copyOf(foldedArguments)) : this;
 	}
 
 }

@@ -1,6 +1,6 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
-import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import name.martingeisse.mahdl.plugin.util.IntegerBitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +28,7 @@ public abstract class TypeConversion extends ProcessedExpression {
 	private final ProcessedExpression operand;
 
 	private TypeConversion(@NotNull ProcessedDataType dataType, @NotNull ProcessedExpression operand) {
-		this(operand.getErrorSource(), dataType, operand);
-	}
-
-	private TypeConversion(@NotNull PsiElement errorSource, @NotNull ProcessedDataType dataType, @NotNull ProcessedExpression operand) {
-		super(errorSource, dataType);
+		super(operand.getErrorSource(), dataType);
 		this.operand = operand;
 	}
 
@@ -50,17 +46,28 @@ public abstract class TypeConversion extends ProcessedExpression {
 		return perform(context, operand.evaluateFormallyConstant(context));
 	}
 
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression operand = this.operand.performFolding(errorHandler);
+		if (operand == this.operand) {
+			return this;
+		}
+		try {
+			return createEquivalentConversion(operand);
+		} catch (TypeErrorException e) {
+			errorHandler.onError(getErrorSource(), "internal type error during folding of type conversion");
+			return this;
+		}
+	}
+
+	// creates a type conversion of the same class as this, using the specified operand
+	protected abstract TypeConversion createEquivalentConversion(ProcessedExpression operand) throws TypeErrorException;
+
 	public static final class BitToVector extends TypeConversion {
 
 		public BitToVector(@NotNull ProcessedExpression operand) throws TypeErrorException {
 			super(new ProcessedDataType.Vector(1), operand);
-			if (!(operand.getDataType() instanceof ProcessedDataType.Bit)) {
-				throw new TypeErrorException();
-			}
-		}
-
-		public BitToVector(@NotNull PsiElement errorSource, @NotNull ProcessedExpression operand) throws TypeErrorException {
-			super(errorSource, new ProcessedDataType.Vector(1), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Bit)) {
 				throw new TypeErrorException();
 			}
@@ -83,19 +90,17 @@ public abstract class TypeConversion extends ProcessedExpression {
 			}
 		}
 
+		@Override
+		protected TypeConversion createEquivalentConversion(ProcessedExpression operand) throws TypeErrorException {
+			return new BitToVector(operand);
+		}
+
 	}
 
 	public static final class IntegerToVector extends TypeConversion {
 
 		public IntegerToVector(int targetSize, @NotNull ProcessedExpression operand) throws TypeErrorException {
 			super(new ProcessedDataType.Vector(targetSize), operand);
-			if (!(operand.getDataType() instanceof ProcessedDataType.Integer)) {
-				throw new TypeErrorException();
-			}
-		}
-
-		public IntegerToVector(@NotNull PsiElement errorSource, int targetSize, @NotNull ProcessedExpression operand) throws TypeErrorException {
-			super(errorSource, new ProcessedDataType.Vector(targetSize), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Integer)) {
 				throw new TypeErrorException();
 			}
@@ -122,30 +127,18 @@ public abstract class TypeConversion extends ProcessedExpression {
 			}
 		}
 
+		@Override
+		protected TypeConversion createEquivalentConversion(ProcessedExpression operand) throws TypeErrorException {
+			return new IntegerToVector(getVectorDataType().getSize(), operand);
+		}
+
 	}
 
-	// TODO this class is probably only used for an integer constant that gets initialized with a vector value -- is that useful at all?
-	// Proof:
-	// - conversions to other types (especially BIT will be ommitted here)
-	// - only called by ExpressionProcessorImpl.convertImplicitly
-	//   - called by ExpressionProcessor interface (two process() methods)
-	//     - one of them only handles BIT
-	//     - the other handles:
-	//       - SignalLike initializer, which can only be integer for constants (the only case where this is used!)
-	//       - assignments in do-blocks, but an assignment target cannot be of integer type
-	//   - also called when converting the result of a switch expression, but that will never convert vector to integer, only the other way round
-	//   - also called when converting a switch selector, but for that only vector types are allowed
+	// This class is used only in one place: When an initializer for an integer constant has vector type.
 	public static final class VectorToInteger extends TypeConversion {
 
 		public VectorToInteger(@NotNull ProcessedExpression operand) throws TypeErrorException {
 			super(new ProcessedDataType.Integer(), operand);
-			if (!(operand.getDataType() instanceof ProcessedDataType.Vector)) {
-				throw new TypeErrorException();
-			}
-		}
-
-		public VectorToInteger(@NotNull PsiElement errorSource, @NotNull ProcessedExpression operand) throws TypeErrorException {
-			super(errorSource, new ProcessedDataType.Integer(), operand);
 			if (!(operand.getDataType() instanceof ProcessedDataType.Vector)) {
 				throw new TypeErrorException();
 			}
@@ -165,6 +158,11 @@ public abstract class TypeConversion extends ProcessedExpression {
 			} else {
 				return context.evaluationInconsistency(this, "got wrong operand value: " + operandValue);
 			}
+		}
+
+		@Override
+		protected TypeConversion createEquivalentConversion(ProcessedExpression operand) throws TypeErrorException {
+			return new VectorToInteger(operand);
 		}
 
 	}

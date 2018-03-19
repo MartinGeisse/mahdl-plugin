@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,6 +52,22 @@ public final class ProcessedRangeSelection extends ProcessedExpression {
 	@NotNull
 	protected ConstantValue evaluateFormallyConstantInternal(@NotNull FormallyConstantEvaluationContext context) {
 		return container.evaluateFormallyConstant(context).selectRange(fromIndex, toIndex);
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression container = this.container.performFolding(errorHandler);
+		if (container != this.container) {
+			try {
+				return new ProcessedRangeSelection(getErrorSource(), getDataType(), container, fromIndex, toIndex);
+			} catch (TypeErrorException e) {
+				errorHandler.onError(getErrorSource(), "internal type error during folding of range selection");
+				return this;
+			}
+		} else {
+			return this;
+		}
 	}
 
 }

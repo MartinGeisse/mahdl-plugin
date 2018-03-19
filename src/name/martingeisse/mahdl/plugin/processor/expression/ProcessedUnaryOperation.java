@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigInteger;
@@ -81,6 +82,22 @@ public final class ProcessedUnaryOperation extends ProcessedExpression {
 			return new ConstantValue.Integer(integerResult);
 		}
 
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression operand = this.operand.performFolding(errorHandler);
+		if (operand != this.operand) {
+			try {
+				return new ProcessedUnaryOperation(getErrorSource(), operand, operator);
+			} catch (TypeErrorException e) {
+				errorHandler.onError(getErrorSource(), "internal type error during folding of unary operation");
+				return this;
+			}
+		} else {
+			return this;
+		}
 	}
 
 }

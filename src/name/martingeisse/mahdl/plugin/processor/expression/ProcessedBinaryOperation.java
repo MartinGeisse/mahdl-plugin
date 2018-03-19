@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -121,6 +122,23 @@ public final class ProcessedBinaryOperation extends ProcessedExpression {
 			return context.evaluationInconsistency(this, "unexpected result type for IVO: " + getDataType());
 		}
 
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression leftOperand = this.leftOperand.performFolding(errorHandler);
+		ProcessedExpression rightOperand = this.rightOperand.performFolding(errorHandler);
+		if (leftOperand != this.leftOperand || rightOperand != this.rightOperand) {
+			try {
+				return new ProcessedBinaryOperation(getErrorSource(), leftOperand, rightOperand, operator);
+			} catch (TypeErrorException e) {
+				errorHandler.onError(getErrorSource(), "internal type error during folding of binary operation");
+				return this;
+			}
+		} else {
+			return this;
+		}
 	}
 
 }

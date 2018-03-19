@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.processor.expression;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,6 +94,28 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 		return intValue;
 	}
 
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		ProcessedExpression container = this.container.performFolding(errorHandler);
+		ProcessedExpression index = this.index.performFolding(errorHandler);
+		if (container != this.container || index != this.index) {
+			try {
+				return createEquivalentIndexSelection(getErrorSource(), container, index);
+			} catch (TypeErrorException e) {
+				errorHandler.onError(getErrorSource(), "internal type error during folding of index selection");
+				return this;
+			}
+		} else {
+			return this;
+		}
+	}
+
+	// creates an index selection of the same class as this, using the specified container and index
+	protected abstract ProcessedIndexSelection createEquivalentIndexSelection(PsiElement errorSource,
+																			  ProcessedExpression container,
+																			  ProcessedExpression index) throws TypeErrorException;
+
 	public static final class BitFromVector extends ProcessedIndexSelection {
 
 		public BitFromVector(@NotNull PsiElement errorSource, @NotNull ProcessedExpression container, @NotNull ProcessedExpression index) throws TypeErrorException {
@@ -109,6 +132,11 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 			} else if (!(index.getDataType() instanceof ProcessedDataType.Integer)) {
 				throw new TypeErrorException();
 			}
+		}
+
+		@Override
+		protected ProcessedIndexSelection createEquivalentIndexSelection(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+			return new BitFromVector(errorSource, container, index);
 		}
 
 	}
@@ -134,6 +162,11 @@ public abstract class ProcessedIndexSelection extends ProcessedExpression {
 				throw new TypeErrorException();
 			}
 			return new ProcessedDataType.Vector(containerType.getSecondSize());
+		}
+
+		@Override
+		protected ProcessedIndexSelection createEquivalentIndexSelection(PsiElement errorSource, ProcessedExpression container, ProcessedExpression index) throws TypeErrorException {
+			return new VectorFromMatrix(errorSource, container, index);
 		}
 
 	}

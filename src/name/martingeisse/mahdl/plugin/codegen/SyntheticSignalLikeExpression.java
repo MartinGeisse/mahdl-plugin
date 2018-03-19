@@ -5,6 +5,7 @@
 package name.martingeisse.mahdl.plugin.codegen;
 
 import com.intellij.psi.PsiElement;
+import name.martingeisse.mahdl.plugin.processor.ErrorHandler;
 import name.martingeisse.mahdl.plugin.processor.expression.ConstantValue;
 import name.martingeisse.mahdl.plugin.processor.expression.ProcessedExpression;
 import name.martingeisse.mahdl.plugin.processor.type.ProcessedDataType;
@@ -29,6 +30,18 @@ public final class SyntheticSignalLikeExpression extends ProcessedExpression {
 	@Override
 	protected ConstantValue evaluateFormallyConstantInternal(FormallyConstantEvaluationContext context) {
 		return context.notConstant(this);
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performFolding(@NotNull ErrorHandler errorHandler) {
+		return this;
+	}
+
+	@NotNull
+	@Override
+	protected ProcessedExpression performSubFolding(@NotNull ErrorHandler errorHandler) {
+		return this;
 	}
 
 }
