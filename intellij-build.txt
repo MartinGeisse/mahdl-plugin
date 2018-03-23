@@ -1,0 +1,10 @@
+
+java/compiler/forms-compiler
+
+jps/jps-builders
+
+plugins/ui-designer/jps-plugin/src
+
+plugins/ui-designer/src/META-INF/plugin.xml
+plugins/ui-designer/src/META-INF/plugin.xml:    <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
+plugins/ui-designer/src/META-INF/plugin.xml:    <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
