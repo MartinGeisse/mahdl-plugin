@@ -1,5 +1,7 @@
 
 java/compiler/forms-compiler
+-> ist der eigentliche Compiler, mit XML-Input (JAva-XML-Klassen) und Classfiles (ObjectWeb ASM) als output.
+	kein PSI, kein source output
 
 jps/jps-builders
 
