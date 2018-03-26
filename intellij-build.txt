@@ -1,12 +1,17 @@
 
 java/compiler/forms-compiler
--> ist der eigentliche Compiler, mit XML-Input (JAva-XML-Klassen) und Classfiles (ObjectWeb ASM) als output.
+-> ist der eigentliche Compiler, mit XML-Input (Java-XML-Klassen) und Classfiles (ObjectWeb ASM) als output.
 	kein PSI, kein source output
 
 jps/jps-builders
+- keine JPS-Einbindung, sondern nur UI-Designer-spezifische Sonderlogik. Unklar, ob man dasselbe Level an Integration
+	ohne entsprechende Sonderlogik erreichen kann.
 
 plugins/ui-designer/jps-plugin/src
+-> Beispiel-Implementierung eines JPS-Builders, benutzt o.g. Standalone-Compiler-Bibliothek
 
-plugins/ui-designer/src/META-INF/plugin.xml
 plugins/ui-designer/src/META-INF/plugin.xml:    <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
+-> Beispiel für eingebauten Builder (???)
+
 plugins/ui-designer/src/META-INF/plugin.xml:    <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
+-> Einbindung des JPS-Builders
