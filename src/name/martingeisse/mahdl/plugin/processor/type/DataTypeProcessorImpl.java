@@ -46,6 +46,8 @@ public final class DataTypeProcessorImpl implements DataTypeProcessor {
 			return ProcessedDataType.Integer.INSTANCE;
 		} else if (dataType instanceof DataType_Text) {
 			return ProcessedDataType.Text.INSTANCE;
+		} else if (dataType instanceof DataType_Clock) {
+			return ProcessedDataType.Clock.INSTANCE;
 		} else {
 			if (reportErrors) {
 				errorHandler.onError(dataType, "unknown data type");

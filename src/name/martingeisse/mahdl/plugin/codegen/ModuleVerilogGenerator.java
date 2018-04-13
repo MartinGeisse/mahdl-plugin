@@ -262,7 +262,7 @@ public final class ModuleVerilogGenerator {
 	}
 
 	private static String bitOrVectorSuffixToString(ProcessedDataType processedDataType) {
-		if (processedDataType instanceof ProcessedDataType.Bit) {
+		if (processedDataType instanceof ProcessedDataType.Bit || processedDataType instanceof ProcessedDataType.Clock) {
 			return "";
 		} else if (processedDataType instanceof ProcessedDataType.Vector) {
 			ProcessedDataType.Vector vectorType = (ProcessedDataType.Vector) processedDataType;

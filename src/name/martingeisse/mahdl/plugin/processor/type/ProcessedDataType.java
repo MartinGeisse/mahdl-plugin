@@ -14,7 +14,7 @@ public abstract class ProcessedDataType {
 
 	public enum Family {
 
-		BIT, VECTOR, MATRIX, INTEGER, TEXT, UNKNOWN;
+		BIT, VECTOR, MATRIX, INTEGER, TEXT, CLOCK, UNKNOWN;
 
 		public String getDisplayString() {
 			return name().toLowerCase();
@@ -213,6 +213,33 @@ public abstract class ProcessedDataType {
 		@NotNull
 		public Family getFamily() {
 			return Family.TEXT;
+		}
+
+	}
+
+	public static final class Clock extends ProcessedDataType {
+
+		public static final Clock INSTANCE = new Clock();
+
+		@Override
+		public boolean equals(Object obj) {
+			return obj instanceof Clock;
+		}
+
+		@Override
+		public int hashCode() {
+			return Clock.class.hashCode();
+		}
+
+		@NotNull
+		public String toString() {
+			return "clock";
+		}
+
+		@Override
+		@NotNull
+		public Family getFamily() {
+			return Family.CLOCK;
 		}
 
 	}

@@ -30,6 +30,7 @@ public final class TokenGroups {
 		Symbols.KW_MATRIX,
 		Symbols.KW_INTEGER,
 		Symbols.KW_TEXT,
+		Symbols.KW_CLOCK,
 		Symbols.KW_DO,
 		Symbols.KW_IF,
 		Symbols.KW_ELSE,

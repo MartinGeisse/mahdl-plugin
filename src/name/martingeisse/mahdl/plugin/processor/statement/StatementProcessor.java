@@ -22,7 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
+ * TODO this processor currently does not ensure that an asynchronous do-block assigns to each target signal in each
+ * branch, nor does it check that assignments to clock signals only occur unconditionally.
  */
 public final class StatementProcessor {
 

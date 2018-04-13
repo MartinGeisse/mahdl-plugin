@@ -106,7 +106,9 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 			}
 
 			// now handle the result value expression
-			if (resultValueType == null) {
+			if (resultValueExpression.getDataType() instanceof ProcessedDataType.Clock) {
+				error(caseItem, "result of a select expression cannot have clock type");
+			} else if (resultValueType == null) {
 				resultValueType = resultValueExpression.getDataType();
 			} else if (resultValueType instanceof ProcessedDataType.Integer) {
 				if ((resultValueExpression.getDataType() instanceof ProcessedDataType.Vector)) {
@@ -460,7 +462,13 @@ public class ExpressionProcessorImpl implements ExpressionProcessor {
 
 		// handle branches
 		branchTypeCheck:
-		if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
+		if (thenBranch.getDataType() instanceof ProcessedDataType.Clock) {
+			error(thenBranch, "cannot use a signal of clock type in a conditional expression");
+			error = true;
+		} else if (elseBranch.getDataType() instanceof ProcessedDataType.Clock) {
+			error(elseBranch, "cannot use a signal of clock type in a conditional expression");
+			error = true;
+		} else if (!thenBranch.getDataType().equals(elseBranch.getDataType())) {
 
 			// recognize bit literals in either branch
 			if (thenBranch.getDataType() instanceof ProcessedDataType.Bit) {

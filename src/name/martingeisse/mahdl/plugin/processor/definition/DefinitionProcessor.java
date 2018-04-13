@@ -110,7 +110,9 @@ public final class DefinitionProcessor {
 				// add the definition
 				if (kind instanceof SignalLikeKind_Constant) {
 					Constant constant = new Constant(nameElement, dataType, processedDataType, initializer);
-					if (initializer == null) {
+					if (dataTypeFamily == ProcessedDataType.Family.CLOCK) {
+						errorHandler.onError(signalLikeDefinition, "clock type is not allowed for constants");
+					} else if (initializer == null) {
 						errorHandler.onError(signalLikeDefinition, "constant must have an initializer");
 					} else {
 						constant.processExpressions(expressionProcessor);
@@ -122,6 +124,11 @@ public final class DefinitionProcessor {
 					if (dataTypeFamily == ProcessedDataType.Family.MATRIX) {
 						if (kind instanceof SignalLikeKind_Signal) {
 							errorHandler.onError(dataType, "matrix type not allowed for signal");
+							processedDataType = ProcessedDataType.Unknown.INSTANCE;
+						}
+					} else if (dataTypeFamily == ProcessedDataType.Family.CLOCK) {
+						if (kind instanceof SignalLikeKind_Register) {
+							errorHandler.onError(dataType, "clock type not allowed for register");
 							processedDataType = ProcessedDataType.Unknown.INSTANCE;
 						}
 					} else if (dataTypeFamily != ProcessedDataType.Family.UNKNOWN &&

@@ -42,6 +42,8 @@ public enum ProcessedUnaryOperator {
 
 	@NotNull
 	public ProcessedDataType checkType(@NotNull ProcessedDataType operandType) throws TypeErrorException {
+		// TODO applying a unary NOT to a clock signal is allowed when it happens as part of a do-block trigger
+		// (indicating a negative edge triggered register). This is currently not implemented.
 		if (operandType instanceof ProcessedDataType.Unknown) {
 			return operandType;
 		}
