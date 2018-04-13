@@ -18,6 +18,7 @@ public class Symbols {
 	public static final MahdlElementType INTEGER_LITERAL = new MahdlElementType("INTEGER_LITERAL");
 	public static final MahdlElementType KW_BIT = new MahdlElementType("KW_BIT");
 	public static final MahdlElementType KW_CASE = new MahdlElementType("KW_CASE");
+	public static final MahdlElementType KW_CLOCK = new MahdlElementType("KW_CLOCK");
 	public static final MahdlElementType KW_CONSTANT = new MahdlElementType("KW_CONSTANT");
 	public static final MahdlElementType KW_DEFAULT = new MahdlElementType("KW_DEFAULT");
 	public static final MahdlElementType KW_DO = new MahdlElementType("KW_DO");
@@ -68,6 +69,7 @@ public class Symbols {
 	//
 
 	public static final MahdlElementType dataType_Bit = new MahdlElementType("dataType_Bit");
+	public static final MahdlElementType dataType_Clock = new MahdlElementType("dataType_Clock");
 	public static final MahdlElementType dataType_Integer = new MahdlElementType("dataType_Integer");
 	public static final MahdlElementType dataType_Matrix = new MahdlElementType("dataType_Matrix");
 	public static final MahdlElementType dataType_Text = new MahdlElementType("dataType_Text");

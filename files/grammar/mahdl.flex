@@ -100,6 +100,7 @@ vector { return Symbols.KW_VECTOR; }
 matrix { return Symbols.KW_MATRIX; }
 integer { return Symbols.KW_INTEGER; }
 text { return Symbols.KW_TEXT; }
+clock { return Symbols.KW_CLOCK; }
 
 // statement keywords
 do { return Symbols.KW_DO; }

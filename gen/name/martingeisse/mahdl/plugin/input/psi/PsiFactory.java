@@ -232,6 +232,9 @@ public class PsiFactory {
                     if (type == Symbols.dataType_Text) {
                 return new DataType_Text(node);
             }
+                    if (type == Symbols.dataType_Clock) {
+                return new DataType_Clock(node);
+            }
                     if (type == Symbols.synthetic_List_PortDefinitionGroup) {
                 return new ListNode<PortDefinitionGroup>(node, TokenSet.create(Symbols.portDefinitionGroup_Valid, Symbols.portDefinitionGroup_Error1, Symbols.portDefinitionGroup_Error2), PortDefinitionGroup.class);
             }
