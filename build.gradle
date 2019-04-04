@@ -10,10 +10,10 @@ targetCompatibility = JavaVersion.VERSION_1_8
 
 intellij {
     version '183.6156.11'
-    pluginName 'MaPaG'
+    pluginName 'MaHDL-Plugin'
 }
 
-group 'name.martingeisse.mapag'
+group 'name.martingeisse.mahdl'
 version '1.0'
 
 sourceSets {
