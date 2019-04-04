@@ -88,3 +88,18 @@ Submodules are an interesting part, and there are two types:
     - Easy for the compiler to analyze MaHDL. Might also be able to analyze the compiled code (interface definition
         files generated in addition to Java) to improve performance.
     - There is no reason to analyze the Java code, especially when Java-only modules use a MaHDL stub.
+
+----------------
+
+Implementation variants:
+- IntelliJ builder module -- requires using IntelliJ for building
+    - faster
+    - cannot work without IntelliJ
+- Gradle Plugin -- requires using gradle for building
+    - slower
+    - could use another IDE or simple editor
+    - runs in CI, e.g. Jenkins
+
+--->
+I accidentally used an old Gradle version via Wrapper. The new gradle is pretty fast, so writing a Gradle plugin
+seems to have only advantages over an IntelliJ builder.
