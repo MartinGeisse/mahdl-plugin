@@ -1,0 +1,54 @@
+
+How is MaHDL integrated with the remaining world? What *is* the remaining world?
+
+Synthesis of full MaHDL design:
+- takes additional info in additional files (like Xilinx "constraints" which are far more than just that)
+- BUT: Limited by the language in some aspects, e.g. no bidir support
+- unclear if useful (yes: developer need not know Java)
+
+Synthesis of MaHDL design embedded in ESDK:
+- code, not contraints file, provides all configuration
+- limitation of MaHDL model is not a problem because the missing parts can be build using ESDK
+- disadvantage: developer must be able to write Java
+
+Simulation of full MaHDL design:
+- testbench must be build using another language (if not Java code, then some testbench language)
+
+Simulation of MaHDL design embedded in ESDK:
+- this is the main topic, see below
+
+---------------------------------------------------------------------------------------------------------------------
+Simulation of MaHDL design embedded in ESDK
+
+Variants:
+
+- MaHDL compiler as part of the MaHDL plugin
+    - compiles to Java?
+    - compilation will cause additional error message because only then does the Java file change
+    - the compiler output is hard to keep out of version control, and be checking in, a missing plugin won't be
+        recognized because the old file will be used, causing followup problems
+        - can be solved by generating to a separate source path
+        - IntelliJ may have a solution for this, because the problem exists for all Java-generating DSLs
+    - in an advanced stage, may be able to fully integrate with Java tooling to use ESDK library modules in MaHDL
+
+- MaHDL compiler as ESDK library component
+    - sub-variant: MaHDL plugin can generate a wrapper class
+    - even in an advanced stage, ESDK library modules will never be integrated automatically into tooling
+        - would need MaHDL-side stubs similar to "native" keyword in Java
+        - that's not really a big problem; also, it only affects MaHDL module instances, not interfaces
+
+- mix: MaHDL compiler as part of the plugin, but compiles to binary, not Java
+    - no .gitignore problem
+    - full Java integration possible in one direction
+    - generating a Java wrapper class would need to be done manually
+
+----------------
+
+What are the goals? Especially, is "developer does not need to know Java" valuable?
+- not for me personally
+- a team would need Java devs anyway for simulation -- not having them at all is not a supported use case
+- the team would need to work together -- dysfunctional teams are not a supported use case
+- the pure HDL devs would then mostly keep off the Java parts
+--> making Java a requirement is not a problem
+
+The most useful variant therefore seems to pre-compile to Java as part of the IntelliJ build process.
