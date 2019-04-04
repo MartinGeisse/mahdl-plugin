@@ -103,3 +103,24 @@ Implementation variants:
 --->
 I accidentally used an old Gradle version via Wrapper. The new gradle is pretty fast, so writing a Gradle plugin
 seems to have only advantages over an IntelliJ builder.
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+Next steps:
+
+1. Refactoring
+- consider removing the "processing" from IntelliJ (possible if it *can* be abstracted from the PSI *and* the
+    IntelliJ annotator does not need too much processing)
+- convert project into three projects in the same git repo: common processing steps, IntelliJ plugin, Gradle plugin
+    (or two if no common code can be extracted)
+- move codegen to Gradle plugin; move functions to either Gradle plugin or common code
+
+2. Gradle Plugin
+- integrate into Gradle
+- get a full build process working in IntelliJ with both plugins, including visible build error messages
+
+3. Change code generation to target ESDK, not Verilog directly
+
+
+
