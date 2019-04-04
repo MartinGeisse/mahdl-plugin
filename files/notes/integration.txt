@@ -52,3 +52,39 @@ What are the goals? Especially, is "developer does not need to know Java" valuab
 --> making Java a requirement is not a problem
 
 The most useful variant therefore seems to pre-compile to Java as part of the IntelliJ build process.
+
+----------------
+
+Another variant:
+- MaHDL source is separate from Java source
+- Java components must be represented in MaHDL as stubs (but: interfaces are such a thing anyway)
+- needs manual wiring on the Java side unless it is still a MaHDL-to-Java pre-compiler.
+--> not a good variant. The idea is to *reduce* manual wiring!
+
+Reduced manual wiring requires either reflection or code generation.
+- code generation would happen in the MaHDL compiler. This happens when MaHDL is pre-compiled before running the
+    Java compiler, as described above.
+- reflection requires to make the Java side conform to MaHDL-defined coding styles -- the MaHDL compiler or runtime
+    system would need to analyze the *surrounding* objects, whereas code generation would generate Java code that
+    is agnostic to the surrounding objects.
+- reflection also can't handle MaHDL interfaces well, only submodules.
+
+So a MaHDL pre-compiler with Java code generation seems like the best solution. Interfaces are turned to signal
+getters (OUT) and setters (IN); interface types are turned to helper objects with getters (OUT) and setters (IN),
+best represented by a Java interface (instead of a helper object class) to disallow access to the internal counter-side
+getters and setters, making the usage of it much clearer.
+
+Submodules are an interesting part, and there are two types:
+- submodule is Java:
+    - Compiled Java may not exist at the time of MaHDL compilation (since MaHDL is compiled first), and analyzing the
+        compiled Java is tricky but may work if one could get it. Analyzing the Java code structure is more likely to
+        happen. Still, things like vector widths must be specified through annotations.
+    - Alternatively, the Java object may be represented by a MaHDL stub ("native module"). MaHDL sources could be
+        separate from Java then, and produce outputs in a "generated" Java source path as a pre-compiler.
+        - In v1, the stub need not even be checked against the Java code by the pre-compiler. Any errors turn up in
+            the generated Java code or at runtime -- both are ugly, but hardly a show stopper since they crash
+            immediately and are easy to track down.
+- submodule is MaHDL
+    - Easy for the compiler to analyze MaHDL. Might also be able to analyze the compiled code (interface definition
+        files generated in addition to Java) to improve performance.
+    - There is no reason to analyze the Java code, especially when Java-only modules use a MaHDL stub.
